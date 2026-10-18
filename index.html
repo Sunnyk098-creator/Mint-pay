@@ -7,13 +7,13 @@
     <link rel="icon" href="App.png" type="image/png">
     
     <!-- Modern Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- Dependencies (QR & 3D Three.js) -->
+    <!-- Dependencies (QR & 3D Three.js Engine) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- Firebase Realtime Database Only -->
+    <!-- Firebase Realtime Database Only (No Auth SDK) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
@@ -22,14 +22,14 @@
 </head>
 <body>
 
-    <!-- 3D Mint Floating Background Canvas -->
+    <!-- 3D Mint Floating Ambience Background Canvas -->
     <canvas id="bg-canvas"></canvas>
 
     <main class="app-shell" id="appShell">
 
         <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP ================= -->
         <div id="authScreen" class="scroll-page">
-            <div class="header-box" style="margin-top: 6px;">
+            <div class="header-box" style="margin-top: 10px;">
                 <div class="top-trust-pill">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span>MintPay Merchant Gateway</span>
@@ -48,7 +48,7 @@
                 <p class="subtitle-text">Multi-Style QR & Realtime Database Settlement</p>
             </div>
 
-            <div class="frosted-card">
+            <div class="frosted-card" style="padding: 16px;">
                 <!-- Auth Switch Tabs -->
                 <div class="auth-tabs">
                     <button class="auth-tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">
@@ -236,7 +236,7 @@
                 </div>
 
                 <div class="txn-list" id="recentTxnList">
-                    <!-- Loaded dynamically via JS -->
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
         </div>
@@ -332,8 +332,12 @@
                         <b id="billTxnId">TXN_000000</b>
                     </div>
                     <div class="invoice-row">
-                        <span>Merchant Name</span>
+                        <span>Creator Name</span>
                         <b id="billMerchantName">Sunny Kumar</b>
+                    </div>
+                    <div class="invoice-row">
+                        <span>Creator Email</span>
+                        <b id="billMerchantEmail">merchant@mintpay.com</b>
                     </div>
                     <div class="invoice-row">
                         <span>Receiver UPI</span>
@@ -361,11 +365,6 @@
                     <span>Open Link</span>
                 </button>
             </div>
-
-            <button class="btn-proceed" style="margin-top: 4px;" onclick="viewQrFromBill()">
-                <img src="eye.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
-                <span>View Full Screen 3D QR</span>
-            </button>
         </div>
 
         <!-- ================= SCREEN 4: PROCESSING LOADER ================= -->
@@ -381,10 +380,10 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR ================= -->
+        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR (FULL SCREEN NO NAV BAR) ================= -->
         <div id="qrScreen" class="screen-view checkout-fullscreen-card" style="display: none;">
             
-            <!-- User Brand Bar -->
+            <!-- User Brand Bar (Displays Creator's Info) -->
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
@@ -403,7 +402,9 @@
                     </div>
                 </div>
 
+                <!-- Timer Capsule with clock.gif before time -->
                 <div class="timer-capsule">
+                    <img src="clock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span id="countdownTimer">04:55</span>
                 </div>
             </div>
@@ -413,7 +414,7 @@
                 <span class="hero-qr-amt-large" id="qrAmtHero">₹1</span>
             </div>
 
-            <!-- 3D Tree QR / Matrix Stage -->
+            <!-- 3D Tree QR Stage Container -->
             <div class="open-tree-stage" id="qrStageContainer" onclick="toggleTreeMode()" title="Tap tree to see QR">
                 <canvas id="treeQrCanvas"></canvas>
                 <div id="staticQrBox" class="static-qr-container" style="display:none;"></div>
@@ -421,15 +422,18 @@
 
             <!-- Toggle Pill -->
             <button class="toggle-tree-pill" id="toggleTreeBtn" onclick="toggleTreeMode()">
+                <img src="eye.gif" alt="" class="tiny-gif" id="toggleBtnGif" onerror="this.style.display='none'">
                 <span id="toggleBtnText">Tap the tree to see QR code</span>
             </button>
 
             <!-- Bottom Row: ✓ Paid & ← Change Amount -->
             <div class="qr-bottom-actions">
                 <button class="btn-paid" onclick="openPaidVerificationModal()">
-                    <span>✓ Paid</span>
+                    <img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <span>Paid</span>
                 </button>
                 <button class="btn-change-amt" onclick="goToAmountScreen()">
+                    <img src="moneybag.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span>← Change Amount</span>
                 </button>
             </div>
@@ -486,6 +490,10 @@
                         <b id="searchResUtr">-</b>
                     </div>
                     <div class="receipt-row">
+                        <span>Creator Email</span>
+                        <b id="searchResEmail">-</b>
+                    </div>
+                    <div class="receipt-row">
                         <span>Time</span>
                         <b id="searchResTime">-</b>
                     </div>
@@ -493,7 +501,7 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 7: DEVELOPER API HUB (REDESIGNED & CLEANED) ================= -->
+        <!-- ================= SCREEN 7: DEVELOPER API HUB ================= -->
         <div id="apiScreen" class="scroll-page">
             <div class="header-box">
                 <div class="top-trust-pill">
@@ -571,7 +579,7 @@
 
                 <div class="json-output-wrap">
                     <div class="json-output-head">
-                        <span>JSON RESPONSE</span>
+                        <span>RAW JSON RESPONSE</span>
                         <span class="json-status-dot">200 OK</span>
                     </div>
                     <pre class="code-block raw-json" id="apiCreateOutput">{ "status": "READY" }</pre>
@@ -606,7 +614,7 @@
 
                 <div class="json-output-wrap">
                     <div class="json-output-head">
-                        <span>LIVE PAYLOAD OUTPUT</span>
+                        <span>LIVE RAW JSON PAYLOAD</span>
                         <span class="json-status-dot">APPLICATION/JSON</span>
                     </div>
                     <pre class="code-block raw-json" id="apiCheckOutput">{
@@ -619,6 +627,7 @@
     "famx_id": "PENDING",
     "payer_name": "Waiting...",
     "amount": 1,
+    "creator_email": "merchant@mintpay.com",
     "merchant": "Sunny Kumar",
     "upi_id": "sunnypro@fam",
     "note": "3D_Tree_Checkout",
@@ -712,14 +721,14 @@
                 </div>
             </div>
 
-            <!-- Verification Backend URL -->
+            <!-- Creator's Verification Backend URL -->
             <div class="frosted-card">
                 <div class="card-section-title" style="margin-bottom:4px;">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
-                    <span>Enter Verification Backend URL</span>
+                    <span>Creator Verification Backend (GAS URL)</span>
                 </div>
                 <div style="font-size:0.72rem; font-weight:600; color:var(--text-muted); margin-bottom:10px; text-align:left;">
-                    Payments will be verified through this script endpoint:
+                    Payments will be verified through the Creator's Google Apps Script:
                 </div>
 
                 <div class="input-group" style="margin-bottom:10px;">
@@ -756,7 +765,7 @@
                 <img src="eye.gif" alt="" class="proc-gif" onerror="this.style.display='none'">
             </div>
             <h2 class="proc-title" id="verifyTitleText">Verifying Transaction...</h2>
-            <p class="proc-sub" id="verifySubText">Validating UTR and credit notifications</p>
+            <p class="proc-sub" id="verifySubText">Validating UTR and credit notifications with Creator's backend</p>
             <div class="proc-bar-wrap">
                 <div class="proc-bar-fill" id="verifyBar"></div>
             </div>
@@ -813,7 +822,7 @@
                 <img src="alert.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
             </h2>
             <div class="result-amt" id="failAmtText">₹1.0</div>
-            <p class="result-sub" id="failReasonSub">No matching credit entry found in database.</p>
+            <p class="result-sub" id="failReasonSub">No matching credit entry found in creator backend.</p>
 
             <div class="receipt-pill">
                 <div class="receipt-row">
@@ -821,8 +830,12 @@
                     <b style="color:#dc2626;"><img src="block.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> UNCONFIRMED</b>
                 </div>
                 <div class="receipt-row">
-                    <span>Searched UTR / ID</span>
-                    <b id="failSearchedQuery">None</b>
+                    <span>Searched UTR</span>
+                    <b id="failSearchedUtr">None</b>
+                </div>
+                <div class="receipt-row">
+                    <span>Searched Txn ID</span>
+                    <b id="failSearchedTxnId">None</b>
                 </div>
                 <div class="receipt-row">
                     <span>Receiver UPI</span>
@@ -900,16 +913,23 @@
         </div>
     </div>
 
+    <!-- MODAL 3: UTR & TRANSACTION ID DUAL ENTRY (SAVES BOTH TO DATABASE) -->
     <div class="modal-backdrop" id="paidVerifyModal">
         <div class="modal-card">
             <img src="eye.gif" alt="" class="modal-top-gif" onerror="this.style.display='none'">
             <h3 class="modal-title">Confirm & Verify Payment</h3>
             <p class="modal-sub">
-                Enter the <b>12-Digit UTR</b> or <b>Transaction ID</b> (e.g. <code>FMPIB6811724682</code>) to verify:
+                Enter the <b>12-Digit UTR</b> and <b>Transaction ID</b> to verify with Creator's backend:
             </p>
 
-            <div class="input-group" style="margin-bottom: 12px;">
-                <input type="text" id="verifyUtrInput" class="glass-input" placeholder="e.g. 629027145452 or FMPIB..." style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
+            <div class="input-group" style="margin-bottom: 8px;">
+                <label class="input-label">12-Digit Bank UTR Number</label>
+                <input type="text" id="verifyUtrInput" class="glass-input" placeholder="e.g. 629027145452" style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 14px;">
+                <label class="input-label">FamX / Payment Transaction ID</label>
+                <input type="text" id="verifyTxnInput" class="glass-input" placeholder="e.g. FMPIB6811724682" style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
             </div>
 
             <div class="real-verify-actions">
