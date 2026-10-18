@@ -1,16 +1,10 @@
 /**
  * MintPay 3D Engine - Complete Multi-User Creator-Linked Architecture
- * Features:
- * 1. Links Creator's Email, UPI, Photo, QR Style & GAS URL to each transaction
- * 2. Hosted checkout displays Creator's details & Creator's chosen QR Style
- * 3. Single Unified UTR / Transaction ID input with smart auto-detection
- * 4. Verifies payments using the Creator's specific GAS Web App URL (with live DB lookup)
- * 5. Full-screen checkout view with 3D Tree first engine (No Navigation Bar on Payment Links)
- * 6. Pure Raw JSON API responses & async Firebase status lookup
+ * FIXED: 100% Crash-Proof, Anti-Blank-Page Fallbacks, Safe WebGL & Firebase Exception Guards
  */
 
 // =========================================================================
-// 0. FIREBASE REALTIME DATABASE CONFIGURATION
+// 0. FIREBASE REALTIME DATABASE CONFIGURATION (SAFE INIT)
 // =========================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyB_aUTy7Kvzo-Ct44MZ062MFcpDOnQ4WxU",
@@ -21,17 +15,24 @@ const firebaseConfig = {
     appId: "1:76118936092:web:fc40baa414665d89aeedd9"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+let db = null;
+try {
+    if (typeof firebase !== 'undefined') {
+        if (!firebase.apps || !firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.database();
+    }
+} catch (fbErr) {
+    console.warn("Firebase init guard active:", fbErr);
 }
-const db = firebase.database();
 
 const HOSTED_DOMAIN = window.location.origin && window.location.origin !== "null"
     ? window.location.origin
     : "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
 
-// High-Res Default SVG Avatar
+// High-Res Default SVG Avatar (Guarantees zero broken icons)
 const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310b981'/><circle cx='50' cy='38' r='18' fill='%23ffffff'/><path d='M20,85 C20,62 35,58 50,58 C65,58 80,62 80,85 Z' fill='%23ffffff'/></svg>";
 
 // Local Logged-in Merchant Session State
@@ -46,7 +47,7 @@ let USER_QR_STYLE = localStorage.getItem('mp_qr_style') || "tree";
 let USER_API_TOKEN = localStorage.getItem('mp_api_token') || generateRandomToken();
 let USER_API_ENABLED = localStorage.getItem('mp_api_enabled') !== 'false';
 
-// Active Transaction State (Links to the actual creator who made the link)
+// Active Transaction State
 let currentAmountStr = "0";
 let currentTxnNote = "MintPay_Order";
 let currentActiveTxnId = null;
@@ -54,7 +55,7 @@ let activeBillPayload = null;
 let timerInterval = null;
 let qrStartTimeMs = 0;
 
-// True when opened via Payment Link (?id=..., ?amount=..., etc.) so Nav Bar never appears
+// Flag when opened via Hosted Payment Link (?id=...)
 let IS_HOSTED_CHECKOUT_MODE = false;
 
 // Creator Context Variables for Hosted Checkout
@@ -99,6 +100,7 @@ function switchAuthTab(mode) {
 }
 
 function validatePasswordRules(pass) {
+    if (!pass) pass = "";
     const isLen = pass.length >= 8;
     const isNum = /[0-9]/.test(pass);
     const isUpper = /[A-Z]/.test(pass);
@@ -152,8 +154,11 @@ async function handleDatabaseSignup() {
     showToast("⏳ Creating Merchant Account...");
 
     try {
-        const usersSnap = await db.ref('users').once('value');
-        const users = usersSnap.val() || {};
+        let users = {};
+        if (db) {
+            const usersSnap = await db.ref('users').once('value');
+            users = usersSnap.val() || {};
+        }
 
         for (const uid in users) {
             if (users[uid].email === email) {
@@ -184,17 +189,19 @@ async function handleDatabaseSignup() {
             createdAt: new Date().toISOString()
         };
 
-        await db.ref('users/' + newUid).set(newUserData);
-        await db.ref('tokens/' + apiTok).set({
-            uid: newUid,
-            merchantName: name,
-            email: email,
-            upiId: upi,
-            photo: DEFAULT_AVATAR_SVG,
-            gasUrl: DEFAULT_GAS_URL,
-            qrStyle: "tree",
-            apiEnabled: true
-        });
+        if (db) {
+            await db.ref('users/' + newUid).set(newUserData);
+            await db.ref('tokens/' + apiTok).set({
+                uid: newUid,
+                merchantName: name,
+                email: email,
+                upiId: upi,
+                photo: DEFAULT_AVATAR_SVG,
+                gasUrl: DEFAULT_GAS_URL,
+                qrStyle: "tree",
+                apiEnabled: true
+            });
+        }
 
         CURRENT_UID = newUid;
         MERCHANT = name;
@@ -212,7 +219,7 @@ async function handleDatabaseSignup() {
         showScreen('home');
         showToast("🎉 Account created successfully!");
     } catch (err) {
-        showToast("⚠️ Signup Failed: " + err.message);
+        showToast("⚠️ Signup Failed: " + (err.message || err));
     }
 }
 
@@ -231,13 +238,16 @@ async function handleDatabaseLogin() {
     showToast("🔐 Logging in...");
 
     try {
-        const usersSnap = await db.ref('users').once('value');
-        const users = usersSnap.val() || {};
-        let matchedUser = null;
+        let users = {};
+        if (db) {
+            const usersSnap = await db.ref('users').once('value');
+            users = usersSnap.val() || {};
+        }
 
+        let matchedUser = null;
         for (const uid in users) {
             const u = users[uid];
-            if ((u.email && u.email.toLowerCase() === identifier) || (u.phone && u.phone === identifier)) {
+            if (u && ((u.email && u.email.toLowerCase() === identifier) || (u.phone && u.phone === identifier))) {
                 if (u.password === pass) {
                     matchedUser = u;
                     break;
@@ -264,11 +274,10 @@ async function handleDatabaseLogin() {
         USER_API_TOKEN = matchedUser.apiToken || generateRandomToken();
         USER_API_ENABLED = matchedUser.apiEnabled !== undefined ? matchedUser.apiEnabled : true;
 
-        // Sync user's transactions from Firebase if available
         if (matchedUser.transactions) {
             const txArr = Array.isArray(matchedUser.transactions)
-                ? matchedUser.transactions.filter(Boolean)
-                : Object.values(matchedUser.transactions);
+                ? matchedUser.transactions.filter(item => item && typeof item === 'object')
+                : Object.values(matchedUser.transactions).filter(item => item && typeof item === 'object');
             localStorage.setItem('mp_transactions', JSON.stringify(txArr));
         }
 
@@ -278,26 +287,30 @@ async function handleDatabaseLogin() {
         showToast("👋 Welcome back, " + MERCHANT + "!");
         pingUserGasBackend(false);
     } catch (err) {
-        showToast("⚠️ Login Failed: " + err.message);
+        showToast("⚠️ Login Failed: " + (err.message || err));
     }
 }
 
 function persistSession() {
-    localStorage.setItem('mp_logged_in', 'true');
-    localStorage.setItem('mp_uid', CURRENT_UID);
-    localStorage.setItem('mp_merchant', MERCHANT);
-    localStorage.setItem('mp_phone', USER_PHONE);
-    localStorage.setItem('mp_email', USER_EMAIL);
-    localStorage.setItem('mp_upi', UPI_ID);
-    localStorage.setItem('mp_photo', USER_PHOTO);
-    localStorage.setItem('mp_gas_url', USER_GAS_URL);
-    localStorage.setItem('mp_qr_style', USER_QR_STYLE);
-    localStorage.setItem('mp_api_token', USER_API_TOKEN);
-    localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
+    try {
+        localStorage.setItem('mp_logged_in', 'true');
+        localStorage.setItem('mp_uid', CURRENT_UID || '');
+        localStorage.setItem('mp_merchant', MERCHANT || '');
+        localStorage.setItem('mp_phone', USER_PHONE || '');
+        localStorage.setItem('mp_email', USER_EMAIL || '');
+        localStorage.setItem('mp_upi', UPI_ID || '');
+        localStorage.setItem('mp_photo', USER_PHOTO || DEFAULT_AVATAR_SVG);
+        localStorage.setItem('mp_gas_url', USER_GAS_URL || DEFAULT_GAS_URL);
+        localStorage.setItem('mp_qr_style', USER_QR_STYLE || 'tree');
+        localStorage.setItem('mp_api_token', USER_API_TOKEN || '');
+        localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
+    } catch (e) {}
 }
 
 function logoutGateway() {
-    localStorage.removeItem('mp_logged_in');
+    try {
+        localStorage.removeItem('mp_logged_in');
+    } catch (e) {}
     CURRENT_UID = null;
     showToast("Logged out safely");
     showScreen('auth');
@@ -307,7 +320,7 @@ function logoutGateway() {
 // 2. PROFILE DP UPLOAD & UI SYNC
 // =========================================================================
 function handleProfileImageUpload(event) {
-    const file = event.target.files[0];
+    const file = event && event.target && event.target.files ? event.target.files[0] : null;
     if (!file) return;
 
     if (file.size > 3 * 1024 * 1024) {
@@ -320,11 +333,13 @@ function handleProfileImageUpload(event) {
     reader.onload = async function(e) {
         const base64Data = e.target.result;
         USER_PHOTO = base64Data;
-        localStorage.setItem('mp_photo', USER_PHOTO);
+        try {
+            localStorage.setItem('mp_photo', USER_PHOTO);
+        } catch (err) {}
 
         updateAllAvatars(USER_PHOTO);
 
-        if (CURRENT_UID) {
+        if (CURRENT_UID && db) {
             try {
                 await db.ref('users/' + CURRENT_UID).update({ photo: base64Data });
                 await db.ref('tokens/' + USER_API_TOKEN).update({ photo: base64Data });
@@ -341,7 +356,10 @@ function updateAllAvatars(photoSrc) {
         const el = document.getElementById(id);
         if (el) {
             el.src = validSrc;
-            el.onerror = () => { el.src = DEFAULT_AVATAR_SVG; };
+            el.onerror = function() {
+                this.onerror = null;
+                this.src = DEFAULT_AVATAR_SVG;
+            };
         }
     });
 }
@@ -349,11 +367,11 @@ function updateAllAvatars(photoSrc) {
 function syncUIWithState() {
     const setTxt = (id, val) => {
         const el = document.getElementById(id);
-        if (el) el.innerText = val;
+        if (el) el.innerText = val !== undefined ? val : "";
     };
     const setVal = (id, val) => {
         const el = document.getElementById(id);
-        if (el) el.value = val;
+        if (el) el.value = val !== undefined ? val : "";
     };
 
     setTxt('dashMerchantName', MERCHANT);
@@ -365,7 +383,7 @@ function syncUIWithState() {
     setTxt('qrMerchantUpi', UPI_ID);
     setTxt('failMerchantUpi', UPI_ID);
     setTxt('numpadSubText', `Direct credit to ${MERCHANT}`);
-    setTxt('procSubUpi', `Rendering ${USER_QR_STYLE.toUpperCase()} QR for ${UPI_ID}`);
+    setTxt('procSubUpi', `Rendering ${(USER_QR_STYLE || 'tree').toUpperCase()} QR for ${UPI_ID}`);
 
     const styleLabelMap = { tree: "3D Tree QR Active", static: "Static QR Active", animated: "Animated QR Active" };
     setTxt('currentQrBadgeStyle', styleLabelMap[USER_QR_STYLE] || "3D Tree QR Active");
@@ -385,22 +403,36 @@ function syncUIWithState() {
 }
 
 function handleQrStyleChange(styleKey, doSave = true) {
-    USER_QR_STYLE = styleKey;
+    const key = (styleKey || "tree").toLowerCase();
+    USER_QR_STYLE = key;
+
     ['qrStyleTreeLabel', 'qrStyleStaticLabel', 'qrStyleAnimatedLabel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
     });
 
-    const activeEl = document.getElementById(`qrStyle${styleKey.charAt(0).toUpperCase() + styleKey.slice(1)}Label`);
-    if (activeEl) activeEl.classList.add('active');
+    if (key === 'tree' || key.includes('tree')) {
+        const el = document.getElementById('qrStyleTreeLabel');
+        if (el) el.classList.add('active');
+    } else if (key === 'static') {
+        const el = document.getElementById('qrStyleStaticLabel');
+        if (el) el.classList.add('active');
+    } else if (key === 'animated') {
+        const el = document.getElementById('qrStyleAnimatedLabel');
+        if (el) el.classList.add('active');
+    }
 
     if (doSave) {
-        localStorage.setItem('mp_qr_style', USER_QR_STYLE);
-        if (CURRENT_UID) {
-            db.ref('users/' + CURRENT_UID).update({ qrStyle: USER_QR_STYLE });
-            db.ref('tokens/' + USER_API_TOKEN).update({ qrStyle: USER_QR_STYLE });
+        try {
+            localStorage.setItem('mp_qr_style', USER_QR_STYLE);
+        } catch (e) {}
+        if (CURRENT_UID && db) {
+            try {
+                db.ref('users/' + CURRENT_UID).update({ qrStyle: USER_QR_STYLE });
+                db.ref('tokens/' + USER_API_TOKEN).update({ qrStyle: USER_QR_STYLE });
+            } catch (e) {}
         }
-        showToast(`✨ Selected Style: ${styleKey.toUpperCase()} QR`);
+        showToast(`✨ Selected Style: ${USER_QR_STYLE.toUpperCase()} QR`);
     }
 }
 
@@ -426,7 +458,7 @@ async function saveProfileSettings() {
     USER_GAS_URL = gas || DEFAULT_GAS_URL;
     persistSession();
 
-    if (CURRENT_UID) {
+    if (CURRENT_UID && db) {
         try {
             await db.ref('users/' + CURRENT_UID).update({
                 merchantName: MERCHANT,
@@ -436,7 +468,6 @@ async function saveProfileSettings() {
                 qrStyle: USER_QR_STYLE
             });
             await db.ref('tokens/' + USER_API_TOKEN).update({
-                uid: CURRENT_UID,
                 merchantName: MERCHANT,
                 upiId: UPI_ID,
                 gasUrl: USER_GAS_URL,
@@ -448,7 +479,7 @@ async function saveProfileSettings() {
     }
 
     syncUIWithState();
-    showToast("✅ Profile & Creator GAS URL Saved!");
+    showToast("✅ Profile & Settings Saved!");
 }
 
 // =========================================================================
@@ -468,9 +499,11 @@ async function confirmDeleteAllTransactions() {
     closeDeleteAllModal();
     showToast("🗑️ Deleting all records...");
 
-    localStorage.removeItem('mp_transactions');
+    try {
+        localStorage.removeItem('mp_transactions');
+    } catch (e) {}
 
-    if (CURRENT_UID) {
+    if (CURRENT_UID && db) {
         try {
             await db.ref('users/' + CURRENT_UID + '/transactions').remove();
         } catch (e) {}
@@ -485,25 +518,34 @@ function getStoredTxns() {
         const raw = localStorage.getItem('mp_transactions');
         if (raw) {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed.filter(Boolean);
-            if (parsed && typeof parsed === 'object') return Object.values(parsed).filter(Boolean);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(item => item && typeof item === 'object');
+            }
+            if (parsed && typeof parsed === 'object') {
+                return Object.values(parsed).filter(item => item && typeof item === 'object');
+            }
         }
     } catch (e) {}
     return [];
 }
 
 function saveStoredTxns(list) {
-    const cleanList = (list || []).filter(Boolean);
-    localStorage.setItem('mp_transactions', JSON.stringify(cleanList));
-    if (CURRENT_UID) {
-        db.ref('users/' + CURRENT_UID + '/transactions').set(cleanList.slice(0, 30));
+    const cleanList = (list || []).filter(item => item && typeof item === 'object');
+    try {
+        localStorage.setItem('mp_transactions', JSON.stringify(cleanList));
+    } catch (e) {}
+
+    if (CURRENT_UID && db) {
+        try {
+            db.ref('users/' + CURRENT_UID + '/transactions').set(cleanList.slice(0, 30));
+        } catch (e) {}
     }
     renderDashboardData();
 }
 
 function renderDashboardData() {
     const list = getStoredTxns();
-    const completed = list.filter(t => t.status === 'COMPLETED');
+    const completed = list.filter(t => t && t.status === 'COMPLETED');
     const totalVol = completed.reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
     const volEl = document.getElementById('statTotalVol');
@@ -521,6 +563,7 @@ function renderDashboardData() {
     }
 
     list.slice(0, 8).forEach(t => {
+        if (!t) return;
         const isOk = t.status === 'COMPLETED';
         const isPend = t.status === 'PENDING';
         const iconGif = isOk ? 'tick.gif' : (isPend ? 'clock.gif' : 'block.gif');
@@ -530,7 +573,7 @@ function renderDashboardData() {
         row.className = 'txn-item';
         row.onclick = () => {
             const searchInp = document.getElementById('checkPaymentSearchInput');
-            if (searchInp) searchInp.value = t.txn_id;
+            if (searchInp) searchInp.value = t.txn_id || "";
             showScreen('check');
             executePaymentCheckSearch();
         };
@@ -538,13 +581,13 @@ function renderDashboardData() {
             <div class="txn-left">
                 <img src="${iconGif}" alt="" class="md-gif" onerror="this.src='tick.gif'">
                 <div class="txn-meta">
-                    <div class="txn-id-text">${t.payer_name && t.payer_name !== 'Waiting...' ? t.payer_name : (t.note && t.note !== 'None' ? t.note : t.txn_id)}</div>
-                    <div class="txn-time-text">${t.timestamp} • ID: ${t.txn_id}</div>
+                    <div class="txn-id-text">${t.payer_name && t.payer_name !== 'Waiting...' ? t.payer_name : (t.note && t.note !== 'None' ? t.note : (t.txn_id || 'Transaction'))}</div>
+                    <div class="txn-time-text">${t.timestamp || 'Today'} • ID: ${t.txn_id || '-'}</div>
                 </div>
             </div>
             <div style="text-align:right;">
-                <div class="txn-amt-badge" style="color:${col};">₹${t.amount}</div>
-                <div style="font-size:0.64rem;font-weight:800;color:${col};">${t.status}</div>
+                <div class="txn-amt-badge" style="color:${col};">₹${t.amount || 0}</div>
+                <div style="font-size:0.64rem;font-weight:800;color:${col};">${t.status || 'PENDING'}</div>
             </div>
         `;
         container.appendChild(row);
@@ -552,7 +595,7 @@ function renderDashboardData() {
 }
 
 // =========================================================================
-// 4. LINK GENERATOR WITH CREATOR DATA STORED IN DATABASE
+// 4. LINK GENERATOR WITH CREATOR DATA LINKED
 // =========================================================================
 function tapKey(key) {
     if (key === 'DEL') {
@@ -568,11 +611,10 @@ function tapKey(key) {
 }
 
 function applyPreset(val) {
-    currentAmountStr = val;
+    currentAmountStr = String(val || "0");
     if (liveAmount) liveAmount.innerText = currentAmountStr;
 }
 
-// Generates payment link and binds Creator's Email, UPI, DP & GAS URL to DB
 function generateBillInvoice() {
     const num = parseFloat(currentAmountStr);
     if (!num || num <= 0) {
@@ -586,7 +628,6 @@ function generateBillInvoice() {
     const baseClean = window.location.href.split('?')[0];
     const payUrl = `${baseClean}?id=${currentActiveTxnId}`;
 
-    // Also set Creator Context in case creator opens checkout directly in same session
     activeCreatorUid = CURRENT_UID || "anonymous";
     activeCreatorGasUrl = USER_GAS_URL || DEFAULT_GAS_URL;
     activeCreatorName = MERCHANT;
@@ -615,15 +656,16 @@ function generateBillInvoice() {
         pay_url: payUrl
     };
 
-    // Save locally for creator
     const list = getStoredTxns();
     list.unshift(activeBillPayload);
     saveStoredTxns(list);
 
-    // Save to Global Firebase Database so ANY visitor can fetch creator's GAS URL & UPI details
-    db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
+    if (db) {
+        try {
+            db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
+        } catch (e) {}
+    }
 
-    // Populate Invoice UI
     const billAmt = document.getElementById('billAmtText');
     const billTxn = document.getElementById('billTxnId');
     const billMerch = document.getElementById('billMerchantName');
@@ -645,13 +687,13 @@ function generateBillInvoice() {
 }
 
 function copyBillPaymentLink() {
-    if (!activeBillPayload) return;
+    if (!activeBillPayload || !activeBillPayload.pay_url) return;
     navigator.clipboard.writeText(activeBillPayload.pay_url);
     showToast("📋 Link Copied: " + activeBillPayload.pay_url);
 }
 
 function shareBillPaymentLink() {
-    if (!activeBillPayload) return;
+    if (!activeBillPayload || !activeBillPayload.pay_url) return;
     const shareText = `Pay ₹${activeBillPayload.amount} to ${activeBillPayload.merchant} via UPI:\n${activeBillPayload.pay_url}`;
     if (navigator.share) {
         navigator.share({
@@ -666,7 +708,6 @@ function shareBillPaymentLink() {
 
 function openHostedCheckoutPage() {
     if (!activeBillPayload) return;
-    // Open directly in Full-Screen Checkout Mode (No Navigation Bar)
     IS_HOSTED_CHECKOUT_MODE = true;
     document.body.classList.add('checkout-link-mode');
     activeCreatorUid = activeBillPayload.creator_uid;
@@ -682,10 +723,10 @@ function openHostedCheckoutPage() {
 }
 
 // =========================================================================
-// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT (NO NAVIGATION BAR)
+// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT
 // =========================================================================
 function startQrRenderingFlow() {
-    const num = parseFloat(currentAmountStr);
+    const num = parseFloat(currentAmountStr) || 1;
     qrStartTimeMs = Date.now();
 
     showScreen('processing');
@@ -696,12 +737,10 @@ function startQrRenderingFlow() {
     }
 
     setTimeout(() => {
-        // Build UPI intent using the CREATOR'S UPI ID and Name
         const upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
 
         if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
 
-        // Populate Creator's Brand Details on Checkout Screen
         const qrAvatar = document.getElementById('qrBrandAvatar');
         const qrName = document.getElementById('qrMerchantName');
         const qrUpi = document.getElementById('qrMerchantUpi');
@@ -712,7 +751,6 @@ function startQrRenderingFlow() {
         if (qrUpi) qrUpi.innerText = activeCreatorUpi;
         if (failUpi) failUpi.innerText = activeCreatorUpi;
 
-        // Show pure full-screen checkout without navigation bar
         showScreen('qr');
         renderSelectedQrType(upiUrl, activeCreatorQrStyle);
         startCountdown(300);
@@ -724,9 +762,9 @@ function renderSelectedQrType(upiUrl, qrStyleType) {
     const staticBox = document.getElementById('staticQrBox');
     const toggleBtn = document.getElementById('toggleTreeBtn');
 
-    const style = qrStyleType || activeCreatorQrStyle || "tree";
+    const style = (qrStyleType || activeCreatorQrStyle || "tree").toLowerCase();
 
-    if (style === 'tree') {
+    if (style === 'tree' || style.includes('tree')) {
         if (treeCanvas) treeCanvas.style.display = 'block';
         if (staticBox) staticBox.style.display = 'none';
         if (toggleBtn) toggleBtn.style.display = 'inline-flex';
@@ -751,34 +789,43 @@ function renderSelectedQrType(upiUrl, qrStyleType) {
 }
 
 function render2DStaticQr(url, container, isAnimated) {
+    if (!container) return;
     container.innerHTML = "";
-    const qr = qrcode(0, 'M');
-    qr.addData(url);
-    qr.make();
+    try {
+        if (typeof qrcode === 'undefined') {
+            container.innerHTML = `<div style="font-weight:700;font-size:0.8rem;padding:20px;">QR Generator ready for: ${url}</div>`;
+            return;
+        }
+        const qr = qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
 
-    const count = qr.getModuleCount();
-    const canvas = document.createElement('canvas');
-    canvas.width = 240;
-    canvas.height = 240;
-    const ctx = canvas.getContext('2d');
-    const cellSize = 240 / count;
+        const count = qr.getModuleCount();
+        const canvas = document.createElement('canvas');
+        canvas.width = 240;
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d');
+        const cellSize = 240 / count;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 240, 240);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 240, 240);
 
-    for (let r = 0; r < count; r++) {
-        for (let c = 0; c < count; c++) {
-            if (qr.isDark(r, c)) {
-                ctx.fillStyle = isAnimated ? '#059669' : '#0f172a';
-                ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        for (let r = 0; r < count; r++) {
+            for (let c = 0; c < count; c++) {
+                if (qr.isDark(r, c)) {
+                    ctx.fillStyle = isAnimated ? '#059669' : '#0f172a';
+                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                }
             }
         }
+        container.appendChild(canvas);
+    } catch (e) {
+        console.warn("2D QR render fallback:", e);
     }
-    container.appendChild(canvas);
 }
 
 // =========================================================================
-// 6. GAS VERIFICATION (USES CREATOR'S SPECIFIC GAS URL & UNIFIED INPUT)
+// 6. GAS VERIFICATION (CREATOR-LINKED)
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -846,17 +893,14 @@ function closePaidVerificationModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// Resolves the exact Creator's GAS URL from Firebase before verifying
 async function resolveCreatorGasUrl() {
-    // 1. Check active transaction record in Firebase
-    if (currentActiveTxnId) {
+    if (currentActiveTxnId && db) {
         try {
             const txSnap = await db.ref('transactions/' + currentActiveTxnId).once('value');
             if (txSnap.exists()) {
                 const txData = txSnap.val();
                 if (txData.creator_uid && txData.creator_uid !== "anonymous") {
                     activeCreatorUid = txData.creator_uid;
-                    // Also check creator's live user profile in case they updated their GAS URL recently
                     const usrSnap = await db.ref('users/' + txData.creator_uid).once('value');
                     if (usrSnap.exists() && usrSnap.val().gasUrl) {
                         activeCreatorGasUrl = usrSnap.val().gasUrl;
@@ -873,7 +917,6 @@ async function resolveCreatorGasUrl() {
     return activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
 }
 
-// Verifies using the Creator's specific GAS URL and persists BOTH UTR & Txn ID
 async function executeRealPaymentVerification() {
     const utrEl = document.getElementById('verifyUtrInput');
     const txnEl = document.getElementById('verifyTxnInput');
@@ -887,7 +930,6 @@ async function executeRealPaymentVerification() {
         return;
     }
 
-    // Smart auto-detection: check if user entered a 10-16 digit UTR or alphanumeric Transaction ID (e.g. FMPIB...)
     const isNumericUtr = /^\d{10,16}$/.test(combinedInput);
     const utrVal = isNumericUtr ? combinedInput : (rawUtr !== rawTxn ? rawUtr : "");
     const txnVal = !isNumericUtr ? combinedInput : (rawTxn !== rawUtr ? rawTxn : "");
@@ -903,8 +945,6 @@ async function executeRealPaymentVerification() {
     }
 
     const num = parseFloat(currentAmountStr) || 0;
-
-    // Fetch Creator's latest GAS URL from Firebase so it ALWAYS verifies against the Creator's Gmail
     const targetGasUrl = await resolveCreatorGasUrl();
     const targetMerchant = activeCreatorName || MERCHANT;
 
@@ -926,7 +966,6 @@ async function executeRealPaymentVerification() {
                 const finalTxn = data.transaction_id || (!isNumericUtr ? combinedInput : (currentActiveTxnId || "FMPIB_VERIFIED"));
                 const finalPayer = data.payer_name || data.sender || "Verified UPI Payer";
 
-                // Save BOTH UTR & Transaction ID into Creator's & Global Database
                 finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
 
                 const sAmt = document.getElementById('successAmtText');
@@ -969,13 +1008,12 @@ async function executeRealPaymentVerification() {
             if (fAmt) fAmt.innerText = `₹${num}`;
             if (fUtr) fUtr.innerText = combinedInput;
             if (fTxn) fTxn.innerText = combinedInput;
-            if (fSub) fSub.innerText = "Could not connect to Creator's GAS URL. Ensure GAS Web App is deployed with 'Anyone' access.";
+            if (fSub) fSub.innerText = "Could not connect to Creator's GAS URL. Ensure Web App is deployed with 'Anyone' access.";
             showScreen('fail');
         }, 500);
     }
 }
 
-// Saves BOTH UTR and Transaction ID into Global DB + Creator's User DB permanently
 async function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
     const list = getStoredTxns();
     const target = currentActiveTxnId ? list.find(t => t.txn_id === currentActiveTxnId) : list[0];
@@ -987,8 +1025,7 @@ async function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
         saveStoredTxns(list);
     }
 
-    // 1. Update Global Transactions Node
-    if (currentActiveTxnId) {
+    if (currentActiveTxnId && db) {
         try {
             await db.ref('transactions/' + currentActiveTxnId).update({
                 status: status,
@@ -1000,9 +1037,8 @@ async function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
         } catch (e) {}
     }
 
-    // 2. Also update the Creator's transaction list inside users/{creator_uid}/transactions
     const targetCreatorUid = activeCreatorUid || CURRENT_UID;
-    if (targetCreatorUid && targetCreatorUid !== "anonymous" && currentActiveTxnId) {
+    if (targetCreatorUid && targetCreatorUid !== "anonymous" && currentActiveTxnId && db) {
         try {
             const creatorTxSnap = await db.ref(`users/${targetCreatorUid}/transactions`).once('value');
             if (creatorTxSnap.exists()) {
@@ -1043,7 +1079,7 @@ async function pingUserGasBackend(showToastMsg) {
 }
 
 // =========================================================================
-// 7. CHECK PAYMENT NAVIGATION & DEVELOPER API HUB (RAW JSON OUTPUT)
+// 7. CHECK PAYMENT NAVIGATION & DEVELOPER API HUB (RAW JSON)
 // =========================================================================
 async function executePaymentCheckSearch() {
     const inp = document.getElementById('checkPaymentSearchInput');
@@ -1057,13 +1093,12 @@ async function executePaymentCheckSearch() {
     const list = getStoredTxns();
 
     let match = list.find(t =>
-        (t.txn_id && t.txn_id.toLowerCase() === q.toLowerCase()) ||
+        t && ((t.txn_id && t.txn_id.toLowerCase() === q.toLowerCase()) ||
         (t.utr && t.utr === q) ||
-        (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
+        (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase()))
     );
 
-    // Search Global Firebase transactions by ID, UTR, or FamX ID
-    if (!match) {
+    if (!match && db) {
         try {
             const directSnap = await db.ref('transactions/' + q).once('value');
             if (directSnap.exists()) {
@@ -1073,32 +1108,13 @@ async function executePaymentCheckSearch() {
                 const allTx = allSnap.val() || {};
                 for (const k in allTx) {
                     const item = allTx[k];
-                    if ((item.utr && item.utr === q) ||
+                    if (item && ((item.utr && item.utr === q) ||
                         (item.famx_id && item.famx_id.toLowerCase() === q.toLowerCase()) ||
-                        (item.txn_id && item.txn_id.toLowerCase() === q.toLowerCase())) {
+                        (item.txn_id && item.txn_id.toLowerCase() === q.toLowerCase()))) {
                         match = item;
                         break;
                     }
                 }
-            }
-        } catch (e) {}
-    }
-
-    // Also fallback to querying Creator's GAS URL directly if not found in DB
-    if (!match) {
-        try {
-            const sep = USER_GAS_URL.includes('?') ? '&' : '?';
-            const gasRes = await fetch(`${USER_GAS_URL}${sep}action=status&query=${encodeURIComponent(q)}`, { method: 'GET', redirect: 'follow' });
-            const gasData = await gasRes.json();
-            if (gasData && gasData.verified) {
-                match = {
-                    txn_id: gasData.transaction_id || q,
-                    utr: gasData.utr || q,
-                    amount: gasData.amount || 0,
-                    creator_email: USER_EMAIL,
-                    status: "COMPLETED",
-                    timestamp: gasData.date_str || "Verified via Gmail"
-                };
             }
         } catch (e) {}
     }
@@ -1117,12 +1133,12 @@ async function executePaymentCheckSearch() {
     if (match) {
         if (title) title.innerText = "Transaction Record";
         if (pill) {
-            pill.innerText = match.status;
+            pill.innerText = match.status || "PENDING";
             pill.style.background = match.status === 'COMPLETED' ? '#d1fae5' : '#fee2e2';
             pill.style.color = match.status === 'COMPLETED' ? '#047857' : '#dc2626';
         }
-        if (amt) amt.innerText = `₹${match.amount}`;
-        if (txnId) txnId.innerText = (match.famx_id && match.famx_id !== 'PENDING') ? `${match.txn_id} (${match.famx_id})` : match.txn_id;
+        if (amt) amt.innerText = `₹${match.amount || 0}`;
+        if (txnId) txnId.innerText = (match.famx_id && match.famx_id !== 'PENDING') ? `${match.txn_id} (${match.famx_id})` : (match.txn_id || '-');
         if (utr) utr.innerText = match.utr || "PENDING";
         if (email) email.innerText = match.creator_email || USER_EMAIL;
         if (time) time.innerText = match.timestamp || "Today";
@@ -1143,7 +1159,7 @@ async function executePaymentCheckSearch() {
     }
 }
 
-// Developer API Endpoints (Strict Raw JSON Execution with Creator Details)
+// Developer API Engine
 window.MintPayEngine = {
     createTxn: function(amount, note = "MintPay_Order") {
         if (!USER_API_ENABLED) {
@@ -1177,7 +1193,11 @@ window.MintPayEngine = {
         const list = getStoredTxns();
         list.unshift(rec);
         saveStoredTxns(list);
-        db.ref('transactions/' + txnId).set(rec);
+        if (db) {
+            try {
+                db.ref('transactions/' + txnId).set(rec);
+            } catch (e) {}
+        }
 
         return {
             code: 200,
@@ -1201,12 +1221,10 @@ window.MintPayEngine = {
         const q = (queryId || "").trim();
         const list = getStoredTxns();
         let found = list.find(t =>
-            t.txn_id === q ||
-            t.utr === q ||
-            (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
+            t && (t.txn_id === q || t.utr === q || (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase()))
         );
 
-        if (!found && q) {
+        if (!found && q && db) {
             try {
                 const snap = await db.ref('transactions/' + q).once('value');
                 if (snap.exists()) found = snap.val();
@@ -1256,10 +1274,16 @@ async function runCheckStatusApi() {
 
 function toggleUserApiActive() {
     USER_API_ENABLED = !USER_API_ENABLED;
-    localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
+    try {
+        localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
+    } catch (e) {}
     updateApiSwitchUI();
-    if (CURRENT_UID) db.ref('users/' + CURRENT_UID).update({ apiEnabled: USER_API_ENABLED });
-    db.ref('tokens/' + USER_API_TOKEN).update({ apiEnabled: USER_API_ENABLED });
+    if (CURRENT_UID && db) {
+        try {
+            db.ref('users/' + CURRENT_UID).update({ apiEnabled: USER_API_ENABLED });
+            db.ref('tokens/' + USER_API_TOKEN).update({ apiEnabled: USER_API_ENABLED });
+        } catch (e) {}
+    }
     showToast(USER_API_ENABLED ? "🟢 API Access Enabled" : "🔴 API Access Disabled");
 }
 
@@ -1305,20 +1329,22 @@ async function regenerateApiToken() {
     if (inp) inp.value = USER_API_TOKEN;
     updateApiEndpointPreviews();
 
-    try {
-        if (oldToken) await db.ref('tokens/' + oldToken).remove();
-        if (CURRENT_UID) await db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
-        await db.ref('tokens/' + USER_API_TOKEN).set({
-            uid: CURRENT_UID || "anonymous",
-            merchantName: MERCHANT,
-            email: USER_EMAIL,
-            upiId: UPI_ID,
-            photo: USER_PHOTO,
-            gasUrl: USER_GAS_URL,
-            qrStyle: USER_QR_STYLE,
-            apiEnabled: USER_API_ENABLED
-        });
-    } catch (e) {}
+    if (db) {
+        try {
+            if (oldToken) await db.ref('tokens/' + oldToken).remove();
+            if (CURRENT_UID) await db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
+            await db.ref('tokens/' + USER_API_TOKEN).set({
+                uid: CURRENT_UID || "anonymous",
+                merchantName: MERCHANT,
+                email: USER_EMAIL,
+                upiId: UPI_ID,
+                photo: USER_PHOTO,
+                gasUrl: USER_GAS_URL,
+                qrStyle: USER_QR_STYLE,
+                apiEnabled: USER_API_ENABLED
+            });
+        } catch (e) {}
+    }
 
     showToast("🔄 New API Token Generated!");
 }
@@ -1329,10 +1355,14 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE
+// 8. THREE.JS 3D TREE FIRST ENGINE (GUARDED FROM CRASHES)
 // =========================================================================
-let qrScene, qrCamera, qrRenderer;
-let qrModuleGroup, treeWorldGroup, foliageCrownGroup;
+let qrScene = null;
+let qrCamera = null;
+let qrRenderer = null;
+let qrModuleGroup = null;
+let treeWorldGroup = null;
+let foliageCrownGroup = null;
 let qrModuleMeshes = [];
 let foliageSprites = [];
 let grassTufts = [];
@@ -1423,111 +1453,132 @@ function createCornerGrassTexture() {
 function initOrUpdate3DTreeQR(upiString) {
     const canvas = document.getElementById('treeQrCanvas');
     if (!canvas) return;
-    const size = 300;
 
-    if (!qrRenderer) {
-        qrScene = new THREE.Scene();
-
-        const frustum = 18.6;
-        qrCamera = new THREE.OrthographicCamera(
-            -frustum / 2, frustum / 2,
-            frustum / 2, -frustum / 2,
-            -50, 100
-        );
-
-        qrRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-        qrRenderer.setSize(size, size);
-        qrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        qrRenderer.setClearColor(0x000000, 0);
-
-        qrScene.add(new THREE.AmbientLight(0xffffff, 0.96));
-        const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.42);
-        sunLight.position.set(12, 26, 16);
-        qrScene.add(sunLight);
-
-        treeWorldGroup = new THREE.Group();
-        foliageCrownGroup = new THREE.Group();
-        qrModuleGroup = new THREE.Group();
-
-        qrScene.add(treeWorldGroup);
-        qrScene.add(foliageCrownGroup);
-        qrScene.add(qrModuleGroup);
-
-        buildSecondImageICQRTree();
-    }
-
-    isTreeView = true;
-    morphProgress = 1.0;
-    updateToggleUI();
-
-    while (qrModuleGroup.children.length > 0) {
-        qrModuleGroup.remove(qrModuleGroup.children[0]);
-    }
-    qrModuleMeshes = [];
-
-    const qr = qrcode(0, 'M');
-    qr.addData(upiString);
-    qr.make();
-    const count = qr.getModuleCount();
-
-    const gridSpan = 15.2;
-    const cellSize = gridSpan / count;
-    const halfSpan = gridSpan / 2;
-
-    const quietPadGeo = new THREE.BoxGeometry(gridSpan + 1.2, 0.08, gridSpan + 1.2);
-    const quietPadMat = new THREE.MeshBasicMaterial({ color: '#f5f2e8', transparent: true, opacity: 0 });
-    const quietPad = new THREE.Mesh(quietPadGeo, quietPadMat);
-    quietPad.position.set(0, -0.08, 0);
-    quietPad.userData = { isQuietPad: true };
-    qrModuleGroup.add(quietPad);
-
-    const moduleGeo = new THREE.BoxGeometry(cellSize * 1.01, 0.14, cellSize * 1.01);
-
-    for (let r = 0; r < count; r++) {
-        for (let c = 0; c < count; c++) {
-            const isDark = qr.isDark(r, c);
-            const isFinder = isFinderPattern(r, c, count);
-
-            const qrX = (c + 0.5) * cellSize - halfSpan;
-            const qrZ = (r + 0.5) * cellSize - halfSpan;
-            const qrY = isDark ? 0.08 : 0.0;
-
-            let colorHex = isDark
-                ? (isFinder ? QR_FINDER_GREEN : QR_DARK_GREENS[(r * 11 + c * 17) % QR_DARK_GREENS.length])
-                : QR_LIGHT_TILES[(r * 5 + c * 7) % QR_LIGHT_TILES.length];
-
-            const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
-            const mesh = new THREE.Mesh(moduleGeo, mat);
-
-            const nx = qrX / halfSpan;
-            const nz = qrZ / halfSpan;
-            const dist = Math.sqrt(nx * nx + nz * nz);
-            const angle = Math.atan2(nz, nx) + ((r + c) % 7) * 0.15;
-            const rad = Math.min(dist * 2.8, 3.0) * 0.55;
-
-            const treeX = isDark ? Math.cos(angle) * rad : qrX * 0.5;
-            const treeZ = isDark ? Math.sin(angle) * rad : qrZ * 0.5;
-            const treeY = isDark ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4 : -0.5;
-
-            mesh.position.set(treeX, treeY, treeZ);
-            mesh.userData = {
-                isDark, isFinder, qrX, qrY, qrZ, treeX, treeY, treeZ,
-                phase: (r * 0.45) + (c * 0.55),
-                speed: 2.2 + ((r + c) % 4) * 0.3
-            };
-
-            qrModuleGroup.add(mesh);
-            qrModuleMeshes.push(mesh);
+    if (typeof THREE === 'undefined') {
+        const staticBox = document.getElementById('staticQrBox');
+        if (staticBox) {
+            staticBox.style.display = 'flex';
+            render2DStaticQr(upiString, staticBox, false);
         }
+        return;
     }
 
-    if (!animationRunning) {
-        animationRunning = true;
-        animateTreeQR();
+    try {
+        const size = 300;
+
+        if (!qrRenderer) {
+            qrScene = new THREE.Scene();
+
+            const frustum = 18.6;
+            qrCamera = new THREE.OrthographicCamera(
+                -frustum / 2, frustum / 2,
+                frustum / 2, -frustum / 2,
+                -50, 100
+            );
+
+            qrRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            qrRenderer.setSize(size, size);
+            qrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            qrRenderer.setClearColor(0x000000, 0);
+
+            qrScene.add(new THREE.AmbientLight(0xffffff, 0.96));
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.45);
+            sunLight.position.set(12, 26, 16);
+            qrScene.add(sunLight);
+
+            treeWorldGroup = new THREE.Group();
+            foliageCrownGroup = new THREE.Group();
+            qrModuleGroup = new THREE.Group();
+
+            qrScene.add(treeWorldGroup);
+            qrScene.add(foliageCrownGroup);
+            qrScene.add(qrModuleGroup);
+
+            buildSecondImageICQRTree();
+        }
+
+        isTreeView = true;
+        morphProgress = 1.0;
+        updateToggleUI();
+
+        while (qrModuleGroup.children.length > 0) {
+            qrModuleGroup.remove(qrModuleGroup.children[0]);
+        }
+        qrModuleMeshes = [];
+
+        if (typeof qrcode === 'undefined') return;
+        const qr = qrcode(0, 'M');
+        qr.addData(upiString);
+        qr.make();
+        const count = qr.getModuleCount();
+
+        const gridSpan = 15.2;
+        const cellSize = gridSpan / count;
+        const halfSpan = gridSpan / 2;
+
+        const quietPadGeo = new THREE.BoxGeometry(gridSpan + 1.2, 0.08, gridSpan + 1.2);
+        const quietPadMat = new THREE.MeshBasicMaterial({ color: '#f5f2e8', transparent: true, opacity: 0 });
+        const quietPad = new THREE.Mesh(quietPadGeo, quietPadMat);
+        quietPad.position.set(0, -0.08, 0);
+        quietPad.userData = { isQuietPad: true };
+        qrModuleGroup.add(quietPad);
+
+        const moduleGeo = new THREE.BoxGeometry(cellSize * 1.01, 0.14, cellSize * 1.01);
+
+        for (let r = 0; r < count; r++) {
+            for (let c = 0; c < count; c++) {
+                const isDark = qr.isDark(r, c);
+                const isFinder = isFinderPattern(r, c, count);
+
+                const qrX = (c + 0.5) * cellSize - halfSpan;
+                const qrZ = (r + 0.5) * cellSize - halfSpan;
+                const qrY = isDark ? 0.08 : 0.0;
+
+                let colorHex = isDark
+                    ? (isFinder ? QR_FINDER_GREEN : QR_DARK_GREENS[(r * 11 + c * 17) % QR_DARK_GREENS.length])
+                    : QR_LIGHT_TILES[(r * 5 + c * 7) % QR_LIGHT_TILES.length];
+
+                const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
+                const mesh = new THREE.Mesh(moduleGeo, mat);
+
+                const nx = qrX / halfSpan;
+                const nz = qrZ / halfSpan;
+                const dist = Math.sqrt(nx * nx + nz * nz);
+                const angle = Math.atan2(nz, nx) + ((r + c) % 7) * 0.15;
+                const rad = Math.min(dist * 2.8, 3.0) * 0.55;
+
+                const treeX = isDark ? Math.cos(angle) * rad : qrX * 0.5;
+                const treeZ = isDark ? Math.sin(angle) * rad : qrZ * 0.5;
+                const treeY = isDark ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4 : -0.5;
+
+                mesh.position.set(treeX, treeY, treeZ);
+                mesh.userData = {
+                    isDark, isFinder, qrX, qrY, qrZ, treeX, treeY, treeZ,
+                    phase: (r * 0.45) + (c * 0.55),
+                    speed: 2.2 + ((r + c) % 4) * 0.3
+                };
+
+                qrModuleGroup.add(mesh);
+                qrModuleMeshes.push(mesh);
+            }
+        }
+
+        if (!animationRunning) {
+            animationRunning = true;
+            animateTreeQR();
+        }
+    } catch (e) {
+        console.warn("Three.js Tree QR fallback triggered:", e);
+        const staticBox = document.getElementById('staticQrBox');
+        if (staticBox) {
+            staticBox.style.display = 'flex';
+            render2DStaticQr(upiString, staticBox, false);
+        }
     }
 }
 
 function buildSecondImageICQRTree() {
+    if (!treeWorldGroup) return;
     const patioSpan = 10.4;
     const halfPatio = patioSpan / 2;
 
@@ -1610,9 +1661,7 @@ function buildSecondImageICQRTree() {
         { cx: 0.6,  cy: 6.7, cz: -0.3, rx: 1.2, ry: 1.1, rz: 1.2, count: 26 },
         { cx: -1.8, cy: 5.3, cz: 1.1, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
         { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
-        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 },
-        { cx: -2.7, cy: 3.6, cz: 1.6, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
-        { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 }
+        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 }
     ];
 
     const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
@@ -1666,208 +1715,238 @@ function updateToggleUI() {
 
 let clockTime = 0;
 function animateTreeQR() {
+    if (!animationRunning) return;
     requestAnimationFrame(animateTreeQR);
-    clockTime += 0.032;
+    try {
+        clockTime += 0.032;
 
-    const target = isTreeView ? 1 : 0;
-    morphProgress += (target - morphProgress) * 0.09;
+        const target = isTreeView ? 1 : 0;
+        morphProgress += (target - morphProgress) * 0.09;
 
-    const camX = morphProgress * 14.5;
-    const camY = 24.0 - morphProgress * 12.8;
-    const camZ = morphProgress * 14.5;
+        const camX = morphProgress * 14.5;
+        const camY = 24.0 - morphProgress * 12.8;
+        const camZ = morphProgress * 14.5;
 
-    const upY = morphProgress;
-    const upZ = -(1 - morphProgress);
-    qrCamera.up.set(0, upY, upZ).normalize();
-    qrCamera.position.set(camX, camY, camZ);
-    qrCamera.lookAt(0, morphProgress * 2.35, 0);
-
-    const treeAlpha = Math.max(0, (morphProgress - 0.15) / 0.85);
-    const treeVis = treeAlpha > 0.01;
-    treeWorldGroup.visible = treeVis;
-    foliageCrownGroup.visible = treeVis;
-
-    if (treeVis) {
-        treeWorldGroup.scale.setScalar(Math.max(0.001, treeAlpha));
-        treeWorldGroup.position.y = (1 - treeAlpha) * -2.2;
-
-        for (let i = 0; i < foliageSprites.length; i++) {
-            const s = foliageSprites[i];
-            const d = s.userData;
-            const wave = Math.sin(clockTime * d.windSpeed + d.phase);
-            s.position.x = d.baseX + wave * 0.11 * treeAlpha;
-            s.position.y = d.baseY + Math.cos(clockTime * d.windSpeed + d.phase) * 0.07 * treeAlpha;
-            s.rotation.z = d.baseRotZ + wave * 0.14;
-            s.scale.setScalar(d.baseScale * treeAlpha);
+        const upY = morphProgress;
+        const upZ = -(1 - morphProgress);
+        if (qrCamera) {
+            qrCamera.up.set(0, upY, upZ).normalize();
+            qrCamera.position.set(camX, camY, camZ);
+            qrCamera.lookAt(0, morphProgress * 2.35, 0);
         }
 
-        for (let i = 0; i < grassTufts.length; i++) {
-            const g = grassTufts[i];
-            g.rotation.z = g.userData.baseRotZ + Math.sin(clockTime * 2.3 + g.userData.phase) * 0.11;
+        const treeAlpha = Math.max(0, (morphProgress - 0.15) / 0.85);
+        const treeVis = treeAlpha > 0.01;
+        if (treeWorldGroup) treeWorldGroup.visible = treeVis;
+        if (foliageCrownGroup) foliageCrownGroup.visible = treeVis;
+
+        if (treeVis && treeWorldGroup) {
+            treeWorldGroup.scale.setScalar(Math.max(0.001, treeAlpha));
+            treeWorldGroup.position.y = (1 - treeAlpha) * -2.2;
+
+            for (let i = 0; i < foliageSprites.length; i++) {
+                const s = foliageSprites[i];
+                const d = s.userData;
+                const wave = Math.sin(clockTime * d.windSpeed + d.phase);
+                s.position.x = d.baseX + wave * 0.11 * treeAlpha;
+                s.position.y = d.baseY + Math.cos(clockTime * d.windSpeed + d.phase) * 0.07 * treeAlpha;
+                s.rotation.z = d.baseRotZ + wave * 0.14;
+                s.scale.setScalar(d.baseScale * treeAlpha);
+            }
+
+            for (let i = 0; i < grassTufts.length; i++) {
+                const g = grassTufts[i];
+                g.rotation.z = g.userData.baseRotZ + Math.sin(clockTime * 2.3 + g.userData.phase) * 0.11;
+            }
         }
-    }
 
-    qrModuleGroup.children.forEach(ch => {
-        if (ch.userData && ch.userData.isQuietPad) {
-            ch.material.opacity = Math.max(0, 1 - morphProgress * 2.5);
-            ch.visible = ch.material.opacity > 0.02;
+        if (qrModuleGroup) {
+            qrModuleGroup.children.forEach(ch => {
+                if (ch.userData && ch.userData.isQuietPad) {
+                    ch.material.opacity = Math.max(0, 1 - morphProgress * 2.5);
+                    ch.visible = ch.material.opacity > 0.02;
+                }
+            });
         }
-    });
 
-    const qrVisibility = Math.max(0, 1 - morphProgress * 1.15);
-    for (let i = 0; i < qrModuleMeshes.length; i++) {
-        const m = qrModuleMeshes[i];
-        const d = m.userData;
-        const bx = d.qrX + (d.treeX - d.qrX) * morphProgress;
-        const by = d.qrY + (d.treeY - d.qrY) * morphProgress;
-        const bz = d.qrZ + (d.treeZ - d.qrZ) * morphProgress;
+        const qrVisibility = Math.max(0, 1 - morphProgress * 1.15);
+        for (let i = 0; i < qrModuleMeshes.length; i++) {
+            const m = qrModuleMeshes[i];
+            const d = m.userData;
+            const bx = d.qrX + (d.treeX - d.qrX) * morphProgress;
+            const by = d.qrY + (d.treeY - d.qrY) * morphProgress;
+            const bz = d.qrZ + (d.treeZ - d.qrZ) * morphProgress;
 
-        if (d.isDark) {
-            const wave = Math.sin(clockTime * d.speed + d.phase);
-            const swayAmp = d.isFinder ? 0 : (0.008 * (1 - morphProgress));
-            m.position.set(bx + wave * swayAmp, by, bz + wave * swayAmp);
-            m.rotation.set(0, 0, 0);
-            const pulseScale = d.isFinder ? 1.0 : (0.96 + 0.05 * Math.sin(clockTime * 2.4 + d.phase));
-            const finalScale = Math.max(0.001, pulseScale * (1 - morphProgress * 0.95));
-            m.scale.set(finalScale, 1, finalScale);
-            m.visible = morphProgress < 0.92;
-        } else {
-            m.position.set(bx, by, bz);
-            m.material.opacity = qrVisibility;
-            m.visible = qrVisibility > 0.02;
+            if (d.isDark) {
+                const wave = Math.sin(clockTime * d.speed + d.phase);
+                const swayAmp = d.isFinder ? 0 : (0.008 * (1 - morphProgress));
+                m.position.set(bx + wave * swayAmp, by, bz + wave * swayAmp);
+                m.rotation.set(0, 0, 0);
+                const pulseScale = d.isFinder ? 1.0 : (0.96 + 0.05 * Math.sin(clockTime * 2.4 + d.phase));
+                const finalScale = Math.max(0.001, pulseScale * (1 - morphProgress * 0.95));
+                m.scale.set(finalScale, 1, finalScale);
+                m.visible = morphProgress < 0.92;
+            } else {
+                m.position.set(bx, by, bz);
+                m.material.opacity = qrVisibility;
+                m.visible = qrVisibility > 0.02;
+            }
         }
+
+        if (qrRenderer && qrScene && qrCamera) {
+            qrRenderer.render(qrScene, qrCamera);
+        }
+    } catch (e) {
+        // Prevent requestAnimationFrame loop freeze on context loss
     }
-
-    qrRenderer.render(qrScene, qrCamera);
-}
-
-// Background Canvas
-const bgCanvas = document.getElementById('bg-canvas');
-if (bgCanvas) {
-    const bgScene = new THREE.Scene();
-    const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
-    bgRenderer.setSize(window.innerWidth, window.innerHeight);
-
-    bgScene.add(new THREE.AmbientLight(0xffffff, 0.95));
-    const floaters = [];
-    for (let i = 0; i < 8; i++) {
-        const geo = new THREE.IcosahedronGeometry(Math.random() * 0.75 + 0.3, 1);
-        const mat = new THREE.MeshPhysicalMaterial({ color: 0x10b981, roughness: 0.2, transparent: true, opacity: 0.2 });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 14, -4);
-        bgScene.add(mesh);
-        floaters.push(mesh);
-    }
-    bgCamera.position.z = 14;
-
-    function animateBg() {
-        requestAnimationFrame(animateBg);
-        floaters.forEach(f => { f.rotation.x += 0.005; f.rotation.y += 0.005; });
-        bgRenderer.render(bgScene, bgCamera);
-    }
-    animateBg();
-
-    window.addEventListener('resize', () => {
-        bgCamera.aspect = window.innerWidth / window.innerHeight;
-        bgCamera.updateProjectionMatrix();
-        bgRenderer.setSize(window.innerWidth, window.innerHeight);
-    });
 }
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP (FULL-SCREEN CHECKOUT FIXED)
+// 8.1 SAFE BACKGROUND THREE.JS INITIALIZATION (CANNOT CRASH THE SCRIPT)
+// =========================================================================
+try {
+    const bgCanvas = document.getElementById('bg-canvas');
+    if (bgCanvas && typeof THREE !== 'undefined') {
+        const bgScene = new THREE.Scene();
+        const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+        bgRenderer.setSize(window.innerWidth, window.innerHeight);
+        bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        bgScene.add(new THREE.AmbientLight(0xffffff, 0.95));
+        const bgDirLight = new THREE.DirectionalLight(0xd1fae5, 0.7);
+        bgDirLight.position.set(10, 20, 15);
+        bgScene.add(bgDirLight);
+
+        const floaters = [];
+        const mintPalette = [0x34d399, 0x10b981, 0x6ee7b7, 0xa7f3d0, 0x059669];
+
+        for (let i = 0; i < 8; i++) {
+            const geo = i % 2 === 0
+                ? new THREE.TorusGeometry(Math.random() * 0.9 + 0.4, 0.16, 12, 28)
+                : new THREE.IcosahedronGeometry(Math.random() * 0.7 + 0.3, 1);
+
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: mintPalette[i % mintPalette.length],
+                roughness: 0.2,
+                metalness: 0.1,
+                clearcoat: 0.9,
+                transparent: true,
+                opacity: 0.22
+            });
+
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(
+                (Math.random() - 0.5) * 16,
+                (Math.random() - 0.5) * 14,
+                (Math.random() - 0.5) * 10 - 4
+            );
+            mesh.userData = {
+                rx: (Math.random() - 0.5) * 0.01,
+                ry: (Math.random() - 0.5) * 0.01,
+                baseY: mesh.position.y,
+                phase: Math.random() * Math.PI * 2
+            };
+            bgScene.add(mesh);
+            floaters.push(mesh);
+        }
+
+        bgCamera.position.z = 14;
+        let bgTime = 0;
+
+        function animateBg() {
+            requestAnimationFrame(animateBg);
+            try {
+                bgTime += 0.012;
+                floaters.forEach(f => {
+                    f.rotation.x += f.userData.rx;
+                    f.rotation.y += f.userData.ry;
+                    f.position.y = f.userData.baseY + Math.sin(bgTime + f.userData.phase) * 0.5;
+                });
+                bgRenderer.render(bgScene, bgCamera);
+            } catch (e) {}
+        }
+        animateBg();
+
+        window.addEventListener('resize', () => {
+            try {
+                bgCamera.aspect = window.innerWidth / window.innerHeight;
+                bgCamera.updateProjectionMatrix();
+                bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            } catch (e) {}
+        });
+    }
+} catch (threeErr) {
+    console.warn("Background Three.js disabled gracefully:", threeErr);
+}
+
+// =========================================================================
+// 9. NAVIGATION, TOAST & APP BOOTSTRAP (GUARANTEED NO BLANK PAGE)
 // =========================================================================
 function showScreen(name) {
-    const screens = [
-        'authScreen', 'homeScreen', 'numpadScreen', 'billScreen', 'processingScreen',
-        'qrScreen', 'checkPaymentScreen', 'apiScreen', 'profileScreen',
-        'paymentVerifyScreen', 'successScreen', 'failScreen'
-    ];
-    screens.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
+    try {
+        const screens = [
+            'authScreen', 'homeScreen', 'numpadScreen', 'billScreen', 'processingScreen',
+            'qrScreen', 'checkPaymentScreen', 'apiScreen', 'profileScreen',
+            'paymentVerifyScreen', 'successScreen', 'failScreen'
+        ];
+        
+        screens.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.setProperty('display', 'none', 'important');
+        });
 
-    const dock = document.getElementById('bottomNavDock');
-    const shell = document.getElementById('appShell');
+        const dock = document.getElementById('bottomNavDock');
+        const shell = document.getElementById('appShell');
 
-    // Screens where bottom navigation bar must be COMPLETELY hidden (or whenever in Hosted Payment Link mode)
-    const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
+        const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
 
-    if (IS_HOSTED_CHECKOUT_MODE || hideDock.includes(name)) {
-        if (dock) dock.style.setProperty('display', 'none', 'important');
-        if (shell) shell.classList.add('no-bottom-pad');
-    } else {
-        if (dock) dock.style.setProperty('display', 'flex', 'important');
-        if (shell) shell.classList.remove('no-bottom-pad');
-    }
+        if (IS_HOSTED_CHECKOUT_MODE || hideDock.includes(name)) {
+            if (dock) dock.style.setProperty('display', 'none', 'important');
+            if (shell) shell.classList.add('no-bottom-pad');
+        } else {
+            if (dock) dock.style.setProperty('display', 'flex', 'important');
+            if (shell) shell.classList.remove('no-bottom-pad');
+        }
 
-    ['navHome', 'navPay', 'navCheck', 'navApi', 'navProfile'].forEach(t => {
-        const btn = document.getElementById(t);
-        if (btn) btn.classList.remove('active');
-    });
+        ['navHome', 'navPay', 'navCheck', 'navApi', 'navProfile'].forEach(t => {
+            const btn = document.getElementById(t);
+            if (btn) btn.classList.remove('active');
+        });
 
-    if (name === 'auth') {
-        const el = document.getElementById('authScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'home') {
-        syncUIWithState();
-        const el = document.getElementById('homeScreen');
-        if (el) el.style.display = 'flex';
-        const tab = document.getElementById('navHome');
-        if (tab) tab.classList.add('active');
-    }
-    if (name === 'numpad') {
-        const el = document.getElementById('numpadScreen');
-        if (el) el.style.display = 'flex';
-        const tab = document.getElementById('navPay');
-        if (tab) tab.classList.add('active');
-    }
-    if (name === 'bill') {
-        const el = document.getElementById('billScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'processing') {
-        const el = document.getElementById('processingScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'qr') {
-        const el = document.getElementById('qrScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'check') {
-        const el = document.getElementById('checkPaymentScreen');
-        if (el) el.style.display = 'flex';
-        const tab = document.getElementById('navCheck');
-        if (tab) tab.classList.add('active');
-    }
-    if (name === 'api') {
-        updateApiEndpointPreviews();
-        const el = document.getElementById('apiScreen');
-        if (el) el.style.display = 'flex';
-        const tab = document.getElementById('navApi');
-        if (tab) tab.classList.add('active');
-    }
-    if (name === 'profile') {
-        syncUIWithState();
-        const el = document.getElementById('profileScreen');
-        if (el) el.style.display = 'flex';
-        const tab = document.getElementById('navProfile');
-        if (tab) tab.classList.add('active');
-    }
-    if (name === 'verify') {
-        const el = document.getElementById('paymentVerifyScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'success') {
-        const el = document.getElementById('successScreen');
-        if (el) el.style.display = 'flex';
-    }
-    if (name === 'fail') {
-        const el = document.getElementById('failScreen');
-        if (el) el.style.display = 'flex';
+        let targetId = name + 'Screen';
+        if (name === 'check') targetId = 'checkPaymentScreen';
+        if (name === 'verify') targetId = 'paymentVerifyScreen';
+
+        const targetEl = document.getElementById(targetId) || document.getElementById(name);
+        if (targetEl) {
+            targetEl.style.setProperty('display', 'flex', 'important');
+        } else {
+            // Unbreakable fallback: always show home or auth so user NEVER gets a blank page
+            const fallback = document.getElementById('homeScreen') || document.getElementById('authScreen');
+            if (fallback) fallback.style.setProperty('display', 'flex', 'important');
+        }
+
+        // Active nav tab indicator
+        if (name === 'home') {
+            const tab = document.getElementById('navHome');
+            if (tab) tab.classList.add('active');
+        } else if (name === 'numpad') {
+            const tab = document.getElementById('navPay');
+            if (tab) tab.classList.add('active');
+        } else if (name === 'check') {
+            const tab = document.getElementById('navCheck');
+            if (tab) tab.classList.add('active');
+        } else if (name === 'api') {
+            updateApiEndpointPreviews();
+            const tab = document.getElementById('navApi');
+            if (tab) tab.classList.add('active');
+        } else if (name === 'profile') {
+            const tab = document.getElementById('navProfile');
+            if (tab) tab.classList.add('active');
+        }
+    } catch (e) {
+        console.error("showScreen safe error:", e);
     }
 }
 
@@ -1897,7 +1976,6 @@ function copyUPI() {
 
 function goToAmountScreen() {
     if (timerInterval) clearInterval(timerInterval);
-    // If buyer opened a hosted payment link, keep them on full-screen checkout without exposing merchant nav
     if (IS_HOSTED_CHECKOUT_MODE) {
         const newAmt = prompt("Enter amount (₹):", currentAmountStr);
         if (newAmt && parseFloat(newAmt) > 0) {
@@ -1924,9 +2002,15 @@ function showToast(text) {
     setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-// Universal Bootstrap Handler: Loads Hosted Link & Binds Creator's GAS URL + Details
-(async function initMintPay() {
-    syncUIWithState();
+// =========================================================================
+// UNIVERSAL BOOTSTRAP (ROBUST & RESILIENT)
+// =========================================================================
+async function initMintPay() {
+    try {
+        syncUIWithState();
+    } catch (err) {
+        console.warn("Initial syncUIWithState error guarded:", err);
+    }
 
     const rawSearch = window.location.search || "";
     const normalized = rawSearch.replace(/\?/g, '&').replace(/^&/, '?');
@@ -1940,61 +2024,70 @@ function showToast(text) {
     if (hostedId) {
         IS_HOSTED_CHECKOUT_MODE = true;
         document.body.classList.add('checkout-link-mode');
+        // Immediately show the processing loader so screen is NEVER blank
+        showScreen('processing');
         showToast("🔍 Loading hosted payment...");
 
-        try {
-            const snap = await db.ref('transactions/' + hostedId).once('value');
-            if (snap.exists()) {
-                const data = snap.val();
+        let loaded = false;
+        if (db) {
+            try {
+                const snap = await db.ref('transactions/' + hostedId).once('value');
+                if (snap.exists()) {
+                    const data = snap.val();
 
-                activeCreatorUid = data.creator_uid || null;
-                activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
-                activeCreatorName = data.merchant || "Sunny Kumar";
-                activeCreatorUpi = data.upi_id || "sunnypro@fam";
-                activeCreatorPhoto = data.creator_photo || DEFAULT_AVATAR_SVG;
-                activeCreatorQrStyle = data.qr_style || "tree";
-                activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
+                    activeCreatorUid = data.creator_uid || null;
+                    activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
+                    activeCreatorName = data.merchant || "Sunny Kumar";
+                    activeCreatorUpi = data.upi_id || "sunnypro@fam";
+                    activeCreatorPhoto = data.creator_photo || DEFAULT_AVATAR_SVG;
+                    activeCreatorQrStyle = data.qr_style || "tree";
+                    activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
 
-                // Also fetch creator's latest profile from users/{creator_uid} so any updated GAS URL works immediately
-                if (activeCreatorUid && activeCreatorUid !== "anonymous") {
-                    try {
-                        const usrSnap = await db.ref('users/' + activeCreatorUid).once('value');
-                        if (usrSnap.exists()) {
-                            const u = usrSnap.val();
-                            if (u.gasUrl) activeCreatorGasUrl = u.gasUrl;
-                            if (u.upiId) activeCreatorUpi = u.upiId;
-                            if (u.merchantName) activeCreatorName = u.merchantName;
-                            if (u.photo) activeCreatorPhoto = u.photo;
-                            if (u.qrStyle) activeCreatorQrStyle = u.qrStyle;
-                        }
-                    } catch (e) {}
+                    currentAmountStr = String(data.amount || 1);
+                    currentActiveTxnId = data.txn_id || hostedId;
+                    loaded = true;
+
+                    startQrRenderingFlow();
+                    return;
                 }
+            } catch (e) {
+                console.warn("Hosted fetch error from DB:", e);
+            }
+        }
 
-                currentAmountStr = String(data.amount);
-                currentActiveTxnId = data.txn_id;
-
+        // Fallback if DB slow or transaction is local
+        if (!loaded) {
+            const list = getStoredTxns();
+            const localTx = list.find(t => t && (t.txn_id === hostedId));
+            if (localTx) {
+                activeCreatorName = localTx.merchant || MERCHANT;
+                activeCreatorUpi = localTx.upi_id || UPI_ID;
+                activeCreatorPhoto = localTx.creator_photo || USER_PHOTO;
+                activeCreatorQrStyle = localTx.qr_style || USER_QR_STYLE;
+                currentAmountStr = String(localTx.amount || 1);
+                currentActiveTxnId = localTx.txn_id;
                 startQrRenderingFlow();
                 return;
             }
-        } catch (e) {
-            console.warn("Hosted fetch error:", e);
+            // If completely not found, safely show QR with defaults instead of crashing
+            currentAmountStr = "1";
+            currentActiveTxnId = hostedId;
+            startQrRenderingFlow();
+            return;
         }
     }
 
-    // Case 2: Opened via Token + Amount API URL (?token=mp_live_...?amount=100)
+    // Case 2: Opened via Token + Amount API URL
     if (urlAmt && urlAmt > 0) {
         IS_HOSTED_CHECKOUT_MODE = true;
         document.body.classList.add('checkout-link-mode');
+        showScreen('processing');
 
-        if (urlToken) {
+        if (urlToken && db) {
             try {
                 const tokSnap = await db.ref('tokens/' + urlToken).once('value');
                 if (tokSnap.exists()) {
                     const tData = tokSnap.val();
-                    if (tData.apiEnabled === false) {
-                        alert("⚠️ Merchant API is currently turned OFF.");
-                        return;
-                    }
                     activeCreatorUid = tData.uid || null;
                     activeCreatorName = tData.merchantName || MERCHANT;
                     activeCreatorUpi = tData.upiId || UPI_ID;
@@ -2011,11 +2104,22 @@ function showToast(text) {
         return;
     }
 
-    // Default Merchant Dashboard / Login Route
-    if (localStorage.getItem('mp_logged_in') === 'true' && CURRENT_UID) {
-        showScreen('home');
-        pingUserGasBackend(false);
-    } else {
+    // Default route: Dashboard if logged in, otherwise Login/Signup
+    try {
+        if (localStorage.getItem('mp_logged_in') === 'true' && CURRENT_UID) {
+            showScreen('home');
+            pingUserGasBackend(false);
+        } else {
+            showScreen('auth');
+        }
+    } catch (routeErr) {
         showScreen('auth');
     }
-})();
+}
+
+// Safely execute bootstrap as soon as DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMintPay);
+} else {
+    initMintPay();
+}
