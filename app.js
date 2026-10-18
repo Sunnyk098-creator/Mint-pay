@@ -1,6 +1,6 @@
 /**
  * MintPay 3D Engine - Complete Multi-User Creator-Linked Architecture
- * FIXED: 100% Crash-Proof, Anti-Blank-Page Fallbacks, Safe WebGL & Firebase Exception Guards
+ * FIXED: 100% Anti-Blank-Screen Instant Render Guard & Safe Fallback
  */
 
 // =========================================================================
@@ -32,7 +32,7 @@ const HOSTED_DOMAIN = window.location.origin && window.location.origin !== "null
     : "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
 
-// High-Res Default SVG Avatar (Guarantees zero broken icons)
+// High-Res Default SVG Avatar
 const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310b981'/><circle cx='50' cy='38' r='18' fill='%23ffffff'/><path d='M20,85 C20,62 35,58 50,58 C65,58 80,62 80,85 Z' fill='%23ffffff'/></svg>";
 
 // Local Logged-in Merchant Session State
@@ -55,7 +55,6 @@ let activeBillPayload = null;
 let timerInterval = null;
 let qrStartTimeMs = 0;
 
-// Flag when opened via Hosted Payment Link (?id=...)
 let IS_HOSTED_CHECKOUT_MODE = false;
 
 // Creator Context Variables for Hosted Checkout
@@ -1119,6 +1118,24 @@ async function executePaymentCheckSearch() {
         } catch (e) {}
     }
 
+    if (!match) {
+        try {
+            const sep = USER_GAS_URL.includes('?') ? '&' : '?';
+            const gasRes = await fetch(`${USER_GAS_URL}${sep}action=status&query=${encodeURIComponent(q)}`, { method: 'GET', redirect: 'follow' });
+            const gasData = await gasRes.json();
+            if (gasData && gasData.verified) {
+                match = {
+                    txn_id: gasData.transaction_id || q,
+                    utr: gasData.utr || q,
+                    amount: gasData.amount || 0,
+                    creator_email: USER_EMAIL,
+                    status: "COMPLETED",
+                    timestamp: gasData.date_str || "Verified via Gmail"
+                };
+            }
+        } catch (e) {}
+    }
+
     const box = document.getElementById('checkSearchResultBox');
     if (box) box.style.display = 'block';
 
@@ -1796,13 +1813,11 @@ function animateTreeQR() {
         if (qrRenderer && qrScene && qrCamera) {
             qrRenderer.render(qrScene, qrCamera);
         }
-    } catch (e) {
-        // Prevent requestAnimationFrame loop freeze on context loss
-    }
+    } catch (e) {}
 }
 
 // =========================================================================
-// 8.1 SAFE BACKGROUND THREE.JS INITIALIZATION (CANNOT CRASH THE SCRIPT)
+// 8.1 SAFE BACKGROUND THREE.JS INITIALIZATION
 // =========================================================================
 try {
     const bgCanvas = document.getElementById('bg-canvas');
@@ -1881,7 +1896,7 @@ try {
 }
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP (GUARANTEED NO BLANK PAGE)
+// 9. NAVIGATION, TOAST & APP BOOTSTRAP (ANTI-BLANK-SCREEN LOGIC)
 // =========================================================================
 function showScreen(name) {
     try {
@@ -1922,12 +1937,10 @@ function showScreen(name) {
         if (targetEl) {
             targetEl.style.setProperty('display', 'flex', 'important');
         } else {
-            // Unbreakable fallback: always show home or auth so user NEVER gets a blank page
             const fallback = document.getElementById('homeScreen') || document.getElementById('authScreen');
             if (fallback) fallback.style.setProperty('display', 'flex', 'important');
         }
 
-        // Active nav tab indicator
         if (name === 'home') {
             const tab = document.getElementById('navHome');
             if (tab) tab.classList.add('active');
@@ -2003,7 +2016,7 @@ function showToast(text) {
 }
 
 // =========================================================================
-// UNIVERSAL BOOTSTRAP (ROBUST & RESILIENT)
+// UNIVERSAL BOOTSTRAP (ANTI-BLANK-SCREEN GUARANTEE)
 // =========================================================================
 async function initMintPay() {
     try {
@@ -2024,7 +2037,6 @@ async function initMintPay() {
     if (hostedId) {
         IS_HOSTED_CHECKOUT_MODE = true;
         document.body.classList.add('checkout-link-mode');
-        // Immediately show the processing loader so screen is NEVER blank
         showScreen('processing');
         showToast("🔍 Loading hosted payment...");
 
@@ -2055,7 +2067,6 @@ async function initMintPay() {
             }
         }
 
-        // Fallback if DB slow or transaction is local
         if (!loaded) {
             const list = getStoredTxns();
             const localTx = list.find(t => t && (t.txn_id === hostedId));
@@ -2069,7 +2080,6 @@ async function initMintPay() {
                 startQrRenderingFlow();
                 return;
             }
-            // If completely not found, safely show QR with defaults instead of crashing
             currentAmountStr = "1";
             currentActiveTxnId = hostedId;
             startQrRenderingFlow();
@@ -2117,7 +2127,7 @@ async function initMintPay() {
     }
 }
 
-// Safely execute bootstrap as soon as DOM is ready
+// Ensure init executes reliably
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMintPay);
 } else {
