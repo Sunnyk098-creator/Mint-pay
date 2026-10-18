@@ -27,8 +27,8 @@
 
     <main class="app-shell" id="appShell">
 
-        <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP ================= -->
-        <div id="authScreen" class="scroll-page">
+        <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP (VISIBLE BY DEFAULT) ================= -->
+        <div id="authScreen" class="scroll-page" style="display: flex;">
             <div class="header-box" style="margin-top: 10px;">
                 <div class="top-trust-pill">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -236,13 +236,12 @@
                 </div>
 
                 <div class="txn-list" id="recentTxnList">
-                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
         </div>
 
         <!-- ================= SCREEN 2: NUMPAD AMOUNT ENTRY ================= -->
-        <div id="numpadScreen" class="screen-view" style="display: none;">
+        <div id="numpadScreen" class="screen-view">
             <div class="header-box">
                 <div class="top-trust-pill">
                     <img src="lock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -380,10 +379,10 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR (FULL SCREEN NO NAV BAR) ================= -->
-        <div id="qrScreen" class="screen-view checkout-fullscreen-card" style="display: none;">
+        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR ================= -->
+        <div id="qrScreen" class="screen-view checkout-fullscreen-card">
             
-            <!-- User Brand Bar (Displays Creator's Info) -->
+            <!-- User Brand Bar -->
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
@@ -402,7 +401,7 @@
                     </div>
                 </div>
 
-                <!-- Timer Capsule with clock.gif before time -->
+                <!-- Timer Capsule with clock.gif -->
                 <div class="timer-capsule">
                     <img src="clock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span id="countdownTimer">04:55</span>
@@ -426,7 +425,7 @@
                 <span id="toggleBtnText">Tap the tree to see QR code</span>
             </button>
 
-            <!-- Bottom Row: ✓ Paid & ← Change Amount -->
+            <!-- Bottom Row: Paid & Change Amount -->
             <div class="qr-bottom-actions">
                 <button class="btn-paid" onclick="openPaidVerificationModal()">
                     <img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -935,7 +934,6 @@
                     style="text-align: center; font-weight: 800; letter-spacing: 0.5px;"
                     oninput="const t = document.getElementById('verifyTxnInput'); if(t) t.value = this.value;"
                 >
-                <!-- Hidden synced input so existing app.js dual-field logic never breaks -->
                 <input type="hidden" id="verifyTxnInput" value="">
             </div>
 
@@ -956,57 +954,5 @@
 
     <!-- Logic Script -->
     <script src="app.js"></script>
-
-    <!-- Full-Screen Payment Link & Nav Bar Guard -->
-    <script>
-        (function enforceFullScreenCheckoutOnLink() {
-            const rawQuery = window.location.search || "";
-            const isPaymentLink = /(?:[?&])(id|txn_id|txn-id|amount|am)=/i.test(rawQuery);
-
-            if (isPaymentLink) {
-                document.body.classList.add('checkout-link-mode');
-                const shell = document.getElementById('appShell');
-                const dock = document.getElementById('bottomNavDock');
-                if (shell) shell.classList.add('no-bottom-pad');
-                if (dock) dock.style.display = 'none';
-            }
-
-            // Observe screen switches so qrScreen / processingScreen / result screens always stay full-screen without nav bar
-            const observer = new MutationObserver(() => {
-                const qrEl = document.getElementById('qrScreen');
-                const procEl = document.getElementById('processingScreen');
-                const verEl = document.getElementById('paymentVerifyScreen');
-                const sucEl = document.getElementById('successScreen');
-                const failEl = document.getElementById('failScreen');
-                const authEl = document.getElementById('authScreen');
-                const dock = document.getElementById('bottomNavDock');
-                const shell = document.getElementById('appShell');
-
-                const isFullScreenActive =
-                    document.body.classList.contains('checkout-link-mode') ||
-                    (qrEl && qrEl.style.display !== 'none') ||
-                    (procEl && procEl.style.display !== 'none' && procEl.style.display !== '') ||
-                    (verEl && verEl.style.display !== 'none' && verEl.style.display !== '') ||
-                    (sucEl && sucEl.style.display !== 'none' && sucEl.style.display !== '') ||
-                    (failEl && failEl.style.display !== 'none' && failEl.style.display !== '') ||
-                    (authEl && authEl.style.display !== 'none' && authEl.style.display !== '');
-
-                if (dock && shell) {
-                    if (isFullScreenActive) {
-                        dock.style.setProperty('display', 'none', 'important');
-                        shell.classList.add('no-bottom-pad');
-                    } else {
-                        dock.style.setProperty('display', 'flex', 'important');
-                        shell.classList.remove('no-bottom-pad');
-                    }
-                }
-            });
-
-            const shellEl = document.getElementById('appShell');
-            if (shellEl) {
-                observer.observe(shellEl, { attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
-            }
-        })();
-    </script>
 </body>
 </html>
