@@ -31,13 +31,13 @@
         <div id="authScreen" class="scroll-page">
             <div class="header-box" style="margin-top: 10px;">
                 <div class="top-trust-pill">
-                    <img src="secure.gif" alt="" class="tiny-gif" onerror="this.src='App.png'">
+                    <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span>MintPay Merchant Gateway</span>
-                    <img src="colourful-sparks.gif" alt="" class="tiny-gif" onerror="this.src='star.gif'">
+                    <img src="colourful-sparks.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                 </div>
 
                 <div class="badge-avatar-wrap">
-                    <img src="App.png" alt="App Logo" class="avatar-logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
+                    <img src="App.png" alt="" class="avatar-logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
                     <img src="crown.gif" alt="" class="crown-gif" onerror="this.style.display='none'">
                 </div>
 
@@ -126,13 +126,13 @@
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="App.png" id="dashAvatarImg" alt="Avatar" class="avatar-logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
-                        <img src="crown.gif" alt="Crown" class="crown-gif" onerror="this.style.display='none'">
+                        <img src="" id="dashAvatarImg" alt="" class="avatar-logo-img">
+                        <img src="crown.gif" alt="" class="crown-gif" onerror="this.style.display='none'">
                     </div>
                     <div class="brand-meta">
                         <div class="brand-name">
                             <span id="dashMerchantName">Sunny Kumar</span>
-                            <img src="tick.gif" alt="Verified" class="name-tick-gif" onerror="this.style.display='none'">
+                            <img src="tick.gif" alt="" class="name-tick-gif" onerror="this.style.display='none'">
                         </div>
                         <div class="brand-upi" onclick="copyUPI()">
                             <img src="live.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -143,11 +143,11 @@
                 </div>
 
                 <button onclick="pingUserGasBackend(true)" title="Engine Status" class="icon-nav-btn">
-                    <img src="bell.gif" alt="Alerts" class="md-gif" onerror="this.style.display='none'">
+                    <img src="bell.gif" alt="" class="md-gif" onerror="this.style.display='none'">
                 </button>
             </div>
 
-            <!-- DASHBOARD STATUS PILL (NO GAS NAME - SUBTLE ENGINE) -->
+            <!-- DASHBOARD STATUS PILL (SUBTLE ENGINE - NO GAS WORDING) -->
             <div class="frosted-card status-banner-card">
                 <div style="display:flex; align-items:center; gap:9px;">
                     <img src="secure.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
@@ -174,7 +174,7 @@
                         <span>Total Collection</span>
                         <img src="moneybag.gif" alt="" class="md-gif" onerror="this.style.display='none'">
                     </div>
-                    <div class="stat-val" id="statTotalVol">₹0</div>
+                    <div class="stat-val" id="statTotalVol">₹0.0</div>
                     <div style="font-size:0.68rem; font-weight:700; color:#059669; display:flex; align-items:center; gap:4px;">
                         <img src="tick.gif" alt="" style="width:13px;height:13px;" onerror="this.style.display='none'"> Realtime DB Synced
                     </div>
@@ -248,7 +248,7 @@
                 </div>
 
                 <div class="badge-avatar-wrap">
-                    <img src="moneybag.gif" alt="Moneybag" class="gif-icon-lg" onerror="this.style.display='none'">
+                    <img src="moneybag.gif" alt="" class="gif-icon-lg" onerror="this.style.display='none'">
                 </div>
 
                 <h1 class="title-text">
@@ -313,9 +313,8 @@
 
             <!-- Bill Receipt Card -->
             <div class="invoice-paper-card">
-                <div class="invoice-top-cut"></div>
                 <div class="invoice-header">
-                    <img src="App.png" id="billLogoImg" alt="" class="invoice-logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
+                    <img src="" id="billLogoImg" alt="" class="invoice-logo">
                     <div style="text-align: right;">
                         <div class="invoice-badge">READY TO PAY</div>
                         <div class="invoice-date" id="billDateText">Today</div>
@@ -345,11 +344,10 @@
                         <b id="billNoteText">None</b>
                     </div>
                     <div class="invoice-row">
-                        <span>Hosted Pay URL</span>
-                        <b id="billShortUrl" class="url-clamp">https://mint-pay.vercel.app/pay?id=...</b>
+                        <span>Direct Hosted Link</span>
+                        <b id="billShortUrl" class="url-clamp">https://mint-pay.vercel.app/?id=...</b>
                     </div>
                 </div>
-                <div class="invoice-bottom-cut"></div>
             </div>
 
             <!-- Action Buttons: Copy, Share, Open -->
@@ -378,7 +376,7 @@
         <div id="processingScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
-                <img src="light.gif" alt="Generating" class="proc-gif" onerror="this.style.display='none'">
+                <img src="light.gif" alt="" class="proc-gif" onerror="this.style.display='none'">
             </div>
             <h2 class="proc-title" id="procTitleText">Building QR Code...</h2>
             <p class="proc-sub" id="procSubUpi">Rendering selected QR style</p>
@@ -387,18 +385,18 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: QR CODE DISPLAY ================= -->
-        <div id="qrScreen">
+        <!-- ================= SCREEN 5: QR CODE DISPLAY (FIXED VERTICAL LAYOUT) ================= -->
+        <div id="qrScreen" class="screen-view" style="display: none;">
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="App.png" id="qrBrandAvatar" alt="Avatar" class="avatar-logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
-                        <img src="crown.gif" alt="Crown" class="crown-gif" onerror="this.style.display='none'">
+                        <img src="" id="qrBrandAvatar" alt="" class="avatar-logo-img">
+                        <img src="crown.gif" alt="" class="crown-gif" onerror="this.style.display='none'">
                     </div>
                     <div class="brand-meta">
                         <div class="brand-name">
                             <span id="qrMerchantName">Sunny Kumar</span>
-                            <img src="tick.gif" alt="Verified" class="name-tick-gif" onerror="this.style.display='none'">
+                            <img src="tick.gif" alt="" class="name-tick-gif" onerror="this.style.display='none'">
                         </div>
                         <div class="brand-upi" onclick="copyUPI()">
                             <span id="qrMerchantUpi">sunnypro@fam</span>
@@ -442,7 +440,7 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 6: CHECK PAYMENT SEARCH (NAV TAB: check.gif) ================= -->
+        <!-- ================= SCREEN 6: CHECK PAYMENT SEARCH ================= -->
         <div id="checkPaymentScreen" class="scroll-page">
             <div class="header-box">
                 <div class="top-trust-pill">
@@ -610,22 +608,26 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 8: PROFILE, SETTINGS & QR CUSTOMIZATION ================= -->
+        <!-- ================= SCREEN 8: PROFILE, SETTINGS & DP UPLOAD ================= -->
         <div id="profileScreen" class="scroll-page">
             <div class="header-box">
-                <!-- Base64 Image Upload / Avatar -->
+                <!-- User Profile DP Upload Area -->
                 <div class="profile-upload-container">
-                    <div class="badge-avatar-wrap" style="width:84px;height:84px;">
-                        <img src="App.png" id="profAvatarImg" alt="Profile" class="avatar-logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%2310b981\'/><text x=\'50\' y=\'62\' font-size=\'36\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MP</text></svg>';">
+                    <div class="badge-avatar-wrap" style="width:88px;height:88px;">
+                        <img src="" id="profAvatarImg" alt="" class="avatar-logo-img">
                         <img src="crown.gif" alt="" class="crown-gif" onerror="this.style.display='none'">
                     </div>
-                    <label for="profileImgInput" class="upload-badge-btn" title="Upload Image (Base64)">
-                        <img src="paper.gif" alt="" style="width:14px;height:14px;" onerror="this.style.display='none'">
+                    <label for="profileImgInput" class="upload-badge-btn" title="Change Profile DP">
+                        <span style="font-size:14px;">📷</span>
                     </label>
                     <input type="file" id="profileImgInput" accept="image/*" style="display:none;" onchange="handleProfileImageUpload(event)">
                 </div>
 
-                <h1 class="title-text">
+                <button class="btn-upload-dp-pill" onclick="document.getElementById('profileImgInput').click()">
+                    <span>Upload New Profile DP</span>
+                </button>
+
+                <h1 class="title-text" style="margin-top:6px;">
                     <span id="profHeaderName">Sunny Kumar</span>
                     <img src="tick.gif" alt="" class="name-tick-gif" onerror="this.style.display='none'">
                 </h1>
@@ -656,7 +658,7 @@
                 </div>
             </div>
 
-            <!-- QR Code Style Selector (STYLED CLEAN BUTTONS) -->
+            <!-- QR Code Style Selector (PROPER CARD BUTTONS) -->
             <div class="frosted-card">
                 <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <img src="colourful-sparks.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -668,21 +670,18 @@
 
                 <div class="qr-style-picker-grid">
                     <div class="qr-style-card active" id="qrStyleTreeLabel" onclick="handleQrStyleChange('tree')">
-                        <input type="radio" name="qrStyleChoice" value="tree" checked>
                         <div class="style-icon">🌱</div>
                         <div class="style-name">3D Tree QR</div>
                         <div class="style-desc">Interactive waving leaves</div>
                     </div>
 
                     <div class="qr-style-card" id="qrStyleStaticLabel" onclick="handleQrStyleChange('static')">
-                        <input type="radio" name="qrStyleChoice" value="static">
                         <div class="style-icon">🔳</div>
                         <div class="style-name">Static QR</div>
                         <div class="style-desc">Crisp high-speed scan</div>
                     </div>
 
                     <div class="qr-style-card" id="qrStyleAnimatedLabel" onclick="handleQrStyleChange('animated')">
-                        <input type="radio" name="qrStyleChoice" value="animated">
                         <div class="style-icon">✨</div>
                         <div class="style-name">Animated QR</div>
                         <div class="style-desc">Glowing dynamic matrix</div>
@@ -690,14 +689,14 @@
                 </div>
             </div>
 
-            <!-- Custom URL & 2 About Buttons -->
+            <!-- Verification Backend URL & 2 About Buttons -->
             <div class="frosted-card">
                 <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span>Enter Verification Backend URL</span>
                 </div>
                 <div style="font-size:0.72rem; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
-                    Payments will be fetched & verified directly through this script endpoint:
+                    Payments will be verified through this script endpoint:
                 </div>
 
                 <div class="input-group">
@@ -732,7 +731,7 @@
         <div id="paymentVerifyScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
-                <img src="eye.gif" alt="Verifying" class="proc-gif" onerror="this.style.display='none'">
+                <img src="eye.gif" alt="" class="proc-gif" onerror="this.style.display='none'">
             </div>
             <h2 class="proc-title" id="verifyTitleText">Verifying Transaction...</h2>
             <p class="proc-sub" id="verifySubText">Validating UTR and credit notifications</p>
@@ -744,7 +743,7 @@
         <!-- ================= SCREEN 10: SUCCESS SCREEN ================= -->
         <div id="successScreen" class="result-screen-box">
             <div class="result-badge-wrap success-bg">
-                <img src="tick.gif" alt="Success" class="result-gif" onerror="this.style.display='none'">
+                <img src="tick.gif" alt="" class="result-gif" onerror="this.style.display='none'">
             </div>
             <h2 class="result-title" style="color: #059669;">
                 <span>Payment Successful!</span>
@@ -785,14 +784,14 @@
         <!-- ================= SCREEN 11: FAILED SCREEN ================= -->
         <div id="failScreen" class="result-screen-box">
             <div class="result-badge-wrap fail-bg">
-                <img src="x.gif" alt="Failed" class="result-gif" onerror="this.src='block.gif';">
+                <img src="x.gif" alt="" class="result-gif" onerror="this.src='block.gif'">
             </div>
             <h2 class="result-title" style="color: #dc2626;">
                 <span>Payment Not Verified</span>
                 <img src="alert.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
             </h2>
             <div class="result-amt" id="failAmtText">₹1.0</div>
-            <p class="result-sub" id="failReasonSub">No matching credit entry found in linked backend or Database.</p>
+            <p class="result-sub" id="failReasonSub">No matching credit entry found in database.</p>
 
             <div class="receipt-pill">
                 <div class="receipt-row">
@@ -823,14 +822,14 @@
 
     </main>
 
-    <!-- ================= 5-BUTTON BOTTOM NAVIGATION DOCK (FIXED 1 LINE ONLY) ================= -->
+    <!-- ================= 5-BUTTON BOTTOM NAVIGATION DOCK (FIXED 1 LINE) ================= -->
     <nav class="bottom-nav-dock" id="bottomNavDock">
         <button class="nav-tab active" id="navHome" onclick="showScreen('home')">
-            <img src="live.gif" alt="" class="nav-icon" onerror="this.src='App.png'">
+            <img src="live.gif" alt="" class="nav-icon" onerror="this.src='check.gif'">
             <span>Home</span>
         </button>
         <button class="nav-tab" id="navPay" onclick="showScreen('numpad')">
-            <img src="moneybag.gif" alt="" class="nav-icon" onerror="this.src='App.png'">
+            <img src="moneybag.gif" alt="" class="nav-icon" onerror="this.src='check.gif'">
             <span>Bill</span>
         </button>
         <button class="nav-tab" id="navCheck" onclick="showScreen('check')">
@@ -838,16 +837,16 @@
             <span>Check</span>
         </button>
         <button class="nav-tab" id="navApi" onclick="showScreen('api')">
-            <img src="light.gif" alt="" class="nav-icon" onerror="this.src='App.png'">
+            <img src="light.gif" alt="" class="nav-icon" onerror="this.src='check.gif'">
             <span>API</span>
         </button>
         <button class="nav-tab" id="navProfile" onclick="showScreen('profile')">
-            <img src="secure.gif" alt="" class="nav-icon" onerror="this.src='App.png'">
+            <img src="secure.gif" alt="" class="nav-icon" onerror="this.src='check.gif'">
             <span>Settings</span>
         </button>
     </nav>
 
-    <!-- ================= MODAL 1: CONFIRM DELETE ALL ================= -->
+    <!-- ================= MODALS ================= -->
     <div class="modal-backdrop" id="deleteAllModal">
         <div class="modal-card">
             <img src="x.gif" alt="" class="modal-top-gif" onerror="this.src='block.gif'">
@@ -866,7 +865,6 @@
         </div>
     </div>
 
-    <!-- ================= MODAL 2: GUIDE POPUP ================= -->
     <div class="modal-backdrop" id="gasInfoModal">
         <div class="modal-card" style="max-width: 420px; text-align: left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -876,15 +874,13 @@
                 <button onclick="closeGasModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;font-weight:900;">✕</button>
             </div>
             <div id="gasModalContent" style="font-size:0.76rem; color:var(--text-dark); line-height:1.5; max-height:360px; overflow-y:auto;">
-                <!-- Populated dynamically via JS -->
             </div>
         </div>
     </div>
 
-    <!-- ================= MODAL 3: UTR / TXN ID ENTRY MODAL ================= -->
     <div class="modal-backdrop" id="paidVerifyModal">
         <div class="modal-card">
-            <img src="eye.gif" alt="Verify" class="modal-top-gif" onerror="this.style.display='none'">
+            <img src="eye.gif" alt="" class="modal-top-gif" onerror="this.style.display='none'">
             <h3 class="modal-title">Confirm & Verify Payment</h3>
             <p class="modal-sub">
                 Enter the <b>12-Digit UTR</b> or <b>Transaction ID</b> (e.g. <code>FMPIB6811724682</code>) to verify:
