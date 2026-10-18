@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MintPay - 3D Tree QR Real Payment Gateway</title>
-    <link rel="icon" href="favicon.png" type="image/png">
+    <title>MintPay - 3D QR Real Payment Gateway</title>
+    <link rel="icon" href="App.png" type="image/png">
     
     <!-- Modern Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- External Dependencies -->
+    <!-- Dependencies (QR & 3D Three.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Firebase Realtime Database Only (No Auth SDK) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
     <!-- Stylesheet -->
@@ -26,17 +27,17 @@
 
     <main class="app-shell" id="appShell">
 
-        <!-- ================= SCREEN 0: PURE GOOGLE AUTH ================= -->
+        <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP (NO GOOGLE AUTH) ================= -->
         <div id="authScreen" class="scroll-page">
-            <div class="header-box" style="margin-top: 18px;">
+            <div class="header-box" style="margin-top: 10px;">
                 <div class="top-trust-pill">
-                    <img src="secure.gif" alt="" class="tiny-gif" onerror="this.src='lock.gif'">
-                    <span>MintPay 3D Merchant Gateway</span>
+                    <img src="secure.gif" alt="" class="tiny-gif" onerror="this.src='App.png'">
+                    <span>MintPay Merchant Gateway</span>
                     <img src="colourful-sparks.gif" alt="" class="tiny-gif" onerror="this.src='star.gif'">
                 </div>
 
                 <div class="badge-avatar-wrap">
-                    <img src="logo.jpg" alt="Logo" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
+                    <img src="App.png" alt="App Logo" class="avatar-logo-img">
                     <img src="crown.gif" alt="" class="crown-gif">
                 </div>
 
@@ -44,97 +45,88 @@
                     <span>Merchant Portal</span>
                     <img src="star.gif" alt="" class="btn-gif-icon">
                 </h1>
-                <p class="subtitle-text">Instant FamX & UPI Automatic Gmail Settlement</p>
+                <p class="subtitle-text">Multi-Style QR & Realtime Database Settlement</p>
             </div>
 
-            <!-- GOOGLE AUTH HERO CARD (No Manual Forms) -->
-            <div class="frosted-card" style="padding: 24px 18px; margin-top: 20px;">
-                <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">
-                    Secure Merchant Sign-In
-                </div>
-                <div style="font-size: 0.74rem; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">
-                    Sign in with your Google account to automatically link your Gmail inbox for reading real FamApp & UPI payment alerts.
+            <div class="frosted-card" style="padding: 16px;">
+                <!-- Auth Switch Tabs -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">
+                        <img src="lock.gif" alt="" class="tiny-gif">
+                        <span>Merchant Login</span>
+                    </button>
+                    <button class="auth-tab-btn" id="tabSignupBtn" onclick="switchAuthTab('signup')">
+                        <img src="colourful-sparks.gif" alt="" class="tiny-gif">
+                        <span>New Sign Up</span>
+                    </button>
                 </div>
 
-                <button class="btn-google-auth" id="btnGoogleSignIn" onclick="handleGoogleSignIn()">
-                    <svg width="22" height="22" viewBox="0 0 48 48">
-                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                    <span>Continue with Google</span>
-                    <img src="colourful-sparks.gif" alt="" class="tiny-gif">
-                </button>
-
-                <div class="auth-security-note">
-                    <img src="secure.gif" alt="" class="tiny-gif">
-                    <span>Google OAuth 2.0 Protected • Real Gmail Sync</span>
+                <!-- LOGIN FORM -->
+                <div id="loginFormBox">
+                    <div class="input-group">
+                        <label class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Registered Email or Mobile</label>
+                        <input type="text" id="loginIdentifier" class="glass-input" placeholder="e.g. user@gmail.com or 9876543210">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label"><img src="lock.gif" alt="" class="tiny-gif"> Password</label>
+                        <input type="password" id="loginPassword" class="glass-input" placeholder="••••••••">
+                    </div>
+                    <button class="btn-proceed" onclick="handleDatabaseLogin()">
+                        <img src="rocket.gif" alt="" class="btn-gif-icon">
+                        <span>Sign In to Dashboard</span>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Features Trust Grid -->
-            <div class="frosted-card" style="padding: 14px 16px;">
-                <div class="trust-list">
-                    <div class="trust-item">
-                        <img src="tick.gif" alt="" class="tiny-gif">
-                        <span>Direct FamApp & FamX UTR verification</span>
+                <!-- SIGN UP FORM -->
+                <div id="signupFormBox" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label"><img src="crown.gif" alt="" class="tiny-gif"> Full Name</label>
+                        <input type="text" id="regName" class="glass-input" placeholder="e.g. Sunny Kumar">
                     </div>
-                    <div class="trust-item">
-                        <img src="tick.gif" alt="" class="tiny-gif">
-                        <span>3D Interactive Tree QR with zero delay</span>
+                    <div class="input-group">
+                        <label class="input-label"><img src="live.gif" alt="" class="tiny-gif"> Mobile Number</label>
+                        <input type="tel" id="regNumber" class="glass-input" placeholder="e.g. 9876543210">
                     </div>
-                    <div class="trust-item">
-                        <img src="tick.gif" alt="" class="tiny-gif">
-                        <span>Real-time credit matching from your logged-in Gmail</span>
+                    <div class="input-group">
+                        <label class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Email Address</label>
+                        <input type="email" id="regEmail" class="glass-input" placeholder="yourname@gmail.com">
                     </div>
+                    <div class="input-group">
+                        <label class="input-label"><img src="moneybag.gif" alt="" class="tiny-gif"> Receiver UPI ID (VPA)</label>
+                        <input type="text" id="regUpi" class="glass-input" placeholder="example@fam or example@upi">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label"><img src="lock.gif" alt="" class="tiny-gif"> Password</label>
+                        <input type="password" id="regPass" class="glass-input" placeholder="Create strong password" oninput="validatePasswordRules(this.value)">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label"><img src="lock.gif" alt="" class="tiny-gif"> Confirm Password</label>
+                        <input type="password" id="regConfirmPass" class="glass-input" placeholder="Re-enter password">
+                    </div>
+
+                    <!-- Password Rules Box -->
+                    <div class="password-rules-box" id="passwordRulesBox">
+                        <div class="rule-title"><img src="secure.gif" alt="" class="tiny-gif"> Password Requirements:</div>
+                        <div class="rule-item" id="ruleLen"><span class="rule-dot">○</span> Minimum 8 characters</div>
+                        <div class="rule-item" id="ruleNum"><span class="rule-dot">○</span> At least 1 number (0-9)</div>
+                        <div class="rule-item" id="ruleUpper"><span class="rule-dot">○</span> At least 1 uppercase letter (A-Z)</div>
+                        <div class="rule-item" id="ruleSpecial"><span class="rule-dot">○</span> At least 1 special character (@#$%^&*)</div>
+                    </div>
+
+                    <button class="btn-proceed" style="margin-top: 12px;" onclick="handleDatabaseSignup()">
+                        <img src="colourful-sparks.gif" alt="" class="btn-gif-icon">
+                        <span>Register & Create Account</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 0.5: NEW USER ONBOARDING MODAL ================= -->
-        <div class="modal-backdrop" id="onboardingModal">
-            <div class="modal-card">
-                <div class="badge-avatar-wrap" style="width: 58px; height: 58px; margin: 0 auto 10px;">
-                    <img src="crown.gif" alt="" class="gif-icon-lg" style="width: 36px; height: 36px;">
-                </div>
-                <h3 class="modal-title">Welcome to MintPay!</h3>
-                <p class="modal-sub">Set up your receiving UPI ID & merchant profile to start accepting payments directly into your account.</p>
-
-                <div class="input-group">
-                    <label class="input-label">
-                        <img src="crown.gif" alt="" class="tiny-gif"> Your Name / Business Name
-                    </label>
-                    <input type="text" id="onboardName" class="glass-input" placeholder="e.g. Sunny Kumar">
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label">
-                        <img src="moneybag.gif" alt="" class="tiny-gif"> Receiving UPI ID (VPA)
-                    </label>
-                    <input type="text" id="onboardUpi" class="glass-input" placeholder="e.g. yourname@fam or yourname@upi">
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label">
-                        <img src="secure.gif" alt="" class="tiny-gif"> Business Mobile / Support Note (Optional)
-                    </label>
-                    <input type="text" id="onboardNote" class="glass-input" placeholder="e.g. 9876543210">
-                </div>
-
-                <button class="btn-proceed" style="margin-top: 10px;" onclick="submitNewUserOnboarding()">
-                    <img src="rocket.gif" alt="" class="btn-gif-icon">
-                    <span>Complete Setup & Enter Gateway</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ================= SCREEN HOME: GATEWAY DASHBOARD ================= -->
+        <!-- ================= SCREEN 1: DASHBOARD ================= -->
         <div id="homeScreen" class="scroll-page">
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="logo.jpg" id="dashAvatarImg" alt="Avatar" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
+                        <img src="App.png" id="dashAvatarImg" alt="Avatar" class="avatar-logo-img">
                         <img src="crown.gif" alt="Crown" class="crown-gif">
                     </div>
                     <div class="brand-meta">
@@ -150,34 +142,32 @@
                     </div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button onclick="pingGmailConnection(true)" title="Check Gmail Sync" style="background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:14px; padding:7px; cursor:pointer; display:flex;">
-                        <img src="bell.gif" alt="Alerts" class="md-gif">
-                    </button>
-                </div>
+                <button onclick="pingUserGasBackend(true)" title="GAS Status" class="icon-nav-btn">
+                    <img src="bell.gif" alt="Alerts" class="md-gif">
+                </button>
             </div>
 
-            <!-- Live Active Gmail Sync Pill -->
+            <!-- GAS Web App Status Pill -->
             <div class="frosted-card status-banner-card">
                 <div style="display:flex; align-items:center; gap:9px;">
                     <img src="secure.gif" alt="" class="btn-gif-icon">
                     <div style="text-align:left;">
                         <div style="font-size:0.82rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:5px;">
-                            <span>Logged-in Gmail Reader</span>
+                            <span>Custom GAS Verifier Engine</span>
                             <img src="colourful-sparks.gif" alt="" class="tiny-gif">
                         </div>
-                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted);" id="gmailConnectedSub">
-                            Syncing: Reading FamApp credit emails
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted);" id="gasConnectedSub">
+                            Active GAS Web App Linked
                         </div>
                     </div>
                 </div>
-                <span class="copy-pill" id="homeApiStatusPill" style="display:inline-flex; align-items:center; gap:4px; padding:4px 9px;">
+                <span class="copy-pill" id="homeApiStatusPill" style="padding:4px 9px;">
                     <img src="live.gif" id="homeApiStatusGif" alt="" style="width:12px;height:12px;">
-                    <span id="homeApiStatusText">ACTIVE</span>
+                    <span id="homeApiStatusText">READY</span>
                 </span>
             </div>
 
-            <!-- Analytics Metrics -->
+            <!-- Analytics Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-head">
@@ -186,7 +176,7 @@
                     </div>
                     <div class="stat-val" id="statTotalVol">₹0</div>
                     <div style="font-size:0.68rem; font-weight:700; color:#059669; display:flex; align-items:center; gap:4px;">
-                        <img src="tick.gif" alt="" style="width:13px;height:13px;"> Real Gmail Verified
+                        <img src="tick.gif" alt="" style="width:13px;height:13px;"> Realtime DB Synced
                     </div>
                 </div>
 
@@ -197,51 +187,63 @@
                     </div>
                     <div class="stat-val" id="statTotalCount">0</div>
                     <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-                        <img src="colourful-sparks.gif" alt="" style="width:13px;height:13px;"> FamX / UPI Direct
+                        <span id="currentQrBadgeStyle">3D Tree QR Active</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Action: Delete All Transactions Permanently -->
+            <div class="frosted-card" style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="text-align:left;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: var(--danger);">Clear Payment Records</div>
+                    <div style="font-size: 0.68rem; font-weight: 600; color: var(--text-muted);">Permanently remove all logs from Database</div>
+                </div>
+                <button class="btn-danger-outline" onclick="openDeleteAllConfirmModal()">
+                    <img src="x.gif" alt="" class="tiny-gif" onerror="this.src='block.gif'">
+                    <span>Delete All</span>
+                </button>
             </div>
 
             <!-- Quick Action Buttons -->
             <div class="quick-actions-grid">
                 <button class="quick-card-btn" onclick="showScreen('numpad')">
                     <img src="moneybag.gif" alt="" class="btn-gif-icon">
-                    <span>Create QR</span>
+                    <span>Create Bill</span>
+                </button>
+                <button class="quick-card-btn" onclick="showScreen('check')">
+                    <img src="check.gif" alt="" class="btn-gif-icon">
+                    <span>Check Txn</span>
                 </button>
                 <button class="quick-card-btn" onclick="showScreen('api')">
                     <img src="light.gif" alt="" class="btn-gif-icon">
-                    <span>API Docs</span>
-                </button>
-                <button class="quick-card-btn" onclick="showScreen('profile')">
-                    <img src="secure.gif" alt="" class="btn-gif-icon">
-                    <span>Settings</span>
+                    <span>API Hub</span>
                 </button>
             </div>
 
-            <!-- Recent Real Transactions List -->
+            <!-- Recent Transactions List -->
             <div class="frosted-card" style="padding:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px;">
                         <img src="clock.gif" alt="" class="tiny-gif">
-                        <span>Recent Real Transactions</span>
+                        <span>Recent Transactions</span>
                     </div>
                     <button onclick="showScreen('numpad')" style="background:#d1fae5; border:none; color:#047857; font-size:0.7rem; font-weight:800; padding:4px 10px; border-radius:8px; cursor:pointer;">
-                        + New QR
+                        + New
                     </button>
                 </div>
 
                 <div class="txn-list" id="recentTxnList">
-                    <!-- Loaded dynamically via JS -->
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 1: NUMPAD AMOUNT ENTRY ================= -->
+        <!-- ================= SCREEN 2: NUMPAD & NOTE (CREATE BILL/TRANSACTION) ================= -->
         <div id="numpadScreen" class="screen-view" style="display: none;">
             <div class="header-box">
                 <div class="top-trust-pill">
                     <img src="lock.gif" alt="" class="tiny-gif">
-                    <span>100% Real FamX / UPI Gateway</span>
+                    <span>Generate Instant Payment Bill</span>
                     <img src="tick.gif" alt="" class="tiny-gif">
                 </div>
 
@@ -253,7 +255,7 @@
                     <span>Enter Amount</span>
                     <img src="rocket.gif" alt="" class="btn-gif-icon">
                 </h1>
-                <p class="subtitle-text" id="numpadSubText">Direct instant transfer to your account</p>
+                <p class="subtitle-text" id="numpadSubText">Direct credit to your UPI account</p>
             </div>
 
             <div class="amount-hero-box">
@@ -261,9 +263,14 @@
                 <span class="live-amount-text" id="liveAmount">0</span>
             </div>
 
+            <!-- Optional Note Field -->
+            <div class="input-group" style="margin: 0 0 6px;">
+                <input type="text" id="txnCustomNote" class="glass-input" placeholder="Add Note / Purpose (Optional)" style="text-align:center; font-size: 0.82rem; padding: 10px;">
+            </div>
+
             <div class="chip-grid">
                 <button class="chip-btn" onclick="applyPreset('1')">₹1</button>
-                <button class="chip-btn" onclick="applyPreset('9')">₹9</button>
+                <button class="chip-btn" onclick="applyPreset('10')">₹10</button>
                 <button class="chip-btn" onclick="applyPreset('50')">₹50</button>
                 <button class="chip-btn" onclick="applyPreset('100')">₹100</button>
             </div>
@@ -283,31 +290,109 @@
                 <button class="pad-btn del-action" onclick="tapKey('DEL')">⌫</button>
             </div>
 
-            <button class="btn-proceed" onclick="startProcessingFlow()">
-                <span>Proceed to Pay</span>
+            <button class="btn-proceed" onclick="generateBillInvoice()">
+                <span>Create Bill & Payment Link</span>
                 <img src="paper.gif" alt="" class="btn-gif-icon" onerror="this.src='rocket.gif'">
             </button>
         </div>
 
-        <!-- ================= SCREEN 2: GENERATING 3D TREE QR ================= -->
+        <!-- ================= SCREEN 3: INVOICE / BILL PREVIEW WITH COPY, SHARE, OPEN ================= -->
+        <div id="billScreen" class="scroll-page">
+            <div class="header-box">
+                <div class="top-trust-pill">
+                    <img src="tick.gif" alt="" class="tiny-gif">
+                    <span>Bill Generated Successfully</span>
+                    <img src="colourful-sparks.gif" alt="" class="tiny-gif">
+                </div>
+                <h1 class="title-text">
+                    <span>Payment Invoice</span>
+                    <img src="paper.gif" alt="" class="btn-gif-icon">
+                </h1>
+                <p class="subtitle-text">Share payment link or open QR checkout</p>
+            </div>
+
+            <!-- Bill Receipt Card -->
+            <div class="invoice-paper-card">
+                <div class="invoice-top-cut"></div>
+                <div class="invoice-header">
+                    <img src="App.png" id="billLogoImg" alt="" class="invoice-logo">
+                    <div style="text-align: right;">
+                        <div class="invoice-badge">READY TO PAY</div>
+                        <div class="invoice-date" id="billDateText">Today</div>
+                    </div>
+                </div>
+
+                <div class="invoice-amt-block">
+                    <span class="invoice-amt-symbol">₹</span>
+                    <span class="invoice-amt-val" id="billAmtText">0</span>
+                </div>
+
+                <div class="invoice-details-list">
+                    <div class="invoice-row">
+                        <span>Transaction ID</span>
+                        <b id="billTxnId">TXN_000000</b>
+                    </div>
+                    <div class="invoice-row">
+                        <span>Merchant Name</span>
+                        <b id="billMerchantName">Sunny Kumar</b>
+                    </div>
+                    <div class="invoice-row">
+                        <span>Receiver UPI</span>
+                        <b id="billMerchantUpi">sunnypro@fam</b>
+                    </div>
+                    <div class="invoice-row" id="billNoteRow">
+                        <span>Order Note</span>
+                        <b id="billNoteText">None</b>
+                    </div>
+                    <div class="invoice-row">
+                        <span>Hosted Pay URL</span>
+                        <b id="billShortUrl" class="url-clamp">https://mint-pay.vercel.app/pay?id=...</b>
+                    </div>
+                </div>
+                <div class="invoice-bottom-cut"></div>
+            </div>
+
+            <!-- Action Buttons: Copy, Share, Open -->
+            <div class="bill-actions-grid">
+                <button class="bill-btn copy-btn" onclick="copyBillPaymentLink()">
+                    <img src="live.gif" alt="" class="tiny-gif">
+                    <span>Copy Link</span>
+                </button>
+                <button class="bill-btn share-btn" onclick="shareBillPaymentLink()">
+                    <img src="paper.gif" alt="" class="tiny-gif">
+                    <span>Share</span>
+                </button>
+                <button class="bill-btn open-btn" onclick="openHostedCheckoutPage()">
+                    <img src="rocket.gif" alt="" class="tiny-gif">
+                    <span>Open Link</span>
+                </button>
+            </div>
+
+            <button class="btn-proceed" style="margin-top: 4px;" onclick="viewQrFromBill()">
+                <img src="eye.gif" alt="" class="btn-gif-icon">
+                <span>View Selected Style QR Code</span>
+            </button>
+        </div>
+
+        <!-- ================= SCREEN 4: PROCESSING LOADER ================= -->
         <div id="processingScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
                 <img src="light.gif" alt="Generating" class="proc-gif">
             </div>
-            <h2 class="proc-title">Growing 3D Tree QR...</h2>
-            <p class="proc-sub" id="procSubUpi">Generating live interactive matrix</p>
+            <h2 class="proc-title" id="procTitleText">Building QR Code...</h2>
+            <p class="proc-sub" id="procSubUpi">Rendering selected QR style</p>
             <div class="proc-bar-wrap">
                 <div class="proc-bar-fill" id="procBar"></div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 3: 3D TREE FIRST + SCAN QR SCREEN ================= -->
+        <!-- ================= SCREEN 5: QR CODE DISPLAY (3D TREE / STATIC / ANIMATED) ================= -->
         <div id="qrScreen">
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="logo.jpg" id="qrBrandAvatar" alt="Avatar" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
+                        <img src="App.png" id="qrBrandAvatar" alt="Avatar" class="avatar-logo-img">
                         <img src="crown.gif" alt="Crown" class="crown-gif">
                     </div>
                     <div class="brand-meta">
@@ -333,8 +418,12 @@
                 <div class="hero-qr-amt" id="qrAmtHero">₹0</div>
             </div>
 
-            <div class="open-tree-stage" onclick="toggleTreeMode()" title="Tap to switch between 3D Tree and QR Code">
+            <!-- Dynamic QR Stage: Supports 3D Tree Canvas, Static Canvas, and Animated SVG/Canvas -->
+            <div class="open-tree-stage" id="qrStageContainer" onclick="toggleTreeMode()" title="Tap to interact">
+                <!-- 3D Tree Canvas -->
                 <canvas id="treeQrCanvas"></canvas>
+                <!-- 2D Static / Animated Fallback Container -->
+                <div id="staticQrBox" class="static-qr-container" style="display:none;"></div>
             </div>
 
             <button class="toggle-tree-pill" id="toggleTreeBtn" onclick="toggleTreeMode()">
@@ -355,48 +444,307 @@
             </div>
         </div>
 
-        <!-- ================= MODAL: REAL UTR / TRANSACTION ID VERIFICATION (NO FAKE BUTTONS) ================= -->
-        <div class="modal-backdrop" id="paidVerifyModal">
-            <div class="modal-card">
-                <img src="eye.gif" alt="Verify" class="modal-top-gif">
-                <h3 class="modal-title">Confirm & Verify Payment</h3>
-                <p class="modal-sub">
-                    Enter the <b>12-Digit UTR</b> or <b>FamX Transaction ID</b> (e.g. <code>FMPIB6812069247</code>) from your payment app, or tap Verify to auto-detect:
-                </p>
+        <!-- ================= SCREEN 6: CHECK PAYMENT SEARCH (NAV TAB: check.gif) ================= -->
+        <div id="checkPaymentScreen" class="scroll-page">
+            <div class="header-box">
+                <div class="top-trust-pill">
+                    <img src="check.gif" alt="" class="tiny-gif">
+                    <span>Instant Payment Lookup</span>
+                    <img src="tick.gif" alt="" class="tiny-gif">
+                </div>
+                <h1 class="title-text">
+                    <span>Check Payment</span>
+                    <img src="check.gif" alt="" class="btn-gif-icon">
+                </h1>
+                <p class="subtitle-text">Search by Note, FamX ID, or 12-Digit UTR</p>
+            </div>
 
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label" style="justify-content: center;">
-                        <img src="tick.gif" alt="" class="tiny-gif"> UTR Number or Transaction ID
+            <div class="frosted-card">
+                <div class="input-group">
+                    <label class="input-label">
+                        <img src="secure.gif" alt="" class="tiny-gif"> Enter Transaction ID, UTR, or Order Note
                     </label>
-                    <input type="text" id="verifyUtrInput" class="glass-input" placeholder="e.g. 629041599431 or FMPIB..." style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="checkPaymentSearchInput" class="glass-input" placeholder="e.g. FMPIB... or 6290... or Note">
+                        <button class="btn-paid" style="width:auto; padding: 0 16px; border-radius: 14px;" onclick="executePaymentCheckSearch()">
+                            <img src="check.gif" alt="" class="tiny-gif">
+                            <span>Search</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Card -->
+            <div id="checkSearchResultBox" class="frosted-card" style="display:none; padding: 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="font-size:0.9rem; font-weight:900;" id="searchResultTitle">Transaction Found</div>
+                    <span class="copy-pill" id="searchResultStatusPill">PENDING</span>
                 </div>
 
-                <div class="real-verify-actions">
-                    <button class="btn-proceed" style="padding: 13px;" onclick="executeRealGmailScan()">
-                        <img src="secure.gif" alt="" class="btn-gif-icon">
-                        <span>Verify From Gmail Now</span>
-                    </button>
-                    <button class="modal-cancel-btn" onclick="closePaidVerificationModal()">
-                        Cancel & Return
-                    </button>
+                <div class="receipt-pill" style="margin-bottom:0;">
+                    <div class="receipt-row">
+                        <span>Amount</span>
+                        <b id="searchResAmt">₹0</b>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Transaction ID</span>
+                        <b id="searchResTxnId">-</b>
+                    </div>
+                    <div class="receipt-row">
+                        <span>UTR / Ref</span>
+                        <b id="searchResUtr">-</b>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Note</span>
+                        <b id="searchResNote">-</b>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Time</span>
+                        <b id="searchResTime">-</b>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 4: REAL GMAIL SCANNING PROCESSING ================= -->
+        <!-- ================= SCREEN 7: DEVELOPER API HUB ================= -->
+        <div id="apiScreen" class="scroll-page">
+            <div class="header-box">
+                <div class="top-trust-pill">
+                    <img src="live.gif" id="apiHeaderLiveGif" alt="" class="tiny-gif">
+                    <span id="apiHeaderStatusLabel">MintPay API v3.0 • Active</span>
+                    <img src="colourful-sparks.gif" alt="" class="tiny-gif">
+                </div>
+                <h1 class="title-text">
+                    <span>Developer API Hub</span>
+                    <img src="light.gif" alt="" class="btn-gif-icon">
+                </h1>
+                <p class="subtitle-text">JSON Endpoints, Note Parameters, and Test Responses</p>
+            </div>
+
+            <div class="frosted-card">
+                <div class="setting-row" style="padding-top:0; margin-bottom:10px;">
+                    <div class="setting-left">
+                        <img src="live.gif" id="apiToggleIconGif" alt="" class="md-gif">
+                        <div>
+                            <div style="font-size:0.88rem; font-weight:900;">API Gateway Access</div>
+                            <div style="font-size:0.7rem; font-weight:600; color:var(--text-muted);" id="apiToggleSubText">Requests are ENABLED</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch on" id="apiMasterSwitch" onclick="toggleUserApiActive()">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Your Secret API Token</span>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="regenerateApiToken()" class="copy-pill" style="background:#fef3c7; color:#b45309; border:none; cursor:pointer;">↻ Regenerate</button>
+                        <button onclick="copyApiKey()" class="copy-pill" style="border:none; cursor:pointer;">Copy</button>
+                    </div>
+                </div>
+                <input type="text" id="merchantApiKeyInput" class="glass-input" value="mp_live_..." readonly style="font-family:'JetBrains Mono',monospace; font-size:0.78rem;">
+            </div>
+
+            <!-- API 1: Create Transaction -->
+            <div class="frosted-card">
+                <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                    <img src="rocket.gif" alt="" class="md-gif">
+                    <span>1. Create Transaction (with Note)</span>
+                </div>
+                <div class="code-block" id="createEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#fde047;">https://mint-pay.vercel.app/api?token={token}&amount={amount}&note={note}</div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div class="input-group">
+                        <label class="input-label">Amount (₹)</label>
+                        <input type="number" id="apiCreateAmt" class="glass-input" value="1" oninput="updateApiEndpointPreviews()">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Note (Optional)</label>
+                        <input type="text" id="apiCreateNote" class="glass-input" value="MintPay_Order" oninput="updateApiEndpointPreviews()">
+                    </div>
+                </div>
+
+                <button class="btn-paid" style="padding:10px; font-size:0.78rem; width:100%; margin-bottom:8px;" onclick="runCreateTxnApi()">
+                    <img src="light.gif" alt="" class="tiny-gif">
+                    <span>Execute Create API Request</span>
+                </button>
+
+                <pre class="code-block" id="apiCreateOutput">{ "status": "READY" }</pre>
+            </div>
+
+            <!-- API 2: Check Status Endpoint -->
+            <div class="frosted-card">
+                <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                    <img src="check.gif" alt="" class="md-gif">
+                    <span>2. Check Transaction Status</span>
+                </div>
+                <div class="code-block" id="checkEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#93c5fd;">https://mint-pay.vercel.app/check?token={token}&txn-id={txn_id}</div>
+
+                <div class="input-group">
+                    <label class="input-label">Transaction ID / UTR</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="apiCheckId" class="glass-input" value="TXN_720326" oninput="updateApiEndpointPreviews()">
+                        <button class="btn-paid" style="width:auto; padding:0 16px; border-radius:14px; font-size:0.8rem;" onclick="runCheckStatusApi()">
+                            <img src="check.gif" alt="" class="tiny-gif">
+                            <span>Check</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Structured JSON Output matching user spec -->
+                <pre class="code-block" id="apiCheckOutput">{
+  "code": 200,
+  "status": "SUCCESS",
+  "source": "DATABASE",
+  "data": {
+    "txn_id": "TXN_720326",
+    "utr": "PENDING",
+    "famx_id": "PENDING",
+    "payer_name": "Waiting...",
+    "amount": 1,
+    "merchant": "Sunny Kumar",
+    "upi_id": "sunnypro@fam",
+    "note": "3D_Tree_Checkout",
+    "status": "PENDING",
+    "created_ms": 1792315402765,
+    "timestamp": "02:53 PM"
+  }
+}</pre>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN 8: PROFILE, SETTINGS & QR CUSTOMIZATION ================= -->
+        <div id="profileScreen" class="scroll-page">
+            <div class="header-box">
+                <!-- Base64 Image Upload / Avatar -->
+                <div class="profile-upload-container">
+                    <div class="badge-avatar-wrap" style="width:84px;height:84px;">
+                        <img src="App.png" id="profAvatarImg" alt="Profile" class="avatar-logo-img">
+                        <img src="crown.gif" alt="" class="crown-gif">
+                    </div>
+                    <label for="profileImgInput" class="upload-badge-btn" title="Upload Image (Base64)">
+                        <img src="paper.gif" alt="" style="width:14px;height:14px;">
+                    </label>
+                    <input type="file" id="profileImgInput" accept="image/*" style="display:none;" onchange="handleProfileImageUpload(event)">
+                </div>
+
+                <h1 class="title-text">
+                    <span id="profHeaderName">Sunny Kumar</span>
+                    <img src="tick.gif" alt="" class="name-tick-gif">
+                </h1>
+                <p class="subtitle-text" id="profHeaderUpi">VIP Merchant • sunnypro@fam</p>
+                <p class="subtitle-text" id="profHeaderPhone" style="color:var(--primary-deep); font-weight:800; font-size:0.74rem;">Mobile: 9876543210</p>
+            </div>
+
+            <!-- Merchant Profile Fields -->
+            <div class="frosted-card">
+                <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                    <img src="star.gif" alt="" class="tiny-gif">
+                    <span>Merchant Details</span>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label"><img src="crown.gif" alt="" class="tiny-gif"> Merchant Display Name</label>
+                    <input type="text" id="setMerchantName" class="glass-input" value="Sunny Kumar">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label"><img src="live.gif" alt="" class="tiny-gif"> Registered Mobile</label>
+                    <input type="tel" id="setMerchantPhone" class="glass-input" value="9876543210">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label"><img src="moneybag.gif" alt="" class="tiny-gif"> Receiver UPI ID (VPA)</label>
+                    <input type="text" id="setMerchantUpi" class="glass-input" value="sunnypro@fam">
+                </div>
+            </div>
+
+            <!-- QR Code Style Selector (3D Tree / Static / Animated) -->
+            <div class="frosted-card">
+                <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                    <img src="colourful-sparks.gif" alt="" class="tiny-gif">
+                    <span>Select QR Code Style</span>
+                </div>
+                <div style="font-size:0.72rem; font-weight:600; color:var(--text-muted); margin-bottom:12px;">
+                    Choose how checkout QR codes will be generated for your buyers:
+                </div>
+
+                <div class="qr-style-picker-grid">
+                    <label class="qr-style-option active" id="qrStyleTreeLabel">
+                        <input type="radio" name="qrStyleChoice" value="tree" checked onchange="handleQrStyleChange('tree')">
+                        <div class="style-icon">🌱</div>
+                        <div class="style-name">3D Tree QR</div>
+                        <div class="style-desc">Interactive waving leaves</div>
+                    </label>
+
+                    <label class="qr-style-option" id="qrStyleStaticLabel">
+                        <input type="radio" name="qrStyleChoice" value="static" onchange="handleQrStyleChange('static')">
+                        <div class="style-icon">🔳</div>
+                        <div class="style-name">Static QR</div>
+                        <div class="style-desc">Crisp high-speed scan</div>
+                    </label>
+
+                    <label class="qr-style-option" id="qrStyleAnimatedLabel">
+                        <input type="radio" name="qrStyleChoice" value="animated" onchange="handleQrStyleChange('animated')">
+                        <div class="style-icon">✨</div>
+                        <div class="style-name">Animated QR</div>
+                        <div class="style-desc">Glowing dynamic matrix</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- GAS Web App URL & 2 About Buttons -->
+            <div class="frosted-card">
+                <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                    <img src="secure.gif" alt="" class="tiny-gif">
+                    <span>Enter GAS Web App URL</span>
+                </div>
+                <div style="font-size:0.72rem; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
+                    Payments will be fetched & verified directly through this Google Apps Script URL:
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="setGasUrl" class="glass-input" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+
+                <!-- 2 About GAS Pop-up Buttons -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                    <button class="btn-info-bubble" onclick="openGasModal('guide')">
+                        <img src="light.gif" alt="" class="tiny-gif">
+                        <span>GAS Code Guide</span>
+                    </button>
+                    <button class="btn-info-bubble" onclick="openGasModal('required')">
+                        <img src="star.gif" alt="" class="tiny-gif">
+                        <span>Required Features</span>
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn-proceed" style="padding:13px;" onclick="saveProfileSettings()">
+                <img src="tick.gif" alt="" class="tiny-gif">
+                <span>Save Profile & QR Settings</span>
+            </button>
+
+            <button class="btn-change-amt" style="width:100%; border-color:#fecaca; color:#dc2626; background:#fef2f2; margin-top:8px;" onclick="logoutGateway()">
+                <img src="off.gif" alt="" class="md-gif" onerror="this.src='block.gif'">
+                <span>Logout Session</span>
+            </button>
+        </div>
+
+        <!-- ================= SCREEN 9: SCAN VERIFYING ================= -->
         <div id="paymentVerifyScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
                 <img src="eye.gif" alt="Verifying" class="proc-gif">
             </div>
-            <h2 class="proc-title" id="verifyTitleText">Scanning Your Gmail...</h2>
-            <p class="proc-sub" id="verifySubText">Reading FamApp / Bank credit notification for UTR & Amount</p>
+            <h2 class="proc-title" id="verifyTitleText">Scanning Custom GAS & DB...</h2>
+            <p class="proc-sub" id="verifySubText">Validating UTR and credit notifications</p>
             <div class="proc-bar-wrap">
                 <div class="proc-bar-fill" id="verifyBar"></div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: REAL PAYMENT SUCCESS SCREEN ================= -->
+        <!-- ================= SCREEN 10: SUCCESS SCREEN ================= -->
         <div id="successScreen" class="result-screen-box">
             <div class="result-badge-wrap success-bg">
                 <img src="tick.gif" alt="Success" class="result-gif">
@@ -406,33 +754,28 @@
                 <img src="rocket.gif" alt="" class="btn-gif-icon">
             </h2>
             <div class="result-amt" id="successAmtText">₹1.0</div>
-            <p class="result-sub" id="successSubText">Verified via official FamApp email credit</p>
+            <p class="result-sub" id="successSubText">Verified & deposited directly into receiver UPI</p>
 
-            <!-- Real FamApp Receipt Card Match -->
             <div class="receipt-pill">
                 <div class="receipt-row">
                     <span>Status</span>
-                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif"> GMAIL VERIFIED</b>
+                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif"> VERIFIED</b>
                 </div>
                 <div class="receipt-row">
                     <span>Sender / Payer</span>
-                    <b id="receiptPayerName">Dipak Parihar</b>
+                    <b id="receiptPayerName">PRATIMA FARIKAR</b>
                 </div>
                 <div class="receipt-row">
                     <span>Transaction ID</span>
-                    <b id="receiptTxnId">FMPIB6812069247</b>
+                    <b id="receiptTxnId">FMPIB6811724682</b>
                 </div>
                 <div class="receipt-row">
                     <span>UTR / Ref No.</span>
-                    <b id="receiptUtrNumber">629041599431</b>
+                    <b id="receiptUtrNumber">629027145452</b>
                 </div>
                 <div class="receipt-row">
                     <span>Date & Time</span>
-                    <b id="receiptDateText">17 October 2026</b>
-                </div>
-                <div class="receipt-row" id="receiptBalanceRow" style="display:none;">
-                    <span>Updated Balance</span>
-                    <b id="receiptBalanceText">₹23.2</b>
+                    <b id="receiptDateText">Today</b>
                 </div>
             </div>
 
@@ -442,17 +785,17 @@
             </button>
         </div>
 
-        <!-- ================= SCREEN 6: REAL PAYMENT FAILED / NOT FOUND ================= -->
+        <!-- ================= SCREEN 11: FAILED SCREEN ================= -->
         <div id="failScreen" class="result-screen-box">
             <div class="result-badge-wrap fail-bg">
                 <img src="x.gif" alt="Failed" class="result-gif" onerror="this.src='block.gif';">
             </div>
             <h2 class="result-title" style="color: #dc2626;">
-                <span>No Credit Email Found</span>
+                <span>Payment Not Verified</span>
                 <img src="alert.gif" alt="" class="btn-gif-icon">
             </h2>
             <div class="result-amt" id="failAmtText">₹1.0</div>
-            <p class="result-sub" id="failReasonSub">No matching FamApp or UPI credit email was found in your logged-in Gmail.</p>
+            <p class="result-sub" id="failReasonSub">No matching credit entry found in linked GAS or Database.</p>
 
             <div class="receipt-pill">
                 <div class="receipt-row">
@@ -472,7 +815,7 @@
             <div class="qr-bottom-actions" style="width:100%;">
                 <button class="btn-paid" onclick="backToQrFromFail()">
                     <img src="light.gif" alt="" class="btn-gif-icon">
-                    <span>Re-check Gmail</span>
+                    <span>Try Again</span>
                 </button>
                 <button class="btn-change-amt" onclick="goToAmountScreen()">
                     <img src="moneybag.gif" alt="" class="tiny-gif">
@@ -481,145 +824,9 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 7: DEVELOPER API HUB ================= -->
-        <div id="apiScreen" class="scroll-page">
-            <div class="header-box">
-                <div class="top-trust-pill">
-                    <img src="live.gif" id="apiHeaderLiveGif" alt="" class="tiny-gif">
-                    <span id="apiHeaderStatusLabel">MintPay API v3.0 • Active</span>
-                    <img src="colourful-sparks.gif" alt="" class="tiny-gif">
-                </div>
-                <h1 class="title-text">
-                    <span>Developer API Hub</span>
-                    <img src="light.gif" alt="" class="btn-gif-icon">
-                </h1>
-                <p class="subtitle-text">Real Token, Endpoints, and Payment Verification</p>
-            </div>
-
-            <div class="frosted-card">
-                <div class="setting-row" style="padding-top:0; margin-bottom:10px;">
-                    <div class="setting-left">
-                        <img src="live.gif" id="apiToggleIconGif" alt="" class="md-gif">
-                        <div>
-                            <div style="font-size:0.88rem; font-weight:900;">API Gateway Access</div>
-                            <div style="font-size:0.7rem; font-weight:600; color:var(--text-muted);" id="apiToggleSubText">Requests are currently ENABLED</div>
-                        </div>
-                    </div>
-                    <div class="toggle-switch on" id="apiMasterSwitch" onclick="toggleUserApiActive()">
-                        <div class="toggle-knob"></div>
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Your Secret API Token</span>
-                    <div style="display:flex; gap:6px;">
-                        <button onclick="regenerateApiToken()" class="copy-pill" style="background:#fef3c7; color:#b45309; border:none; cursor:pointer;">↻ Regenerate</button>
-                        <button onclick="copyApiKey()" class="copy-pill" style="border:none; cursor:pointer;">Copy</button>
-                    </div>
-                </div>
-                <input type="text" id="merchantApiKeyInput" class="glass-input" value="mp_live_..." readonly style="font-family:'JetBrains Mono',monospace; font-size:0.78rem;">
-            </div>
-
-            <div class="frosted-card">
-                <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                    <img src="rocket.gif" alt="" class="md-gif">
-                    <span>1. Create Transaction Endpoint</span>
-                </div>
-                <div class="code-block" id="createEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#fde047;">https://mint-pay.vercel.app/api?token={token}&amount={amount}</div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <div class="input-group">
-                        <label class="input-label">Amount (₹)</label>
-                        <input type="number" id="apiCreateAmt" class="glass-input" value="1" oninput="updateApiEndpointPreviews()">
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Order Note</label>
-                        <input type="text" id="apiCreateNote" class="glass-input" value="MintPay_Order">
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                    <button class="btn-paid" style="padding:10px; font-size:0.78rem;" onclick="runCreateTxnApi(false)">
-                        <img src="light.gif" alt="" class="tiny-gif">
-                        <span>Test API</span>
-                    </button>
-                    <button class="btn-change-amt" style="padding:10px; font-size:0.78rem;" onclick="runCreateTxnApi(true)">
-                        <img src="eye.gif" alt="" class="tiny-gif">
-                        <span>Open QR Link</span>
-                    </button>
-                </div>
-
-                <pre class="code-block" id="apiCreateOutput">{ "status": "READY" }</pre>
-            </div>
-
-            <div class="frosted-card">
-                <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                    <img src="eye.gif" alt="" class="md-gif">
-                    <span>2. Check Status / Verify UTR</span>
-                </div>
-                <div class="code-block" id="checkEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#93c5fd;">https://mint-pay.vercel.app/api/status?token={token}&query={txn_or_utr}</div>
-
-                <div class="input-group">
-                    <label class="input-label">FamX ID (`FMPIB...`) or 12-Digit UTR</label>
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="apiCheckId" class="glass-input" value="FMPIB6812069247" placeholder="e.g. FMPIB... or UTR" oninput="updateApiEndpointPreviews()">
-                        <button class="btn-paid" style="width:auto; padding:0 16px; border-radius:14px; font-size:0.8rem;" onclick="runCheckStatusApi()">
-                            <img src="eye.gif" alt="" class="tiny-gif">
-                            <span>Check</span>
-                        </button>
-                    </div>
-                </div>
-
-                <pre class="code-block" id="apiCheckOutput">{ "status": "WAITING_INPUT" }</pre>
-            </div>
-        </div>
-
-        <!-- ================= SCREEN 8: PROFILE & SETTINGS ================= -->
-        <div id="profileScreen" class="scroll-page">
-            <div class="header-box">
-                <div class="badge-avatar-wrap" style="width:76px;height:76px;">
-                    <img src="logo.jpg" id="profAvatarImg" alt="Profile" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
-                    <img src="crown.gif" alt="" class="crown-gif">
-                </div>
-                <h1 class="title-text">
-                    <span id="profHeaderName">Sunny Kumar</span>
-                    <img src="tick.gif" alt="" class="name-tick-gif">
-                </h1>
-                <p class="subtitle-text" id="profHeaderUpi">VIP Merchant • sunnypro@fam</p>
-                <p class="subtitle-text" id="profHeaderEmail" style="color:#059669; font-weight:800; font-size:0.74rem; margin-top:2px;">Google: Connected</p>
-            </div>
-
-            <div class="frosted-card">
-                <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-                    <img src="star.gif" alt="" class="tiny-gif">
-                    <span>Merchant Receiving Configuration</span>
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label"><img src="crown.gif" alt="" class="tiny-gif"> Merchant Display Name</label>
-                    <input type="text" id="setMerchantName" class="glass-input" value="Sunny Kumar">
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label"><img src="moneybag.gif" alt="" class="tiny-gif"> Receiver UPI ID (VPA)</label>
-                    <input type="text" id="setMerchantUpi" class="glass-input" value="sunnypro@fam">
-                </div>
-
-                <button class="btn-proceed" style="padding:12px;" onclick="saveProfileSettings()">
-                    <img src="tick.gif" alt="" class="tiny-gif">
-                    <span>Save Merchant Profile</span>
-                </button>
-            </div>
-
-            <button class="btn-change-amt" style="width:100%; border-color:#fecaca; color:#dc2626; background:#fef2f2;" onclick="logoutGateway()">
-                <img src="off.gif" alt="" class="md-gif" onerror="this.src='block.gif'">
-                <span>Logout Merchant Session</span>
-            </button>
-        </div>
-
     </main>
 
-    <!-- BOTTOM FLOATING NAVIGATION BAR -->
+    <!-- ================= 5-BUTTON BOTTOM NAVIGATION DOCK ================= -->
     <nav class="bottom-nav-dock" id="bottomNavDock">
         <button class="nav-tab active" id="navHome" onclick="showScreen('home')">
             <img src="live.gif" alt="" class="md-gif">
@@ -627,7 +834,12 @@
         </button>
         <button class="nav-tab" id="navPay" onclick="showScreen('numpad')">
             <img src="moneybag.gif" alt="" class="md-gif">
-            <span>Create QR</span>
+            <span>Create Bill</span>
+        </button>
+        <!-- NEW CHECK PAYMENT BUTTON WITH check.gif -->
+        <button class="nav-tab" id="navCheck" onclick="showScreen('check')">
+            <img src="check.gif" alt="" class="md-gif">
+            <span>Check</span>
         </button>
         <button class="nav-tab" id="navApi" onclick="showScreen('api')">
             <img src="light.gif" alt="" class="md-gif">
@@ -635,14 +847,73 @@
         </button>
         <button class="nav-tab" id="navProfile" onclick="showScreen('profile')">
             <img src="secure.gif" alt="" class="md-gif">
-            <span>Profile</span>
+            <span>Settings</span>
         </button>
     </nav>
 
-    <!-- Global Toast -->
+    <!-- ================= MODAL 1: CONFIRM DELETE ALL TRANSACTIONS ================= -->
+    <div class="modal-backdrop" id="deleteAllModal">
+        <div class="modal-card">
+            <img src="x.gif" alt="" class="modal-top-gif" onerror="this.src='block.gif'">
+            <h3 class="modal-title" style="color:var(--danger);">Delete All Transactions?</h3>
+            <p class="modal-sub">
+                This will <b>permanently delete</b> every transaction record from the Realtime Database. This action cannot be undone!
+            </p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="btn-danger-confirm" onclick="confirmDeleteAllTransactions()">
+                    Yes, Permanently Delete All
+                </button>
+                <button class="modal-cancel-btn" onclick="closeDeleteAllModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: GAS CODE REQUIREMENTS / GUIDE POPUP ================= -->
+    <div class="modal-backdrop" id="gasInfoModal">
+        <div class="modal-card" style="max-width: 420px; text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-size:1.05rem; font-weight:900; color:var(--primary-deep);" id="gasModalTitle">
+                    GAS Code Requirements
+                </div>
+                <button onclick="closeGasModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;font-weight:900;">✕</button>
+            </div>
+            <div id="gasModalContent" style="font-size:0.76rem; color:var(--text-dark); line-height:1.5; max-height:360px; overflow-y:auto;">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: UTR / TXN ID ENTRY MODAL ================= -->
+    <div class="modal-backdrop" id="paidVerifyModal">
+        <div class="modal-card">
+            <img src="eye.gif" alt="Verify" class="modal-top-gif">
+            <h3 class="modal-title">Confirm & Verify Payment</h3>
+            <p class="modal-sub">
+                Enter the <b>12-Digit UTR</b> or <b>FamX Transaction ID</b> (e.g. <code>FMPIB6811724682</code>) to verify via your custom GAS backend:
+            </p>
+
+            <div class="input-group" style="margin-bottom: 12px;">
+                <input type="text" id="verifyUtrInput" class="glass-input" placeholder="e.g. 629027145452 or FMPIB..." style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
+            </div>
+
+            <div class="real-verify-actions">
+                <button class="btn-proceed" style="padding: 13px;" onclick="executeRealPaymentVerification()">
+                    <img src="secure.gif" alt="" class="btn-gif-icon">
+                    <span>Verify Payment Now</span>
+                </button>
+                <button class="modal-cancel-btn" onclick="closePaidVerificationModal()">
+                    Cancel & Return
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
     <div id="toast" class="toast-msg">Copied to Clipboard!</div>
 
-    <!-- Main Logic Script (Separated) -->
+    <!-- Logic Script (Separated) -->
     <script src="app.js"></script>
 </body>
 </html>
