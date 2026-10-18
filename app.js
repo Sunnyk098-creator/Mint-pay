@@ -1,5 +1,12 @@
 /**
- * MintPay 3D Engine - Fixed URL Routing, DP Sync, and Errorless Realtime Database
+ * MintPay 3D Engine - Complete Multi-User Creator-Linked Architecture
+ * Features:
+ * 1. Links Creator's Email, UPI, Photo, QR Style & GAS URL to each transaction
+ * 2. Hosted checkout displays Creator's details & Creator's chosen QR Style
+ * 3. Saves both UTR & Transaction ID into Database on payment verification
+ * 4. Verifies payments using the Creator's specific GAS Web App URL
+ * 5. Full-screen checkout view with 3D Tree first engine (No Navigation Bar)
+ * 6. Pure Raw JSON API responses
  */
 
 // =========================================================================
@@ -22,10 +29,10 @@ const db = firebase.database();
 const HOSTED_DOMAIN = "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
 
-// Default High-Res SVG Avatar (Guarantees no broken image icon)
+// High-Res Default SVG Avatar
 const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310b981'/><circle cx='50' cy='38' r='18' fill='%23ffffff'/><path d='M20,85 C20,62 35,58 50,58 C65,58 80,62 80,85 Z' fill='%23ffffff'/></svg>";
 
-// Current Active Session State
+// Local Logged-in Merchant Session State
 let CURRENT_UID = localStorage.getItem('mp_uid') || null;
 let MERCHANT = localStorage.getItem('mp_merchant') || "Sunny Kumar";
 let UPI_ID = localStorage.getItem('mp_upi') || "sunnypro@fam";
@@ -37,14 +44,22 @@ let USER_QR_STYLE = localStorage.getItem('mp_qr_style') || "tree";
 let USER_API_TOKEN = localStorage.getItem('mp_api_token') || generateRandomToken();
 let USER_API_ENABLED = localStorage.getItem('mp_api_enabled') !== 'false';
 
-// Dynamic Flow State
+// Active Transaction State (Links to the actual creator who made the link)
 let currentAmountStr = "0";
 let currentTxnNote = "MintPay_Order";
 let currentActiveTxnId = null;
 let activeBillPayload = null;
 let timerInterval = null;
 
-// DOM Helpers
+// Creator Context Variables for Hosted Checkout
+let activeCreatorGasUrl = DEFAULT_GAS_URL;
+let activeCreatorName = "Sunny Kumar";
+let activeCreatorUpi = "sunnypro@fam";
+let activeCreatorPhoto = DEFAULT_AVATAR_SVG;
+let activeCreatorQrStyle = "tree";
+let activeCreatorEmail = "merchant@mintpay.com";
+
+// DOM Elements
 const liveAmount = document.getElementById("liveAmount");
 const qrAmtHero = document.getElementById("qrAmtHero");
 const countdownTimer = document.getElementById("countdownTimer");
@@ -494,7 +509,7 @@ function renderDashboardData() {
 }
 
 // =========================================================================
-// 4. BILL INVOICE & SAFE URL CREATOR (CRASH FIXED)
+// 4. LINK GENERATOR WITH CREATOR DATA STORED IN DATABASE
 // =========================================================================
 function tapKey(key) {
     if (key === 'DEL') {
@@ -514,7 +529,7 @@ function applyPreset(val) {
     if (liveAmount) liveAmount.innerText = currentAmountStr;
 }
 
-// FIXED: Removed missing 'txnCustomNote' element lookup that was breaking the button
+// Generates payment link and binds Creator's Email, UPI, DP & GAS URL to DB
 function generateBillInvoice() {
     const num = parseFloat(currentAmountStr);
     if (!num || num <= 0) {
@@ -522,7 +537,6 @@ function generateBillInvoice() {
         return;
     }
 
-    // Default note since input field is removed from UI (API-only)
     currentTxnNote = "MintPay_Order";
     currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
 
@@ -534,8 +548,13 @@ function generateBillInvoice() {
         famx_id: "PENDING",
         payer_name: "Waiting...",
         amount: num,
+        creator_uid: CURRENT_UID || "anonymous",
+        creator_email: USER_EMAIL,
         merchant: MERCHANT,
         upi_id: UPI_ID,
+        creator_photo: USER_PHOTO,
+        creator_gas_url: USER_GAS_URL,
+        qr_style: USER_QR_STYLE,
         note: currentTxnNote,
         status: "PENDING",
         created_ms: Date.now(),
@@ -543,15 +562,19 @@ function generateBillInvoice() {
         pay_url: payUrl
     };
 
+    // Save locally for creator
     const list = getStoredTxns();
     list.unshift(activeBillPayload);
     saveStoredTxns(list);
+
+    // Save to Global Firebase Database so ANY visitor can fetch creator details
     db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
 
-    // Safely populate Invoice Preview elements
+    // Populate Invoice UI
     const billAmt = document.getElementById('billAmtText');
     const billTxn = document.getElementById('billTxnId');
     const billMerch = document.getElementById('billMerchantName');
+    const billEmail = document.getElementById('billMerchantEmail');
     const billUpi = document.getElementById('billMerchantUpi');
     const billUrl = document.getElementById('billShortUrl');
     const billDate = document.getElementById('billDateText');
@@ -559,6 +582,7 @@ function generateBillInvoice() {
     if (billAmt) billAmt.innerText = num;
     if (billTxn) billTxn.innerText = currentActiveTxnId;
     if (billMerch) billMerch.innerText = MERCHANT;
+    if (billEmail) billEmail.innerText = USER_EMAIL;
     if (billUpi) billUpi.innerText = UPI_ID;
     if (billUrl) billUrl.innerText = payUrl;
     if (billDate) billDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
@@ -592,14 +616,8 @@ function openHostedCheckoutPage() {
     window.location.href = activeBillPayload.pay_url;
 }
 
-function viewQrFromBill() {
-    if (!activeBillPayload) return;
-    currentAmountStr = String(activeBillPayload.amount);
-    startQrRenderingFlow();
-}
-
 // =========================================================================
-// 5. MULTI-STYLE QR RENDERING FLOW (FULL SCREEN MATCHING SCREENSHOT 5)
+// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT (MATCHES SCREENSHOT 5)
 // =========================================================================
 function startQrRenderingFlow() {
     const num = parseFloat(currentAmountStr);
@@ -611,27 +629,40 @@ function startQrRenderingFlow() {
     }
 
     setTimeout(() => {
-        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT)}&am=${num}&cu=INR`;
-        if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
+        // Build UPI intent using the CREATOR'S UPI ID and Name
+        const upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
         
-        // Show pure full-screen checkout without navigation bar
+        if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
+
+        // Populate Creator's Brand Details on Checkout Screen
+        const qrAvatar = document.getElementById('qrBrandAvatar');
+        const qrName = document.getElementById('qrMerchantName');
+        const qrUpi = document.getElementById('qrMerchantUpi');
+
+        if (qrAvatar) qrAvatar.src = activeCreatorPhoto || DEFAULT_AVATAR_SVG;
+        if (qrName) qrName.innerText = activeCreatorName;
+        if (qrUpi) qrUpi.innerText = activeCreatorUpi;
+        
+        // Show pure full-screen checkout without navigation bar (matches Screenshot 5)
         showScreen('qr');
-        renderSelectedQrType(upiUrl);
+        renderSelectedQrType(upiUrl, activeCreatorQrStyle);
         startCountdown(300);
     }, 1100);
 }
 
-function renderSelectedQrType(upiUrl) {
+function renderSelectedQrType(upiUrl, qrStyleType) {
     const treeCanvas = document.getElementById('treeQrCanvas');
     const staticBox = document.getElementById('staticQrBox');
     const toggleBtn = document.getElementById('toggleTreeBtn');
 
-    if (USER_QR_STYLE === 'tree') {
+    const style = qrStyleType || activeCreatorQrStyle || "tree";
+
+    if (style === 'tree') {
         if (treeCanvas) treeCanvas.style.display = 'block';
         if (staticBox) staticBox.style.display = 'none';
         if (toggleBtn) toggleBtn.style.display = 'inline-flex';
         initOrUpdate3DTreeQR(upiUrl);
-    } else if (USER_QR_STYLE === 'static') {
+    } else if (style === 'static') {
         if (treeCanvas) treeCanvas.style.display = 'none';
         if (staticBox) {
             staticBox.style.display = 'flex';
@@ -639,7 +670,7 @@ function renderSelectedQrType(upiUrl) {
             render2DStaticQr(upiUrl, staticBox, false);
         }
         if (toggleBtn) toggleBtn.style.display = 'none';
-    } else if (USER_QR_STYLE === 'animated') {
+    } else if (style === 'animated') {
         if (treeCanvas) treeCanvas.style.display = 'none';
         if (staticBox) {
             staticBox.style.display = 'flex';
@@ -678,7 +709,7 @@ function render2DStaticQr(url, container, isAnimated) {
 }
 
 // =========================================================================
-// 6. GAS VERIFICATION & MODALS
+// 6. GAS VERIFICATION (SAVES BOTH UTR & TXN ID & QUERIES CREATOR'S GAS)
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -715,8 +746,8 @@ function openGasModal(type) {
     status: "SUCCESS",
     verified: true,
     amount: p.amount,
-    utr: p.query || "629027145452",
-    transaction_id: "FMPIB" + Math.floor(1000000000 + Math.random()*9000000000),
+    utr: p.utr || p.query || "629027145452",
+    transaction_id: p.txn_id || "FMPIB" + Math.floor(1000000000 + Math.random()*9000000000),
     payer_name: "Verified Payer"
   })).setMimeType(ContentService.MimeType.JSON);
 }</div>
@@ -733,8 +764,10 @@ function closeGasModal() {
 }
 
 function openPaidVerificationModal() {
-    const inp = document.getElementById('verifyUtrInput');
-    if (inp) inp.value = "";
+    const utrInp = document.getElementById('verifyUtrInput');
+    const txnInp = document.getElementById('verifyTxnInput');
+    if (utrInp) utrInp.value = "";
+    if (txnInp) txnInp.value = "";
     const modal = document.getElementById('paidVerifyModal');
     if (modal) modal.classList.add('active');
 }
@@ -744,9 +777,19 @@ function closePaidVerificationModal() {
     if (modal) modal.classList.remove('active');
 }
 
+// Verifies using the Creator's GAS URL and persists BOTH UTR & Txn ID
 async function executeRealPaymentVerification() {
-    const inp = document.getElementById('verifyUtrInput');
-    const utrOrTxn = inp ? inp.value.trim() : "";
+    const utrEl = document.getElementById('verifyUtrInput');
+    const txnEl = document.getElementById('verifyTxnInput');
+
+    const utrVal = utrEl ? utrEl.value.trim() : "";
+    const txnVal = txnEl ? txnEl.value.trim() : "";
+
+    if (!utrVal && !txnVal) {
+        showToast("⚠️ Enter UTR or Transaction ID to verify!");
+        return;
+    }
+
     closePaidVerificationModal();
     if (timerInterval) clearInterval(timerInterval);
 
@@ -758,10 +801,14 @@ async function executeRealPaymentVerification() {
     }
 
     const num = parseFloat(currentAmountStr) || 0;
-    const gasEndpoint = USER_GAS_URL || DEFAULT_GAS_URL;
+    
+    // CRITICAL: Call the CREATOR'S GAS URL associated with this transaction
+    const targetGasUrl = activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
+    const targetMerchant = activeCreatorName || MERCHANT;
+    const queryParam = utrVal || txnVal;
 
     try {
-        const verifyUrl = `${gasEndpoint}?action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(utrOrTxn)}&merchant=${encodeURIComponent(MERCHANT)}`;
+        const verifyUrl = `${targetGasUrl}?action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(queryParam)}&utr=${encodeURIComponent(utrVal)}&txn_id=${encodeURIComponent(txnVal)}&merchant=${encodeURIComponent(targetMerchant)}`;
         const res = await fetch(verifyUrl, { method: 'GET', mode: 'cors' });
         const data = await res.json();
 
@@ -769,7 +816,12 @@ async function executeRealPaymentVerification() {
 
         setTimeout(() => {
             if (data && (data.verified === true || data.status === "SUCCESS")) {
-                finalizeTxnStatus('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_OK", data.payer_name || "PRATIMA FARIKAR", num);
+                const finalUtr = data.utr || utrVal || "VERIFIED";
+                const finalTxn = data.transaction_id || txnVal || "FMPIB_OK";
+                const finalPayer = data.payer_name || data.sender || "PRATIMA FARIKAR";
+
+                // Save BOTH UTR & Transaction ID into Database
+                finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
                 
                 const sAmt = document.getElementById('successAmtText');
                 const sPayer = document.getElementById('receiptPayerName');
@@ -778,21 +830,23 @@ async function executeRealPaymentVerification() {
                 const sDate = document.getElementById('receiptDateText');
 
                 if (sAmt) sAmt.innerText = `₹${data.amount || num}`;
-                if (sPayer) sPayer.innerText = data.payer_name || "PRATIMA FARIKAR";
-                if (sTxn) sTxn.innerText = data.transaction_id || currentActiveTxnId || "FMPIB6811724682";
-                if (sUtr) sUtr.innerText = data.utr || utrOrTxn || "629027145452";
+                if (sPayer) sPayer.innerText = finalPayer;
+                if (sTxn) sTxn.innerText = finalTxn;
+                if (sUtr) sUtr.innerText = finalUtr;
                 if (sDate) sDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                 
                 showScreen('success');
             } else {
-                finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
+                finalizeTxnStatus('FAILED', utrVal || 'NOT_FOUND', txnVal || 'NONE', 'Unconfirmed', num);
                 const fAmt = document.getElementById('failAmtText');
-                const fQuery = document.getElementById('failSearchedQuery');
+                const fUtr = document.getElementById('failSearchedUtr');
+                const fTxn = document.getElementById('failSearchedTxnId');
                 const fSub = document.getElementById('failReasonSub');
 
                 if (fAmt) fAmt.innerText = `₹${num}`;
-                if (fQuery) fQuery.innerText = utrOrTxn || `₹${num}`;
-                if (fSub) fSub.innerText = data.message || "Payment not verified.";
+                if (fUtr) fUtr.innerText = utrVal || "None";
+                if (fTxn) fTxn.innerText = txnVal || "None";
+                if (fSub) fSub.innerText = data.message || "No matching credit entry found in creator backend.";
                 showScreen('fail');
             }
         }, 400);
@@ -800,19 +854,22 @@ async function executeRealPaymentVerification() {
     } catch (e) {
         if (verifyBar) verifyBar.style.width = "100%";
         setTimeout(() => {
-            finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
+            finalizeTxnStatus('FAILED', utrVal || 'NOT_FOUND', txnVal || 'NONE', 'Unconfirmed', num);
             const fAmt = document.getElementById('failAmtText');
-            const fQuery = document.getElementById('failSearchedQuery');
+            const fUtr = document.getElementById('failSearchedUtr');
+            const fTxn = document.getElementById('failSearchedTxnId');
             const fSub = document.getElementById('failReasonSub');
 
             if (fAmt) fAmt.innerText = `₹${num}`;
-            if (fQuery) fQuery.innerText = utrOrTxn || "None";
-            if (fSub) fSub.innerText = "Check verification backend URL deployment.";
+            if (fUtr) fUtr.innerText = utrVal || "None";
+            if (fTxn) fTxn.innerText = txnVal || "None";
+            if (fSub) fSub.innerText = "Check creator verification backend URL deployment.";
             showScreen('fail');
         }, 500);
     }
 }
 
+// Saves BOTH UTR and Transaction ID into Database permanently
 function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
     const list = getStoredTxns();
     const target = currentActiveTxnId ? list.find(t => t.txn_id === currentActiveTxnId) : list[0];
@@ -822,10 +879,25 @@ function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
         target.famx_id = famxId;
         target.payer_name = payerName;
         saveStoredTxns(list);
-        if (CURRENT_UID) {
-            db.ref(`users/${CURRENT_UID}/transactions/${target.txn_id}`).update({ status, utr, famx_id: famxId, payer_name: payerName });
-        }
-        db.ref('transactions/' + target.txn_id).update({ status, utr, famx_id: famxId, payer_name: payerName });
+    }
+    
+    // Always persist to Firebase Global Transactions so Creator & Buyer both see it updated
+    if (currentActiveTxnId) {
+        db.ref('transactions/' + currentActiveTxnId).update({
+            status: status,
+            utr: utr,
+            famx_id: famxId,
+            payer_name: payerName
+        });
+    }
+
+    if (CURRENT_UID && target) {
+        db.ref(`users/${CURRENT_UID}/transactions/${target.txn_id}`).update({
+            status: status,
+            utr: utr,
+            famx_id: famxId,
+            payer_name: payerName
+        });
     }
 }
 
@@ -855,7 +927,7 @@ async function executePaymentCheckSearch() {
     const inp = document.getElementById('checkPaymentSearchInput');
     const q = inp ? inp.value.trim() : "";
     if (!q) {
-        showToast("⚠️ Enter Txn ID or UTR to search");
+        showToast("⚠️ Enter Txn ID, FamX ID, or UTR to search");
         return;
     }
 
@@ -884,6 +956,7 @@ async function executePaymentCheckSearch() {
         const amt = document.getElementById('searchResAmt');
         const txnId = document.getElementById('searchResTxnId');
         const utr = document.getElementById('searchResUtr');
+        const email = document.getElementById('searchResEmail');
         const time = document.getElementById('searchResTime');
 
         if (title) title.innerText = "Transaction Record";
@@ -895,6 +968,7 @@ async function executePaymentCheckSearch() {
         if (amt) amt.innerText = `₹${match.amount}`;
         if (txnId) txnId.innerText = match.txn_id;
         if (utr) utr.innerText = match.utr || "PENDING";
+        if (email) email.innerText = match.creator_email || USER_EMAIL;
         if (time) time.innerText = match.timestamp || "Today";
         showToast("✅ Transaction Found!");
     } else {
@@ -903,6 +977,7 @@ async function executePaymentCheckSearch() {
         const amt = document.getElementById('searchResAmt');
         const txnId = document.getElementById('searchResTxnId');
         const utr = document.getElementById('searchResUtr');
+        const email = document.getElementById('searchResEmail');
         const time = document.getElementById('searchResTime');
 
         if (title) title.innerText = "No Record Found";
@@ -910,12 +985,13 @@ async function executePaymentCheckSearch() {
         if (amt) amt.innerText = "₹0";
         if (txnId) txnId.innerText = q;
         if (utr) utr.innerText = "None";
+        if (email) email.innerText = "None";
         if (time) time.innerText = "-";
         showToast("⚠️ No matching transaction found");
     }
 }
 
-// Developer API Endpoints (Strict Raw JSON Execution)
+// Developer API Endpoints (Strict Raw JSON Execution with Creator Details)
 window.MintPayEngine = {
     createTxn: function(amount, note = "MintPay_Order") {
         if (!USER_API_ENABLED) {
@@ -931,8 +1007,13 @@ window.MintPayEngine = {
             famx_id: "PENDING",
             payer_name: "Waiting...",
             amount: num,
+            creator_uid: CURRENT_UID || "anonymous",
+            creator_email: USER_EMAIL,
             merchant: MERCHANT,
             upi_id: UPI_ID,
+            creator_photo: USER_PHOTO,
+            creator_gas_url: USER_GAS_URL,
+            qr_style: USER_QR_STYLE,
             note: note,
             status: "PENDING",
             created_ms: Date.now(),
@@ -950,6 +1031,7 @@ window.MintPayEngine = {
             status: "SUCCESS",
             data: {
                 name: MERCHANT,
+                creator_email: USER_EMAIL,
                 upi_id: UPI_ID,
                 amount: num,
                 note: note,
@@ -975,6 +1057,7 @@ window.MintPayEngine = {
                 famx_id: "PENDING",
                 payer_name: "Waiting...",
                 amount: 1,
+                creator_email: USER_EMAIL,
                 merchant: MERCHANT,
                 upi_id: UPI_ID,
                 note: "3D_Tree_Checkout",
@@ -1067,16 +1150,96 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE
+// 8. THREE.JS 3D TREE FIRST ENGINE (DIRECT FROM ATTACHED FILE)
 // =========================================================================
 let qrScene, qrCamera, qrRenderer;
 let qrModuleGroup, treeWorldGroup, foliageCrownGroup;
 let qrModuleMeshes = [];
+let foliageSprites = [];
+let grassTufts = [];
 let isTreeView = true;
 let morphProgress = 1;
 let animationRunning = false;
 
-const QR_DARK_GREENS = ['#1b5e12', '#266e17', '#32821d', '#3e9123', '#4fa32d', '#5fb537', '#206314'];
+const QR_DARK_GREENS = [
+    '#1b5e12', '#266e17', '#32821d', '#3e9123',
+    '#4fa32d', '#5fb537', '#206314', '#688f26'
+];
+const QR_FINDER_GREEN = '#1e5e13';
+const QR_LIGHT_TILES = ['#f7f5ee', '#efece2', '#e7e3d6'];
+
+function isFinderPattern(r, c, count) {
+    const inTL = r < 7 && c < 7;
+    const inTR = r < 7 && c >= count - 7;
+    const inBL = r >= count - 7 && c < 7;
+    return inTL || inTR || inBL;
+}
+
+function createICQRFoliageTexture(baseCol, lightCol, darkCol) {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 128;
+    const ctx = c.getContext('2d');
+
+    const drawLeafBlade = (x, y, rx, ry, rot, color) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        ctx.moveTo(-rx, 0);
+        ctx.quadraticCurveTo(0, -ry * 1.2, rx, 0);
+        ctx.quadraticCurveTo(0, ry * 1.2, -rx, 0);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+    };
+
+    for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        drawLeafBlade(64 + Math.cos(a) * 24, 66 + Math.sin(a) * 20, 22, 11, a + 0.25, darkCol);
+    }
+    for (let i = 0; i < 11; i++) {
+        const a = (i / 11) * Math.PI * 2 + 0.15;
+        const d = 14 + (i % 3) * 8;
+        drawLeafBlade(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 21, 10.5, a, baseCol);
+    }
+    for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + 0.4;
+        drawLeafBlade(64 + Math.cos(a) * 13, 56 + Math.sin(a) * 12, 17, 8.5, a - 0.15, lightCol);
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    return tex;
+}
+
+function createCornerGrassTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 128;
+    const ctx = c.getContext('2d');
+
+    const cols = ['#38800e', '#4d9c18', '#64b824', '#7ed433', '#448f14'];
+    for (let i = 0; i < 22; i++) {
+        const sx = 18 + (i / 22) * 92;
+        const tx = sx + (Math.random() - 0.5) * 42;
+        const ty = 12 + Math.random() * 38;
+        const cx = (sx + tx) / 2 + (Math.random() - 0.5) * 12;
+
+        ctx.beginPath();
+        ctx.moveTo(sx - 4.5, 124);
+        ctx.quadraticCurveTo(cx, 66, tx, ty);
+        ctx.quadraticCurveTo(cx + 5, 66, sx + 4.5, 124);
+        ctx.closePath();
+        ctx.fillStyle = cols[i % cols.length];
+        ctx.fill();
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    return tex;
+}
 
 function initOrUpdate3DTreeQR(upiString) {
     const canvas = document.getElementById('treeQrCanvas');
@@ -1085,14 +1248,21 @@ function initOrUpdate3DTreeQR(upiString) {
 
     if (!qrRenderer) {
         qrScene = new THREE.Scene();
+
         const frustum = 18.6;
-        qrCamera = new THREE.OrthographicCamera(-frustum / 2, frustum / 2, frustum / 2, -frustum / 2, -50, 100);
+        qrCamera = new THREE.OrthographicCamera(
+            -frustum / 2, frustum / 2,
+            frustum / 2, -frustum / 2,
+            -50, 100
+        );
+
         qrRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
         qrRenderer.setSize(size, size);
         qrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        qrRenderer.setClearColor(0x000000, 0);
 
         qrScene.add(new THREE.AmbientLight(0xffffff, 0.96));
-        const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.45);
+        const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.42);
         sunLight.position.set(12, 26, 16);
         qrScene.add(sunLight);
 
@@ -1104,7 +1274,7 @@ function initOrUpdate3DTreeQR(upiString) {
         qrScene.add(foliageCrownGroup);
         qrScene.add(qrModuleGroup);
 
-        build3DTreeEnvironment();
+        buildSecondImageICQRTree();
     }
 
     isTreeView = true;
@@ -1125,26 +1295,35 @@ function initOrUpdate3DTreeQR(upiString) {
     const cellSize = gridSpan / count;
     const halfSpan = gridSpan / 2;
 
+    const quietPadGeo = new THREE.BoxGeometry(gridSpan + 1.2, 0.08, gridSpan + 1.2);
+    const quietPadMat = new THREE.MeshBasicMaterial({ color: '#f5f2e8', transparent: true, opacity: 0 });
+    const quietPad = new THREE.Mesh(quietPadGeo, quietPadMat);
+    quietPad.position.set(0, -0.08, 0);
+    quietPad.userData = { isQuietPad: true };
+    qrModuleGroup.add(quietPad);
+
     const moduleGeo = new THREE.BoxGeometry(cellSize * 1.01, 0.14, cellSize * 1.01);
 
     for (let r = 0; r < count; r++) {
         for (let c = 0; c < count; c++) {
             const isDark = qr.isDark(r, c);
+            const isFinder = isFinderPattern(r, c, count);
+
             const qrX = (c + 0.5) * cellSize - halfSpan;
             const qrZ = (r + 0.5) * cellSize - halfSpan;
             const qrY = isDark ? 0.08 : 0.0;
 
-            const mat = new THREE.MeshBasicMaterial({
-                color: isDark ? QR_DARK_GREENS[(r * 7 + c * 11) % QR_DARK_GREENS.length] : '#f8fafc',
-                transparent: true,
-                opacity: 1
-            });
+            let colorHex = isDark
+                ? (isFinder ? QR_FINDER_GREEN : QR_DARK_GREENS[(r * 11 + c * 17) % QR_DARK_GREENS.length])
+                : QR_LIGHT_TILES[(r * 5 + c * 7) % QR_LIGHT_TILES.length];
+
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
             const mesh = new THREE.Mesh(moduleGeo, mat);
 
             const nx = qrX / halfSpan;
             const nz = qrZ / halfSpan;
             const dist = Math.sqrt(nx * nx + nz * nz);
-            const angle = Math.atan2(nz, nx);
+            const angle = Math.atan2(nz, nx) + ((r + c) % 7) * 0.15;
             const rad = Math.min(dist * 2.8, 3.0) * 0.55;
 
             const treeX = isDark ? Math.cos(angle) * rad : qrX * 0.5;
@@ -1152,7 +1331,11 @@ function initOrUpdate3DTreeQR(upiString) {
             const treeY = isDark ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4 : -0.5;
 
             mesh.position.set(treeX, treeY, treeZ);
-            mesh.userData = { isDark, qrX, qrY, qrZ, treeX, treeY, treeZ, phase: r * 0.4 + c * 0.5 };
+            mesh.userData = {
+                isDark, isFinder, qrX, qrY, qrZ, treeX, treeY, treeZ,
+                phase: (r * 0.45) + (c * 0.55),
+                speed: 2.2 + ((r + c) % 4) * 0.3
+            };
 
             qrModuleGroup.add(mesh);
             qrModuleMeshes.push(mesh);
@@ -1165,17 +1348,129 @@ function initOrUpdate3DTreeQR(upiString) {
     }
 }
 
-function build3DTreeEnvironment() {
-    const slabGeo = new THREE.BoxGeometry(10.8, 0.5, 10.8);
+function buildSecondImageICQRTree() {
+    const patioSpan = 10.4;
+    const halfPatio = patioSpan / 2;
+
+    const slabGeo = new THREE.BoxGeometry(patioSpan + 0.45, 0.5, patioSpan + 0.45);
     const slabMat = new THREE.MeshLambertMaterial({ color: '#b8b3a8' });
     const slabMesh = new THREE.Mesh(slabGeo, slabMat);
     slabMesh.position.set(0, -1.85, 0);
     treeWorldGroup.add(slabMesh);
 
+    const tilesPerSide = 14;
+    const tileStep = patioSpan / tilesPerSide;
+    const tileGeo = new THREE.BoxGeometry(tileStep * 0.94, 0.12, tileStep * 0.94);
+    const stonePalette = ['#e5e1d7', '#d8d3c6', '#cfcabd', '#ebe7dd'];
+
+    for (let r = 0; r < tilesPerSide; r++) {
+        for (let c = 0; c < tilesPerSide; c++) {
+            const tMat = new THREE.MeshLambertMaterial({ color: stonePalette[(r + c) % stonePalette.length] });
+            const tMesh = new THREE.Mesh(tileGeo, tMat);
+            tMesh.position.set((c + 0.5) * tileStep - halfPatio, -1.58, (r + 0.5) * tileStep - halfPatio);
+            treeWorldGroup.add(tMesh);
+        }
+    }
+
+    const grassTex = createCornerGrassTexture();
+    const grassGeo = new THREE.PlaneGeometry(1.2, 1.1);
+
+    const addGrassTuft = (gx, gz, scaleMul) => {
+        const gMat = new THREE.MeshBasicMaterial({ map: grassTex, transparent: true, alphaTest: 0.14, side: THREE.DoubleSide });
+        const tuft = new THREE.Mesh(grassGeo, gMat);
+        tuft.position.set(gx, -1.12, gz);
+        tuft.rotation.y = Math.PI / 4 + (Math.random() - 0.5) * 0.45;
+        const s = (0.75 + Math.random() * 0.45) * scaleMul;
+        tuft.scale.set(s, s, s);
+        tuft.userData = { baseRotZ: (Math.random() - 0.5) * 0.12, phase: Math.random() * Math.PI * 2 };
+        treeWorldGroup.add(tuft);
+        grassTufts.push(tuft);
+    };
+
+    const corners = [
+        { cx: halfPatio - 0.9, cz: halfPatio - 0.9 },
+        { cx: -halfPatio + 0.9, cz: halfPatio - 0.9 },
+        { cx: halfPatio - 0.9, cz: -halfPatio + 0.9 },
+        { cx: -halfPatio + 0.9, cz: -halfPatio + 0.9 }
+    ];
+    corners.forEach(cn => {
+        for (let k = 0; k < 16; k++) {
+            addGrassTuft(cn.cx + (Math.random() - 0.5) * 1.7, cn.cz + (Math.random() - 0.5) * 1.7, 1.05);
+        }
+    });
+
     const barkMat = new THREE.MeshLambertMaterial({ color: '#54341e' });
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.48, 5.4, 10), barkMat);
-    trunk.position.set(0, 1.0, 0);
-    treeWorldGroup.add(trunk);
+    const mainTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.48, 5.4, 10), barkMat);
+    mainTrunk.position.set(0, 1.0, 0);
+    treeWorldGroup.add(mainTrunk);
+
+    const branchList = [
+        { x: -1.1, y: 1.9, z: 0.9, rx: 0.52, rz: 0.68, len: 3.1, r: 0.16 },
+        { x: -0.95, y: 3.1, z: 0.6, rx: 0.35, rz: 0.58, len: 3.8, r: 0.19 },
+        { x: 1.05, y: 3.2, z: -0.6, rx: -0.35, rz: -0.58, len: 3.8, r: 0.19 },
+        { x: 0.75, y: 3.3, z: 0.85, rx: 0.45, rz: -0.40, len: 3.4, r: 0.17 },
+        { x: -0.75, y: 3.4, z: -0.85, rx: -0.45, rz: 0.40, len: 3.4, r: 0.17 },
+        { x: -0.2, y: 4.9, z: 0.1, rx: 0.08, rz: 0.12, len: 3.9, r: 0.16 }
+    ];
+
+    branchList.forEach(b => {
+        const br = new THREE.Mesh(new THREE.CylinderGeometry(b.r * 0.38, b.r, b.len, 8), barkMat);
+        br.position.set(b.x, b.y, b.z);
+        br.rotation.x = b.rx;
+        br.rotation.z = b.rz;
+        treeWorldGroup.add(br);
+    });
+
+    const texSunlit = createICQRFoliageTexture('#8cd738', '#aae856', '#68b31e');
+    const texLush   = createICQRFoliageTexture('#7bc62b', '#98e048', '#569c14');
+    const texShade  = createICQRFoliageTexture('#65ad1b', '#83cc35', '#44820c');
+    const leafTextures = [texSunlit, texLush, texShade];
+
+    const boughClusters = [
+        { cx: -0.3, cy: 7.3, cz: 0.2, rx: 1.0, ry: 1.2, rz: 1.0, count: 28 },
+        { cx: 0.6,  cy: 6.7, cz: -0.3, rx: 1.2, ry: 1.1, rz: 1.2, count: 26 },
+        { cx: -1.8, cy: 5.3, cz: 1.1, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
+        { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
+        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 },
+        { cx: -2.7, cy: 3.6, cz: 1.6, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
+        { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 }
+    ];
+
+    const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
+    let idx = 0;
+    boughClusters.forEach(m => {
+        for (let i = 0; i < m.count; i++) {
+            idx++;
+            const tex = leafTextures[idx % 3];
+            const pMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.12, side: THREE.DoubleSide });
+            const puff = new THREE.Mesh(puffGeo, pMat);
+
+            const u = Math.random();
+            const v = Math.random();
+            const theta = u * 2.0 * Math.PI;
+            const phi = Math.acos(2.0 * v - 1.0);
+            const r = Math.cbrt(Math.random());
+
+            const lx = m.cx + r * Math.sin(phi) * Math.cos(theta) * m.rx;
+            const ly = m.cy + r * Math.cos(phi) * m.ry;
+            const lz = m.cz + r * Math.sin(phi) * Math.sin(theta) * m.rz;
+
+            puff.position.set(lx, ly, lz);
+            puff.rotation.y = Math.PI / 4 + (Math.random() - 0.5) * 0.4;
+            puff.rotation.x = -0.32 + (Math.random() - 0.5) * 0.3;
+            puff.rotation.z = (Math.random() - 0.5) * 0.55;
+
+            const baseScale = 0.68 + Math.random() * 0.48;
+            puff.userData = {
+                baseX: lx, baseY: ly, baseZ: lz,
+                baseRotZ: puff.rotation.z, baseScale,
+                phase: Math.random() * Math.PI * 2,
+                windSpeed: 1.9 + Math.random() * 1.3
+            };
+            foliageCrownGroup.add(puff);
+            foliageSprites.push(puff);
+        }
+    });
 }
 
 function toggleTreeMode() {
@@ -1186,7 +1481,7 @@ function toggleTreeMode() {
 function updateToggleUI() {
     const btnText = document.getElementById('toggleBtnText');
     const btnGif = document.getElementById('toggleBtnGif');
-    if (btnText) btnText.innerText = isTreeView ? "Tap tree to view QR code" : "Tap QR to view 3D Tree";
+    if (btnText) btnText.innerText = isTreeView ? "Tap the tree to see QR code" : "Tap QR to see the 3D Tree";
     if (btnGif) btnGif.src = isTreeView ? "eye.gif" : "light.gif";
 }
 
@@ -1202,21 +1497,66 @@ function animateTreeQR() {
     const camY = 24.0 - morphProgress * 12.8;
     const camZ = morphProgress * 14.5;
 
-    qrCamera.up.set(0, morphProgress, -(1 - morphProgress)).normalize();
+    const upY = morphProgress;
+    const upZ = -(1 - morphProgress);
+    qrCamera.up.set(0, upY, upZ).normalize();
     qrCamera.position.set(camX, camY, camZ);
     qrCamera.lookAt(0, morphProgress * 2.35, 0);
 
     const treeAlpha = Math.max(0, (morphProgress - 0.15) / 0.85);
-    treeWorldGroup.visible = treeAlpha > 0.01;
-    foliageCrownGroup.visible = treeAlpha > 0.01;
+    const treeVis = treeAlpha > 0.01;
+    treeWorldGroup.visible = treeVis;
+    foliageCrownGroup.visible = treeVis;
 
+    if (treeVis) {
+        treeWorldGroup.scale.setScalar(Math.max(0.001, treeAlpha));
+        treeWorldGroup.position.y = (1 - treeAlpha) * -2.2;
+
+        for (let i = 0; i < foliageSprites.length; i++) {
+            const s = foliageSprites[i];
+            const d = s.userData;
+            const wave = Math.sin(clockTime * d.windSpeed + d.phase);
+            s.position.x = d.baseX + wave * 0.11 * treeAlpha;
+            s.position.y = d.baseY + Math.cos(clockTime * d.windSpeed + d.phase) * 0.07 * treeAlpha;
+            s.rotation.z = d.baseRotZ + wave * 0.14;
+            s.scale.setScalar(d.baseScale * treeAlpha);
+        }
+
+        for (let i = 0; i < grassTufts.length; i++) {
+            const g = grassTufts[i];
+            g.rotation.z = g.userData.baseRotZ + Math.sin(clockTime * 2.3 + g.userData.phase) * 0.11;
+        }
+    }
+
+    qrModuleGroup.children.forEach(ch => {
+        if (ch.userData && ch.userData.isQuietPad) {
+            ch.material.opacity = Math.max(0, 1 - morphProgress * 2.5);
+            ch.visible = ch.material.opacity > 0.02;
+        }
+    });
+
+    const qrVisibility = Math.max(0, 1 - morphProgress * 1.15);
     for (let i = 0; i < qrModuleMeshes.length; i++) {
         const m = qrModuleMeshes[i];
         const d = m.userData;
         const bx = d.qrX + (d.treeX - d.qrX) * morphProgress;
         const by = d.qrY + (d.treeY - d.qrY) * morphProgress;
         const bz = d.qrZ + (d.treeZ - d.qrZ) * morphProgress;
-        m.position.set(bx, by, bz);
+
+        if (d.isDark) {
+            const wave = Math.sin(clockTime * d.speed + d.phase);
+            const swayAmp = d.isFinder ? 0 : (0.008 * (1 - morphProgress));
+            m.position.set(bx + wave * swayAmp, by, bz + wave * swayAmp);
+            m.rotation.set(0, 0, 0);
+            const pulseScale = d.isFinder ? 1.0 : (0.96 + 0.05 * Math.sin(clockTime * 2.4 + d.phase));
+            const finalScale = Math.max(0.001, pulseScale * (1 - morphProgress * 0.95));
+            m.scale.set(finalScale, 1, finalScale);
+            m.visible = morphProgress < 0.92;
+        } else {
+            m.position.set(bx, by, bz);
+            m.material.opacity = qrVisibility;
+            m.visible = qrVisibility > 0.02;
+        }
     }
 
     qrRenderer.render(qrScene, qrCamera);
@@ -1251,7 +1591,7 @@ if (bgCanvas) {
 }
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP (FIXED FULL SCREEN CHECKOUT)
+// 9. NAVIGATION, TOAST & APP BOOTSTRAP (FULL-SCREEN CHECKOUT FIXED)
 // =========================================================================
 function showScreen(name) {
     const screens = [
@@ -1267,7 +1607,7 @@ function showScreen(name) {
     const dock = document.getElementById('bottomNavDock');
     const shell = document.getElementById('appShell');
     
-    // Screens that must NEVER show the bottom navigation bar (Full-screen view)
+    // Screens where bottom navigation bar must be COMPLETELY hidden (Screenshot 5 mode)
     const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
 
     if (hideDock.includes(name)) {
@@ -1363,10 +1703,10 @@ function startCountdown(seconds) {
 }
 
 function copyUPI() {
-    navigator.clipboard.writeText(UPI_ID);
+    navigator.clipboard.writeText(activeCreatorUpi || UPI_ID);
     const tip = document.getElementById('copyTip');
     if (tip) tip.innerText = "Copied!";
-    showToast("UPI ID Copied: " + UPI_ID);
+    showToast("UPI ID Copied: " + (activeCreatorUpi || UPI_ID));
     setTimeout(() => { if (tip) tip.innerText = "Copy"; }, 2000);
 }
 
@@ -1387,7 +1727,7 @@ function showToast(text) {
     setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-// Bootstrap Handler: Direct Link Handler (Matches ?id=TXN_... or ?pay=...)
+// Universal Bootstrap Handler: Loads Hosted Link & Sets Creator Context
 (async function initMintPay() {
     syncUIWithState();
 
@@ -1396,23 +1736,35 @@ function showToast(text) {
     const params = new URLSearchParams(normalized);
     const hostedId = params.get('id') || params.get('pay') || params.get('txn-id');
 
+    // If a payment link is opened (e.g. https://mint-pay.vercel.app/?id=TXN_...)
     if (hostedId) {
         showToast("🔍 Loading hosted payment...");
         try {
             const snap = await db.ref('transactions/' + hostedId).once('value');
             if (snap.exists()) {
                 const data = snap.val();
+                
+                // Bind Creator's data to checkout context
+                activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
+                activeCreatorName = data.merchant || "Sunny Kumar";
+                activeCreatorUpi = data.upi_id || "sunnypro@fam";
+                activeCreatorPhoto = data.creator_photo || DEFAULT_AVATAR_SVG;
+                activeCreatorQrStyle = data.qr_style || "tree";
+                activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
+
                 currentAmountStr = String(data.amount);
                 currentActiveTxnId = data.txn_id;
-                MERCHANT = data.merchant || MERCHANT;
-                UPI_ID = data.upi_id || UPI_ID;
-                syncUIWithState();
+
+                // Open directly in Full Screen 3D Tree QR (Screenshot 5 mode)
                 startQrRenderingFlow();
                 return;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn("Hosted fetch error:", e);
+        }
     }
 
+    // Default route check
     if (localStorage.getItem('mp_logged_in') === 'true' && CURRENT_UID) {
         showScreen('home');
         pingUserGasBackend(false);
