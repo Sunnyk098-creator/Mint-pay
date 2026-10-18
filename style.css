@@ -5,7 +5,7 @@
     --danger: #ef4444;
     --danger-dark: #dc2626;
     --glass-surface: rgba(255, 255, 255, 0.65);
-    --glass-card: rgba(255, 255, 255, 0.84);
+    --glass-card: rgba(255, 255, 255, 0.88);
     --glass-border: rgba(255, 255, 255, 0.95);
     --text-dark: #0f172a;
     --text-muted: #475569;
@@ -54,33 +54,26 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 12px 14px 74px;
+    padding: 12px 14px 76px;
     overflow-y: auto;
     overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .app-shell.no-bottom-pad {
-    padding-bottom: 18px;
+    padding: 14px !important;
 }
 
-/* SCREEN CONTAINERS - STRICT VERTICAL COLUMN (NEVER ROW) */
+/* SCREEN CONTAINERS - STRICT VERTICAL STACK */
 .screen-view,
-.scroll-page,
-#qrScreen,
-#homeScreen,
-#billScreen,
-#numpadScreen,
-#authScreen,
-#checkPaymentScreen,
-#apiScreen,
-#profileScreen {
+.scroll-page {
     width: 100% !important;
     max-width: 100% !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
     box-sizing: border-box !important;
-    animation: softIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: softIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .screen-view {
@@ -96,8 +89,33 @@ html, body {
 }
 
 @keyframes softIn {
-    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* =========================================================================
+   CHECKOUT SCREEN 5: FULL-SCREEN WHITE ROUNDED CARD (NO NAV BAR)
+   ========================================================================= */
+.checkout-fullscreen-card {
+    display: none;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 28px) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-radius: 34px !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 16px 40px -10px rgba(16, 185, 129, 0.2) !important;
+    padding: 18px 16px 20px !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    z-index: 50 !important;
+}
+
+.app-shell.no-bottom-pad #bottomNavDock {
+    display: none !important;
 }
 
 /* Header & Trust Pill */
@@ -236,23 +254,23 @@ html, body {
     backdrop-filter: blur(16px);
     border: 2px solid var(--glass-border);
     border-radius: 24px;
-    padding: 12px 18px;
+    padding: 14px 18px;
     display: flex;
     justify-content: center;
     align-items: baseline;
-    margin: 4px 0 6px;
+    margin: 6px 0 10px;
     box-shadow: 0 10px 25px -8px rgba(16, 185, 129, 0.14), inset 0 2px 3px rgba(255, 255, 255, 1);
 }
 
 .currency-symbol {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 900;
     color: var(--primary-dark);
     margin-right: 6px;
 }
 
 .live-amount-text {
-    font-size: 2.6rem;
+    font-size: 2.8rem;
     font-weight: 900;
     color: var(--text-dark);
     letter-spacing: -1px;
@@ -264,15 +282,15 @@ html, body {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     width: 100%;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .chip-btn {
     background: var(--glass-card);
     border: 1.5px solid var(--glass-border);
     border-radius: 14px;
-    padding: 8px 0;
-    font-size: 0.82rem;
+    padding: 9px 0;
+    font-size: 0.85rem;
     font-weight: 800;
     color: var(--primary-deep);
     cursor: pointer;
@@ -290,19 +308,19 @@ html, body {
 .numpad-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 9px;
+    gap: 10px;
     width: 100%;
     flex: 1;
-    max-height: 270px;
-    margin: 4px 0 8px;
+    max-height: 290px;
+    margin: 4px 0 12px;
 }
 
 .pad-btn {
     background: var(--glass-card);
     backdrop-filter: blur(12px);
     border: 1.5px solid var(--glass-border);
-    border-radius: 18px;
-    font-size: 1.45rem;
+    border-radius: 20px;
+    font-size: 1.48rem;
     font-weight: 800;
     color: var(--text-dark);
     cursor: pointer;
@@ -325,12 +343,12 @@ html, body {
 /* Buttons */
 .btn-proceed {
     width: 100%;
-    padding: 14px 20px;
+    padding: 15px 20px;
     border: 1.5px solid rgba(255, 255, 255, 0.45);
     border-radius: 20px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #ffffff;
-    font-size: 1rem;
+    font-size: 1.02rem;
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 12px 26px -6px rgba(16, 185, 129, 0.5);
@@ -492,7 +510,7 @@ html, body {
 .share-btn { background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1d4ed8; }
 .open-btn { background: #fefce8; border: 1.5px solid #fef08a; color: #a16207; }
 
-/* QR STYLE SELECTOR (FIXED: MODERN CLEAN CARDS) */
+/* QR STYLE SELECTOR */
 .qr-style-picker-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -563,11 +581,7 @@ html, body {
 
 .btn-upload-dp-pill:active { transform: scale(0.96); }
 
-/* QR SCREEN COMPONENTS (STRICT VERTICAL STACK) */
-#qrScreen {
-    gap: 12px !important;
-}
-
+/* QR SCREEN 5 SPECIFIC COMPONENTS (MATCHES SCREENSHOT 5) */
 .user-brand-bar {
     display: flex !important;
     flex-direction: row !important;
@@ -576,7 +590,7 @@ html, body {
     background: var(--glass-card);
     backdrop-filter: blur(18px);
     border: 2px solid var(--glass-border);
-    padding: 9px 12px;
+    padding: 10px 14px;
     border-radius: 20px;
     box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.14);
     width: 100% !important;
@@ -611,22 +625,52 @@ html, body {
 .brand-upi { font-size: 0.74rem; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 5px; cursor: pointer; margin-top: 1px; }
 
 .copy-pill { background: #d1fae5; color: #047857; font-size: 0.65rem; padding: 2px 7px; border-radius: 6px; font-weight: 800; }
-.timer-capsule { display: inline-flex; align-items: center; gap: 5px; background: rgba(254, 226, 226, 0.9); border: 1px solid #fecaca; color: #dc2626; padding: 4px 9px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
-.amount-banner-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--glass-card); border: 1.5px solid var(--glass-border); padding: 5px 20px; border-radius: 99px; }
-.hero-qr-amt { font-size: 1.9rem; font-weight: 900; color: var(--text-dark); letter-spacing: -0.8px; }
 
+/* Timer capsule matching Screenshot 5 (pill shaped pink/red on right) */
+.timer-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(254, 226, 226, 0.85);
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+/* Screenshot 5 Large Centered Amount */
+.hero-amount-center-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.hero-qr-amt-large {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -1.5px;
+    line-height: 1;
+}
+
+/* 3D Tree Stage Centered */
 .open-tree-stage {
     position: relative;
-    width: 310px;
-    height: 310px;
+    width: 300px;
+    height: 300px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     background: transparent;
+    margin: 2px auto;
 }
 
-#treeQrCanvas { width: 310px !important; height: 310px !important; display: block; }
+#treeQrCanvas { width: 300px !important; height: 300px !important; display: block; }
 
 .static-qr-container {
     width: 250px;
@@ -642,34 +686,30 @@ html, body {
 
 .static-qr-container canvas { width: 100% !important; height: 100% !important; }
 
-.animated-qr-matrix canvas {
-    animation: pulseMatrix 2s infinite alternate ease-in-out;
-}
-
-@keyframes pulseMatrix {
-    0% { filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4)); transform: scale(0.98); }
-    100% { filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.8)); transform: scale(1.02); }
-}
-
+/* Screenshot 5 Pill Toggle Button */
 .toggle-tree-pill {
-    background: var(--glass-card);
-    backdrop-filter: blur(14px);
-    border: 1.5px solid var(--glass-border);
-    color: #334155;
+    background: rgba(241, 245, 249, 0.85);
+    border: 1.5px solid #e2e8f0;
+    color: #475569;
     font-size: 0.82rem;
     font-weight: 800;
-    padding: 8px 20px;
+    padding: 9px 24px;
     border-radius: 99px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 }
 
+.toggle-tree-pill:active { transform: scale(0.96); background: #ffffff; }
+
+/* Screenshot 5 Action Buttons: ✓ Paid & ← Change Amount */
 .qr-bottom-actions {
     display: grid !important;
-    grid-template-columns: 1.25fr 1fr !important;
-    gap: 9px !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
 }
@@ -677,43 +717,49 @@ html, body {
 .btn-paid {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #ffffff;
-    border: 1.5px solid rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
+    border: none;
+    font-size: 0.95rem;
     font-weight: 800;
-    padding: 12px 14px;
-    border-radius: 16px;
+    padding: 14px;
+    border-radius: 18px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 10px 24px -4px rgba(16, 185, 129, 0.45);
 }
 
+.btn-paid:active { transform: scale(0.96); }
+
 .btn-change-amt {
-    background: var(--glass-card);
-    border: 1.5px solid var(--glass-border);
-    color: var(--text-dark);
-    font-size: 0.82rem;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.88rem;
     font-weight: 800;
-    padding: 12px 10px;
-    border-radius: 16px;
+    padding: 14px;
+    border-radius: 18px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 6px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
 }
+
+.btn-change-amt:active { transform: scale(0.96); background: #f8fafc; }
 
 /* Inputs & Form Elements */
 .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; text-align: left; width: 100%; }
 .input-label { font-size: 0.74rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 5px; padding-left: 3px; }
 .glass-input {
     width: 100%;
-    padding: 11px 13px;
+    padding: 12px 14px;
     border-radius: 14px;
     border: 1.5px solid #d1fae5;
     background: rgba(255, 255, 255, 0.94);
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--text-dark);
     outline: none;
@@ -784,7 +830,7 @@ html, body {
 
 .btn-info-bubble:active { transform: scale(0.96); }
 
-/* BOTTOM NAVIGATION BAR: PERMANENTLY LOCKED TO 1 ROW */
+/* BOTTOM NAVIGATION BAR: 1 ROW LOCKED (Updated label: Create Link) */
 .bottom-nav-dock {
     position: fixed;
     bottom: 8px;
@@ -797,7 +843,7 @@ html, body {
     -webkit-backdrop-filter: blur(24px);
     border: 1.5px solid #ffffff;
     border-radius: 22px;
-    padding: 5px 4px;
+    padding: 6px 4px;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -815,13 +861,13 @@ html, body {
     background: transparent;
     border: none;
     border-radius: 14px;
-    padding: 6px 2px;
+    padding: 5px 2px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 800;
     color: var(--text-muted);
     cursor: pointer;
@@ -899,8 +945,32 @@ html, body {
 .receipt-row { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600; }
 .receipt-row b { color: var(--text-dark); font-weight: 800; display: inline-flex; align-items: center; gap: 5px; word-break: break-all; }
 
-/* Code Blocks & Toggles */
-.code-block { width: 100%; background: #0f172a; color: #a7f3d0; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 11px; border-radius: 13px; overflow-x: auto; text-align: left; line-height: 1.45; user-select: text; border: 1px solid #334155; white-space: pre-wrap; word-break: break-all; }
+/* CODE BLOCKS & RAW JSON DISPLAY */
+.code-block {
+    width: 100%;
+    background: #090d16;
+    color: #a7f3d0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 12px;
+    border-radius: 13px;
+    overflow-x: auto;
+    text-align: left;
+    line-height: 1.45;
+    user-select: text;
+    border: 1px solid #1e293b;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.code-block.raw-json {
+    color: #38bdf8 !important;
+    background: #020617 !important;
+    border: 1px solid #0f172a !important;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
 .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(203, 213, 225, 0.45); }
 .setting-row:last-child { border-bottom: none; }
 .setting-left { display: flex; align-items: center; gap: 10px; font-size: 0.84rem; font-weight: 800; color: var(--text-dark); }
