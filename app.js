@@ -3,10 +3,10 @@
  * Features:
  * 1. Links Creator's Email, UPI, Photo, QR Style & GAS URL to each transaction
  * 2. Hosted checkout displays Creator's details & Creator's chosen QR Style
- * 3. Saves both UTR & Transaction ID into Database on payment verification
- * 4. Verifies payments using the Creator's specific GAS Web App URL
- * 5. Full-screen checkout view with 3D Tree first engine (No Navigation Bar)
- * 6. Pure Raw JSON API responses
+ * 3. Single Unified UTR / Transaction ID input with smart auto-detection
+ * 4. Verifies payments using the Creator's specific GAS Web App URL (with live DB lookup)
+ * 5. Full-screen checkout view with 3D Tree first engine (No Navigation Bar on Payment Links)
+ * 6. Pure Raw JSON API responses & async Firebase status lookup
  */
 
 // =========================================================================
@@ -26,7 +26,9 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-const HOSTED_DOMAIN = "https://mint-pay.vercel.app";
+const HOSTED_DOMAIN = window.location.origin && window.location.origin !== "null"
+    ? window.location.origin
+    : "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
 
 // High-Res Default SVG Avatar
@@ -50,8 +52,13 @@ let currentTxnNote = "MintPay_Order";
 let currentActiveTxnId = null;
 let activeBillPayload = null;
 let timerInterval = null;
+let qrStartTimeMs = 0;
+
+// True when opened via Payment Link (?id=..., ?amount=..., etc.) so Nav Bar never appears
+let IS_HOSTED_CHECKOUT_MODE = false;
 
 // Creator Context Variables for Hosted Checkout
+let activeCreatorUid = null;
 let activeCreatorGasUrl = DEFAULT_GAS_URL;
 let activeCreatorName = "Sunny Kumar";
 let activeCreatorUpi = "sunnypro@fam";
@@ -178,6 +185,16 @@ async function handleDatabaseSignup() {
         };
 
         await db.ref('users/' + newUid).set(newUserData);
+        await db.ref('tokens/' + apiTok).set({
+            uid: newUid,
+            merchantName: name,
+            email: email,
+            upiId: upi,
+            photo: DEFAULT_AVATAR_SVG,
+            gasUrl: DEFAULT_GAS_URL,
+            qrStyle: "tree",
+            apiEnabled: true
+        });
 
         CURRENT_UID = newUid;
         MERCHANT = name;
@@ -246,8 +263,16 @@ async function handleDatabaseLogin() {
         USER_QR_STYLE = matchedUser.qrStyle || "tree";
         USER_API_TOKEN = matchedUser.apiToken || generateRandomToken();
         USER_API_ENABLED = matchedUser.apiEnabled !== undefined ? matchedUser.apiEnabled : true;
-        persistSession();
 
+        // Sync user's transactions from Firebase if available
+        if (matchedUser.transactions) {
+            const txArr = Array.isArray(matchedUser.transactions)
+                ? matchedUser.transactions.filter(Boolean)
+                : Object.values(matchedUser.transactions);
+            localStorage.setItem('mp_transactions', JSON.stringify(txArr));
+        }
+
+        persistSession();
         syncUIWithState();
         showScreen('home');
         showToast("👋 Welcome back, " + MERCHANT + "!");
@@ -302,6 +327,7 @@ function handleProfileImageUpload(event) {
         if (CURRENT_UID) {
             try {
                 await db.ref('users/' + CURRENT_UID).update({ photo: base64Data });
+                await db.ref('tokens/' + USER_API_TOKEN).update({ photo: base64Data });
             } catch (err) {}
         }
         showToast("✅ Profile DP Updated Everywhere!");
@@ -372,6 +398,7 @@ function handleQrStyleChange(styleKey, doSave = true) {
         localStorage.setItem('mp_qr_style', USER_QR_STYLE);
         if (CURRENT_UID) {
             db.ref('users/' + CURRENT_UID).update({ qrStyle: USER_QR_STYLE });
+            db.ref('tokens/' + USER_API_TOKEN).update({ qrStyle: USER_QR_STYLE });
         }
         showToast(`✨ Selected Style: ${styleKey.toUpperCase()} QR`);
     }
@@ -400,17 +427,28 @@ async function saveProfileSettings() {
     persistSession();
 
     if (CURRENT_UID) {
-        await db.ref('users/' + CURRENT_UID).update({
-            merchantName: MERCHANT,
-            phone: USER_PHONE,
-            upiId: UPI_ID,
-            gasUrl: USER_GAS_URL,
-            qrStyle: USER_QR_STYLE
-        });
+        try {
+            await db.ref('users/' + CURRENT_UID).update({
+                merchantName: MERCHANT,
+                phone: USER_PHONE,
+                upiId: UPI_ID,
+                gasUrl: USER_GAS_URL,
+                qrStyle: USER_QR_STYLE
+            });
+            await db.ref('tokens/' + USER_API_TOKEN).update({
+                uid: CURRENT_UID,
+                merchantName: MERCHANT,
+                upiId: UPI_ID,
+                gasUrl: USER_GAS_URL,
+                qrStyle: USER_QR_STYLE,
+                photo: USER_PHOTO,
+                apiEnabled: USER_API_ENABLED
+            });
+        } catch (e) {}
     }
 
     syncUIWithState();
-    showToast("✅ Profile Saved Successfully!");
+    showToast("✅ Profile & Creator GAS URL Saved!");
 }
 
 // =========================================================================
@@ -445,15 +483,20 @@ async function confirmDeleteAllTransactions() {
 function getStoredTxns() {
     try {
         const raw = localStorage.getItem('mp_transactions');
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+            if (parsed && typeof parsed === 'object') return Object.values(parsed).filter(Boolean);
+        }
     } catch (e) {}
     return [];
 }
 
 function saveStoredTxns(list) {
-    localStorage.setItem('mp_transactions', JSON.stringify(list));
+    const cleanList = (list || []).filter(Boolean);
+    localStorage.setItem('mp_transactions', JSON.stringify(cleanList));
     if (CURRENT_UID) {
-        db.ref('users/' + CURRENT_UID + '/transactions').set(list.slice(0, 30));
+        db.ref('users/' + CURRENT_UID + '/transactions').set(cleanList.slice(0, 30));
     }
     renderDashboardData();
 }
@@ -495,7 +538,7 @@ function renderDashboardData() {
             <div class="txn-left">
                 <img src="${iconGif}" alt="" class="md-gif" onerror="this.src='tick.gif'">
                 <div class="txn-meta">
-                    <div class="txn-id-text">${t.note && t.note !== 'None' ? t.note : t.txn_id}</div>
+                    <div class="txn-id-text">${t.payer_name && t.payer_name !== 'Waiting...' ? t.payer_name : (t.note && t.note !== 'None' ? t.note : t.txn_id)}</div>
                     <div class="txn-time-text">${t.timestamp} • ID: ${t.txn_id}</div>
                 </div>
             </div>
@@ -540,7 +583,17 @@ function generateBillInvoice() {
     currentTxnNote = "MintPay_Order";
     currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
 
-    const payUrl = `${HOSTED_DOMAIN}/?id=${currentActiveTxnId}`;
+    const baseClean = window.location.href.split('?')[0];
+    const payUrl = `${baseClean}?id=${currentActiveTxnId}`;
+
+    // Also set Creator Context in case creator opens checkout directly in same session
+    activeCreatorUid = CURRENT_UID || "anonymous";
+    activeCreatorGasUrl = USER_GAS_URL || DEFAULT_GAS_URL;
+    activeCreatorName = MERCHANT;
+    activeCreatorUpi = UPI_ID;
+    activeCreatorPhoto = USER_PHOTO;
+    activeCreatorQrStyle = USER_QR_STYLE;
+    activeCreatorEmail = USER_EMAIL;
 
     activeBillPayload = {
         txn_id: currentActiveTxnId,
@@ -553,7 +606,7 @@ function generateBillInvoice() {
         merchant: MERCHANT,
         upi_id: UPI_ID,
         creator_photo: USER_PHOTO,
-        creator_gas_url: USER_GAS_URL,
+        creator_gas_url: USER_GAS_URL || DEFAULT_GAS_URL,
         qr_style: USER_QR_STYLE,
         note: currentTxnNote,
         status: "PENDING",
@@ -567,7 +620,7 @@ function generateBillInvoice() {
     list.unshift(activeBillPayload);
     saveStoredTxns(list);
 
-    // Save to Global Firebase Database so ANY visitor can fetch creator details
+    // Save to Global Firebase Database so ANY visitor can fetch creator's GAS URL & UPI details
     db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
 
     // Populate Invoice UI
@@ -613,14 +666,28 @@ function shareBillPaymentLink() {
 
 function openHostedCheckoutPage() {
     if (!activeBillPayload) return;
-    window.location.href = activeBillPayload.pay_url;
+    // Open directly in Full-Screen Checkout Mode (No Navigation Bar)
+    IS_HOSTED_CHECKOUT_MODE = true;
+    document.body.classList.add('checkout-link-mode');
+    activeCreatorUid = activeBillPayload.creator_uid;
+    activeCreatorGasUrl = activeBillPayload.creator_gas_url || USER_GAS_URL || DEFAULT_GAS_URL;
+    activeCreatorName = activeBillPayload.merchant || MERCHANT;
+    activeCreatorUpi = activeBillPayload.upi_id || UPI_ID;
+    activeCreatorPhoto = activeBillPayload.creator_photo || USER_PHOTO;
+    activeCreatorQrStyle = activeBillPayload.qr_style || USER_QR_STYLE;
+    activeCreatorEmail = activeBillPayload.creator_email || USER_EMAIL;
+    currentAmountStr = String(activeBillPayload.amount);
+    currentActiveTxnId = activeBillPayload.txn_id;
+    startQrRenderingFlow();
 }
 
 // =========================================================================
-// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT (MATCHES SCREENSHOT 5)
+// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT (NO NAVIGATION BAR)
 // =========================================================================
 function startQrRenderingFlow() {
     const num = parseFloat(currentAmountStr);
+    qrStartTimeMs = Date.now();
+
     showScreen('processing');
     const procBar = document.getElementById('procBar');
     if (procBar) {
@@ -631,19 +698,21 @@ function startQrRenderingFlow() {
     setTimeout(() => {
         // Build UPI intent using the CREATOR'S UPI ID and Name
         const upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
-        
+
         if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
 
         // Populate Creator's Brand Details on Checkout Screen
         const qrAvatar = document.getElementById('qrBrandAvatar');
         const qrName = document.getElementById('qrMerchantName');
         const qrUpi = document.getElementById('qrMerchantUpi');
+        const failUpi = document.getElementById('failMerchantUpi');
 
         if (qrAvatar) qrAvatar.src = activeCreatorPhoto || DEFAULT_AVATAR_SVG;
         if (qrName) qrName.innerText = activeCreatorName;
         if (qrUpi) qrUpi.innerText = activeCreatorUpi;
-        
-        // Show pure full-screen checkout without navigation bar (matches Screenshot 5)
+        if (failUpi) failUpi.innerText = activeCreatorUpi;
+
+        // Show pure full-screen checkout without navigation bar
         showScreen('qr');
         renderSelectedQrType(upiUrl, activeCreatorQrStyle);
         startCountdown(300);
@@ -709,7 +778,7 @@ function render2DStaticQr(url, container, isAnimated) {
 }
 
 // =========================================================================
-// 6. GAS VERIFICATION (SAVES BOTH UTR & TXN ID & QUERIES CREATOR'S GAS)
+// 6. GAS VERIFICATION (USES CREATOR'S SPECIFIC GAS URL & UNIFIED INPUT)
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -746,8 +815,8 @@ function openGasModal(type) {
     status: "SUCCESS",
     verified: true,
     amount: p.amount,
-    utr: p.utr || p.query || "629027145452",
-    transaction_id: p.txn_id || "FMPIB" + Math.floor(1000000000 + Math.random()*9000000000),
+    utr: p.utr || p.query,
+    transaction_id: p.txn_id || p.query,
     payer_name: "Verified Payer"
   })).setMimeType(ContentService.MimeType.JSON);
 }</div>
@@ -777,18 +846,51 @@ function closePaidVerificationModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// Verifies using the Creator's GAS URL and persists BOTH UTR & Txn ID
+// Resolves the exact Creator's GAS URL from Firebase before verifying
+async function resolveCreatorGasUrl() {
+    // 1. Check active transaction record in Firebase
+    if (currentActiveTxnId) {
+        try {
+            const txSnap = await db.ref('transactions/' + currentActiveTxnId).once('value');
+            if (txSnap.exists()) {
+                const txData = txSnap.val();
+                if (txData.creator_uid && txData.creator_uid !== "anonymous") {
+                    activeCreatorUid = txData.creator_uid;
+                    // Also check creator's live user profile in case they updated their GAS URL recently
+                    const usrSnap = await db.ref('users/' + txData.creator_uid).once('value');
+                    if (usrSnap.exists() && usrSnap.val().gasUrl) {
+                        activeCreatorGasUrl = usrSnap.val().gasUrl;
+                        return activeCreatorGasUrl;
+                    }
+                }
+                if (txData.creator_gas_url) {
+                    activeCreatorGasUrl = txData.creator_gas_url;
+                    return activeCreatorGasUrl;
+                }
+            }
+        } catch (e) {}
+    }
+    return activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
+}
+
+// Verifies using the Creator's specific GAS URL and persists BOTH UTR & Txn ID
 async function executeRealPaymentVerification() {
     const utrEl = document.getElementById('verifyUtrInput');
     const txnEl = document.getElementById('verifyTxnInput');
 
-    const utrVal = utrEl ? utrEl.value.trim() : "";
-    const txnVal = txnEl ? txnEl.value.trim() : "";
+    const rawUtr = utrEl ? utrEl.value.trim() : "";
+    const rawTxn = txnEl ? txnEl.value.trim() : "";
+    const combinedInput = rawUtr || rawTxn;
 
-    if (!utrVal && !txnVal) {
-        showToast("⚠️ Enter UTR or Transaction ID to verify!");
+    if (!combinedInput) {
+        showToast("⚠️ Enter 12-Digit UTR or FamX Transaction ID!");
         return;
     }
+
+    // Smart auto-detection: check if user entered a 10-16 digit UTR or alphanumeric Transaction ID (e.g. FMPIB...)
+    const isNumericUtr = /^\d{10,16}$/.test(combinedInput);
+    const utrVal = isNumericUtr ? combinedInput : (rawUtr !== rawTxn ? rawUtr : "");
+    const txnVal = !isNumericUtr ? combinedInput : (rawTxn !== rawUtr ? rawTxn : "");
 
     closePaidVerificationModal();
     if (timerInterval) clearInterval(timerInterval);
@@ -797,32 +899,36 @@ async function executeRealPaymentVerification() {
     const verifyBar = document.getElementById('verifyBar');
     if (verifyBar) {
         verifyBar.style.width = "0%";
-        setTimeout(() => { verifyBar.style.width = "75%"; }, 80);
+        setTimeout(() => { verifyBar.style.width = "78%"; }, 80);
     }
 
     const num = parseFloat(currentAmountStr) || 0;
-    
-    // CRITICAL: Call the CREATOR'S GAS URL associated with this transaction
-    const targetGasUrl = activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
+
+    // Fetch Creator's latest GAS URL from Firebase so it ALWAYS verifies against the Creator's Gmail
+    const targetGasUrl = await resolveCreatorGasUrl();
     const targetMerchant = activeCreatorName || MERCHANT;
-    const queryParam = utrVal || txnVal;
 
     try {
-        const verifyUrl = `${targetGasUrl}?action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(queryParam)}&utr=${encodeURIComponent(utrVal)}&txn_id=${encodeURIComponent(txnVal)}&merchant=${encodeURIComponent(targetMerchant)}`;
-        const res = await fetch(verifyUrl, { method: 'GET', mode: 'cors' });
+        const sep = targetGasUrl.includes('?') ? '&' : '?';
+        const verifyUrl = `${targetGasUrl}${sep}action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(combinedInput)}&utr=${encodeURIComponent(utrVal || combinedInput)}&txn_id=${encodeURIComponent(txnVal || combinedInput)}&startTime=${qrStartTimeMs}&merchant=${encodeURIComponent(targetMerchant)}`;
+
+        const res = await fetch(verifyUrl, {
+            method: 'GET',
+            redirect: 'follow'
+        });
         const data = await res.json();
 
         if (verifyBar) verifyBar.style.width = "100%";
 
         setTimeout(() => {
             if (data && (data.verified === true || data.status === "SUCCESS")) {
-                const finalUtr = data.utr || utrVal || "VERIFIED";
-                const finalTxn = data.transaction_id || txnVal || "FMPIB_OK";
-                const finalPayer = data.payer_name || data.sender || "PRATIMA FARIKAR";
+                const finalUtr = data.utr || (isNumericUtr ? combinedInput : "VERIFIED");
+                const finalTxn = data.transaction_id || (!isNumericUtr ? combinedInput : (currentActiveTxnId || "FMPIB_VERIFIED"));
+                const finalPayer = data.payer_name || data.sender || "Verified UPI Payer";
 
-                // Save BOTH UTR & Transaction ID into Database
+                // Save BOTH UTR & Transaction ID into Creator's & Global Database
                 finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
-                
+
                 const sAmt = document.getElementById('successAmtText');
                 const sPayer = document.getElementById('receiptPayerName');
                 const sTxn = document.getElementById('receiptTxnId');
@@ -833,20 +939,20 @@ async function executeRealPaymentVerification() {
                 if (sPayer) sPayer.innerText = finalPayer;
                 if (sTxn) sTxn.innerText = finalTxn;
                 if (sUtr) sUtr.innerText = finalUtr;
-                if (sDate) sDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                
+                if (sDate) sDate.innerText = data.date_str || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
                 showScreen('success');
             } else {
-                finalizeTxnStatus('FAILED', utrVal || 'NOT_FOUND', txnVal || 'NONE', 'Unconfirmed', num);
+                finalizeTxnStatus('FAILED', isNumericUtr ? combinedInput : 'NOT_FOUND', !isNumericUtr ? combinedInput : 'NONE', 'Unconfirmed', num);
                 const fAmt = document.getElementById('failAmtText');
                 const fUtr = document.getElementById('failSearchedUtr');
                 const fTxn = document.getElementById('failSearchedTxnId');
                 const fSub = document.getElementById('failReasonSub');
 
                 if (fAmt) fAmt.innerText = `₹${num}`;
-                if (fUtr) fUtr.innerText = utrVal || "None";
-                if (fTxn) fTxn.innerText = txnVal || "None";
-                if (fSub) fSub.innerText = data.message || "No matching credit entry found in creator backend.";
+                if (fUtr) fUtr.innerText = combinedInput;
+                if (fTxn) fTxn.innerText = combinedInput;
+                if (fSub) fSub.innerText = (data && data.message) ? data.message : "No matching credit entry found in creator's Gmail.";
                 showScreen('fail');
             }
         }, 400);
@@ -854,23 +960,23 @@ async function executeRealPaymentVerification() {
     } catch (e) {
         if (verifyBar) verifyBar.style.width = "100%";
         setTimeout(() => {
-            finalizeTxnStatus('FAILED', utrVal || 'NOT_FOUND', txnVal || 'NONE', 'Unconfirmed', num);
+            finalizeTxnStatus('FAILED', combinedInput, combinedInput, 'Unconfirmed', num);
             const fAmt = document.getElementById('failAmtText');
             const fUtr = document.getElementById('failSearchedUtr');
             const fTxn = document.getElementById('failSearchedTxnId');
             const fSub = document.getElementById('failReasonSub');
 
             if (fAmt) fAmt.innerText = `₹${num}`;
-            if (fUtr) fUtr.innerText = utrVal || "None";
-            if (fTxn) fTxn.innerText = txnVal || "None";
-            if (fSub) fSub.innerText = "Check creator verification backend URL deployment.";
+            if (fUtr) fUtr.innerText = combinedInput;
+            if (fTxn) fTxn.innerText = combinedInput;
+            if (fSub) fSub.innerText = "Could not connect to Creator's GAS URL. Ensure GAS Web App is deployed with 'Anyone' access.";
             showScreen('fail');
         }, 500);
     }
 }
 
-// Saves BOTH UTR and Transaction ID into Database permanently
-function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
+// Saves BOTH UTR and Transaction ID into Global DB + Creator's User DB permanently
+async function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
     const list = getStoredTxns();
     const target = currentActiveTxnId ? list.find(t => t.txn_id === currentActiveTxnId) : list[0];
     if (target) {
@@ -880,24 +986,38 @@ function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
         target.payer_name = payerName;
         saveStoredTxns(list);
     }
-    
-    // Always persist to Firebase Global Transactions so Creator & Buyer both see it updated
+
+    // 1. Update Global Transactions Node
     if (currentActiveTxnId) {
-        db.ref('transactions/' + currentActiveTxnId).update({
-            status: status,
-            utr: utr,
-            famx_id: famxId,
-            payer_name: payerName
-        });
+        try {
+            await db.ref('transactions/' + currentActiveTxnId).update({
+                status: status,
+                utr: utr,
+                famx_id: famxId,
+                payer_name: payerName,
+                verified_at: new Date().toISOString()
+            });
+        } catch (e) {}
     }
 
-    if (CURRENT_UID && target) {
-        db.ref(`users/${CURRENT_UID}/transactions/${target.txn_id}`).update({
-            status: status,
-            utr: utr,
-            famx_id: famxId,
-            payer_name: payerName
-        });
+    // 2. Also update the Creator's transaction list inside users/{creator_uid}/transactions
+    const targetCreatorUid = activeCreatorUid || CURRENT_UID;
+    if (targetCreatorUid && targetCreatorUid !== "anonymous" && currentActiveTxnId) {
+        try {
+            const creatorTxSnap = await db.ref(`users/${targetCreatorUid}/transactions`).once('value');
+            if (creatorTxSnap.exists()) {
+                let cList = creatorTxSnap.val();
+                if (Array.isArray(cList)) {
+                    cList = cList.map(item => {
+                        if (item && item.txn_id === currentActiveTxnId) {
+                            return { ...item, status, utr, famx_id: famxId, payer_name: payerName };
+                        }
+                        return item;
+                    });
+                    await db.ref(`users/${targetCreatorUid}/transactions`).set(cList);
+                }
+            }
+        } catch (e) {}
     }
 }
 
@@ -906,11 +1026,13 @@ async function pingUserGasBackend(showToastMsg) {
     const pillText = document.getElementById('homeApiStatusText');
 
     try {
-        const res = await fetch(`${USER_GAS_URL}?action=status`);
+        const sep = USER_GAS_URL.includes('?') ? '&' : '?';
+        const res = await fetch(`${USER_GAS_URL}${sep}action=ping`, { method: 'GET', redirect: 'follow' });
         if (res.ok) {
-            if (sub) sub.innerText = "Automated Verification Active";
+            const data = await res.json();
+            if (sub) sub.innerText = data.merchant_email ? `Connected: ${data.merchant_email}` : "Automated Verification Active";
             if (pillText) pillText.innerText = "ONLINE";
-            if (showToastMsg) showToast("✅ Verification Engine Live!");
+            if (showToastMsg) showToast("✅ Creator GAS Verifier Live!");
             return;
         }
     } catch (e) {}
@@ -940,25 +1062,59 @@ async function executePaymentCheckSearch() {
         (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
     );
 
+    // Search Global Firebase transactions by ID, UTR, or FamX ID
     if (!match) {
         try {
-            const snap = await db.ref('transactions/' + q).once('value');
-            if (snap.exists()) match = snap.val();
+            const directSnap = await db.ref('transactions/' + q).once('value');
+            if (directSnap.exists()) {
+                match = directSnap.val();
+            } else {
+                const allSnap = await db.ref('transactions').limitToLast(50).once('value');
+                const allTx = allSnap.val() || {};
+                for (const k in allTx) {
+                    const item = allTx[k];
+                    if ((item.utr && item.utr === q) ||
+                        (item.famx_id && item.famx_id.toLowerCase() === q.toLowerCase()) ||
+                        (item.txn_id && item.txn_id.toLowerCase() === q.toLowerCase())) {
+                        match = item;
+                        break;
+                    }
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Also fallback to querying Creator's GAS URL directly if not found in DB
+    if (!match) {
+        try {
+            const sep = USER_GAS_URL.includes('?') ? '&' : '?';
+            const gasRes = await fetch(`${USER_GAS_URL}${sep}action=status&query=${encodeURIComponent(q)}`, { method: 'GET', redirect: 'follow' });
+            const gasData = await gasRes.json();
+            if (gasData && gasData.verified) {
+                match = {
+                    txn_id: gasData.transaction_id || q,
+                    utr: gasData.utr || q,
+                    amount: gasData.amount || 0,
+                    creator_email: USER_EMAIL,
+                    status: "COMPLETED",
+                    timestamp: gasData.date_str || "Verified via Gmail"
+                };
+            }
         } catch (e) {}
     }
 
     const box = document.getElementById('checkSearchResultBox');
     if (box) box.style.display = 'block';
 
-    if (match) {
-        const title = document.getElementById('searchResultTitle');
-        const pill = document.getElementById('searchResultStatusPill');
-        const amt = document.getElementById('searchResAmt');
-        const txnId = document.getElementById('searchResTxnId');
-        const utr = document.getElementById('searchResUtr');
-        const email = document.getElementById('searchResEmail');
-        const time = document.getElementById('searchResTime');
+    const title = document.getElementById('searchResultTitle');
+    const pill = document.getElementById('searchResultStatusPill');
+    const amt = document.getElementById('searchResAmt');
+    const txnId = document.getElementById('searchResTxnId');
+    const utr = document.getElementById('searchResUtr');
+    const email = document.getElementById('searchResEmail');
+    const time = document.getElementById('searchResTime');
 
+    if (match) {
         if (title) title.innerText = "Transaction Record";
         if (pill) {
             pill.innerText = match.status;
@@ -966,22 +1122,18 @@ async function executePaymentCheckSearch() {
             pill.style.color = match.status === 'COMPLETED' ? '#047857' : '#dc2626';
         }
         if (amt) amt.innerText = `₹${match.amount}`;
-        if (txnId) txnId.innerText = match.txn_id;
+        if (txnId) txnId.innerText = (match.famx_id && match.famx_id !== 'PENDING') ? `${match.txn_id} (${match.famx_id})` : match.txn_id;
         if (utr) utr.innerText = match.utr || "PENDING";
         if (email) email.innerText = match.creator_email || USER_EMAIL;
         if (time) time.innerText = match.timestamp || "Today";
         showToast("✅ Transaction Found!");
     } else {
-        const title = document.getElementById('searchResultTitle');
-        const pill = document.getElementById('searchResultStatusPill');
-        const amt = document.getElementById('searchResAmt');
-        const txnId = document.getElementById('searchResTxnId');
-        const utr = document.getElementById('searchResUtr');
-        const email = document.getElementById('searchResEmail');
-        const time = document.getElementById('searchResTime');
-
         if (title) title.innerText = "No Record Found";
-        if (pill) pill.innerText = "NOT_FOUND";
+        if (pill) {
+            pill.innerText = "NOT_FOUND";
+            pill.style.background = '#fee2e2';
+            pill.style.color = '#dc2626';
+        }
         if (amt) amt.innerText = "₹0";
         if (txnId) txnId.innerText = q;
         if (utr) utr.innerText = "None";
@@ -999,7 +1151,8 @@ window.MintPayEngine = {
         }
         const num = parseFloat(amount) || 1;
         const txnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
-        const payUrl = `${HOSTED_DOMAIN}/?id=${txnId}`;
+        const baseClean = window.location.href.split('?')[0];
+        const payUrl = `${baseClean}?id=${txnId}`;
 
         const rec = {
             txn_id: txnId,
@@ -1012,7 +1165,7 @@ window.MintPayEngine = {
             merchant: MERCHANT,
             upi_id: UPI_ID,
             creator_photo: USER_PHOTO,
-            creator_gas_url: USER_GAS_URL,
+            creator_gas_url: USER_GAS_URL || DEFAULT_GAS_URL,
             qr_style: USER_QR_STYLE,
             note: note,
             status: "PENDING",
@@ -1041,30 +1194,33 @@ window.MintPayEngine = {
         };
     },
 
-    checkTxn: function(queryId) {
+    checkTxn: async function(queryId) {
+        if (!USER_API_ENABLED) {
+            return { code: 403, status: "API_DISABLED", message: "API Gateway is turned off." };
+        }
+        const q = (queryId || "").trim();
         const list = getStoredTxns();
-        const found = list.find(t => t.txn_id === queryId || t.utr === queryId);
+        let found = list.find(t =>
+            t.txn_id === q ||
+            t.utr === q ||
+            (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
+        );
+
+        if (!found && q) {
+            try {
+                const snap = await db.ref('transactions/' + q).once('value');
+                if (snap.exists()) found = snap.val();
+            } catch (e) {}
+        }
+
         if (found) {
             return { code: 200, status: "SUCCESS", source: "DATABASE", data: found };
         }
         return {
-            code: 200,
-            status: "SUCCESS",
+            code: 404,
+            status: "NOT_FOUND",
             source: "DATABASE",
-            data: {
-                txn_id: queryId || "TXN_720326",
-                utr: "PENDING",
-                famx_id: "PENDING",
-                payer_name: "Waiting...",
-                amount: 1,
-                creator_email: USER_EMAIL,
-                merchant: MERCHANT,
-                upi_id: UPI_ID,
-                note: "3D_Tree_Checkout",
-                status: "PENDING",
-                created_ms: Date.now(),
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }
+            message: "No transaction found matching: " + q
         };
     }
 };
@@ -1073,23 +1229,29 @@ function runCreateTxnApi() {
     const amtEl = document.getElementById('apiCreateAmt');
     const noteEl = document.getElementById('apiCreateNote');
     const outEl = document.getElementById('apiCreateOutput');
+    const checkInp = document.getElementById('apiCheckId');
 
     const amt = amtEl ? amtEl.value || "1" : "1";
     const note = noteEl ? noteEl.value || "MintPay_Order" : "MintPay_Order";
-    
+
     const res = window.MintPayEngine.createTxn(amt, note);
     if (outEl) outEl.innerText = JSON.stringify(res, null, 2);
-    showToast("✅ Create API Executed!");
+    if (res.data && res.data.txn_id && checkInp) {
+        checkInp.value = res.data.txn_id;
+        updateApiEndpointPreviews();
+    }
+    showToast(res.code === 200 ? "✅ Create API Executed!" : "🚫 API Disabled!");
 }
 
-function runCheckStatusApi() {
+async function runCheckStatusApi() {
     const inp = document.getElementById('apiCheckId');
     const outEl = document.getElementById('apiCheckOutput');
 
-    const id = inp ? inp.value.trim() : "TXN_720326";
-    const res = window.MintPayEngine.checkTxn(id);
+    const id = inp ? inp.value.trim() : "";
+    if (outEl) outEl.innerText = "Checking Realtime Database...";
+    const res = await window.MintPayEngine.checkTxn(id);
     if (outEl) outEl.innerText = JSON.stringify(res, null, 2);
-    showToast("✅ Status Checked!");
+    showToast(res.code === 200 ? "✅ Status Checked!" : "⚠️ Record Not Found");
 }
 
 function toggleUserApiActive() {
@@ -1097,6 +1259,7 @@ function toggleUserApiActive() {
     localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
     updateApiSwitchUI();
     if (CURRENT_UID) db.ref('users/' + CURRENT_UID).update({ apiEnabled: USER_API_ENABLED });
+    db.ref('tokens/' + USER_API_TOKEN).update({ apiEnabled: USER_API_ENABLED });
     showToast(USER_API_ENABLED ? "🟢 API Access Enabled" : "🔴 API Access Disabled");
 }
 
@@ -1131,16 +1294,32 @@ function updateApiEndpointPreviews() {
     const createPre = document.getElementById('createEndpointUrlPreview');
     const checkPre = document.getElementById('checkEndpointUrlPreview');
 
-    if (createPre) createPre.innerText = `${HOSTED_DOMAIN}/?api_create=1&token=${USER_API_TOKEN}&amount=${amt}&note=${encodeURIComponent(note)}`;
-    if (checkPre) checkPre.innerText = `${HOSTED_DOMAIN}/?api_check=1&token=${USER_API_TOKEN}&txn-id=${id}`;
+    if (createPre) createPre.innerText = `${HOSTED_DOMAIN}/api?token=${USER_API_TOKEN}?amount=${amt}&note=${encodeURIComponent(note)}`;
+    if (checkPre) checkPre.innerText = `${HOSTED_DOMAIN}/api/status?token=${USER_API_TOKEN}&txn-id=${id}`;
 }
 
-function regenerateApiToken() {
+async function regenerateApiToken() {
+    const oldToken = USER_API_TOKEN;
     USER_API_TOKEN = generateRandomToken();
     const inp = document.getElementById('merchantApiKeyInput');
     if (inp) inp.value = USER_API_TOKEN;
     updateApiEndpointPreviews();
-    if (CURRENT_UID) db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
+
+    try {
+        if (oldToken) await db.ref('tokens/' + oldToken).remove();
+        if (CURRENT_UID) await db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
+        await db.ref('tokens/' + USER_API_TOKEN).set({
+            uid: CURRENT_UID || "anonymous",
+            merchantName: MERCHANT,
+            email: USER_EMAIL,
+            upiId: UPI_ID,
+            photo: USER_PHOTO,
+            gasUrl: USER_GAS_URL,
+            qrStyle: USER_QR_STYLE,
+            apiEnabled: USER_API_ENABLED
+        });
+    } catch (e) {}
+
     showToast("🔄 New API Token Generated!");
 }
 
@@ -1150,7 +1329,7 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE (DIRECT FROM ATTACHED FILE)
+// 8. THREE.JS 3D TREE FIRST ENGINE
 // =========================================================================
 let qrScene, qrCamera, qrRenderer;
 let qrModuleGroup, treeWorldGroup, foliageCrownGroup;
@@ -1588,6 +1767,12 @@ if (bgCanvas) {
         bgRenderer.render(bgScene, bgCamera);
     }
     animateBg();
+
+    window.addEventListener('resize', () => {
+        bgCamera.aspect = window.innerWidth / window.innerHeight;
+        bgCamera.updateProjectionMatrix();
+        bgRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
 }
 
 // =========================================================================
@@ -1606,15 +1791,15 @@ function showScreen(name) {
 
     const dock = document.getElementById('bottomNavDock');
     const shell = document.getElementById('appShell');
-    
-    // Screens where bottom navigation bar must be COMPLETELY hidden (Screenshot 5 mode)
+
+    // Screens where bottom navigation bar must be COMPLETELY hidden (or whenever in Hosted Payment Link mode)
     const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
 
-    if (hideDock.includes(name)) {
-        if (dock) dock.style.display = 'none';
+    if (IS_HOSTED_CHECKOUT_MODE || hideDock.includes(name)) {
+        if (dock) dock.style.setProperty('display', 'none', 'important');
         if (shell) shell.classList.add('no-bottom-pad');
     } else {
-        if (dock) dock.style.display = 'flex';
+        if (dock) dock.style.setProperty('display', 'flex', 'important');
         if (shell) shell.classList.remove('no-bottom-pad');
     }
 
@@ -1712,6 +1897,18 @@ function copyUPI() {
 
 function goToAmountScreen() {
     if (timerInterval) clearInterval(timerInterval);
+    // If buyer opened a hosted payment link, keep them on full-screen checkout without exposing merchant nav
+    if (IS_HOSTED_CHECKOUT_MODE) {
+        const newAmt = prompt("Enter amount (₹):", currentAmountStr);
+        if (newAmt && parseFloat(newAmt) > 0) {
+            currentAmountStr = String(parseFloat(newAmt));
+            startQrRenderingFlow();
+        } else {
+            showScreen('qr');
+            startCountdown(300);
+        }
+        return;
+    }
     showScreen('numpad');
 }
 
@@ -1727,24 +1924,30 @@ function showToast(text) {
     setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-// Universal Bootstrap Handler: Loads Hosted Link & Sets Creator Context
+// Universal Bootstrap Handler: Loads Hosted Link & Binds Creator's GAS URL + Details
 (async function initMintPay() {
     syncUIWithState();
 
     const rawSearch = window.location.search || "";
     const normalized = rawSearch.replace(/\?/g, '&').replace(/^&/, '?');
     const params = new URLSearchParams(normalized);
-    const hostedId = params.get('id') || params.get('pay') || params.get('txn-id');
 
-    // If a payment link is opened (e.g. https://mint-pay.vercel.app/?id=TXN_...)
+    const hostedId = params.get('id') || params.get('pay') || params.get('txn-id') || params.get('txn_id');
+    const urlToken = params.get('token');
+    const urlAmt = parseFloat(params.get('amount') || params.get('am'));
+
+    // Case 1: Opened via Payment Link (?id=TXN_...)
     if (hostedId) {
+        IS_HOSTED_CHECKOUT_MODE = true;
+        document.body.classList.add('checkout-link-mode');
         showToast("🔍 Loading hosted payment...");
+
         try {
             const snap = await db.ref('transactions/' + hostedId).once('value');
             if (snap.exists()) {
                 const data = snap.val();
-                
-                // Bind Creator's data to checkout context
+
+                activeCreatorUid = data.creator_uid || null;
                 activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
                 activeCreatorName = data.merchant || "Sunny Kumar";
                 activeCreatorUpi = data.upi_id || "sunnypro@fam";
@@ -1752,10 +1955,24 @@ function showToast(text) {
                 activeCreatorQrStyle = data.qr_style || "tree";
                 activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
 
+                // Also fetch creator's latest profile from users/{creator_uid} so any updated GAS URL works immediately
+                if (activeCreatorUid && activeCreatorUid !== "anonymous") {
+                    try {
+                        const usrSnap = await db.ref('users/' + activeCreatorUid).once('value');
+                        if (usrSnap.exists()) {
+                            const u = usrSnap.val();
+                            if (u.gasUrl) activeCreatorGasUrl = u.gasUrl;
+                            if (u.upiId) activeCreatorUpi = u.upiId;
+                            if (u.merchantName) activeCreatorName = u.merchantName;
+                            if (u.photo) activeCreatorPhoto = u.photo;
+                            if (u.qrStyle) activeCreatorQrStyle = u.qrStyle;
+                        }
+                    } catch (e) {}
+                }
+
                 currentAmountStr = String(data.amount);
                 currentActiveTxnId = data.txn_id;
 
-                // Open directly in Full Screen 3D Tree QR (Screenshot 5 mode)
                 startQrRenderingFlow();
                 return;
             }
@@ -1764,7 +1981,37 @@ function showToast(text) {
         }
     }
 
-    // Default route check
+    // Case 2: Opened via Token + Amount API URL (?token=mp_live_...?amount=100)
+    if (urlAmt && urlAmt > 0) {
+        IS_HOSTED_CHECKOUT_MODE = true;
+        document.body.classList.add('checkout-link-mode');
+
+        if (urlToken) {
+            try {
+                const tokSnap = await db.ref('tokens/' + urlToken).once('value');
+                if (tokSnap.exists()) {
+                    const tData = tokSnap.val();
+                    if (tData.apiEnabled === false) {
+                        alert("⚠️ Merchant API is currently turned OFF.");
+                        return;
+                    }
+                    activeCreatorUid = tData.uid || null;
+                    activeCreatorName = tData.merchantName || MERCHANT;
+                    activeCreatorUpi = tData.upiId || UPI_ID;
+                    activeCreatorPhoto = tData.photo || DEFAULT_AVATAR_SVG;
+                    activeCreatorGasUrl = tData.gasUrl || DEFAULT_GAS_URL;
+                    activeCreatorQrStyle = tData.qrStyle || "tree";
+                }
+            } catch (e) {}
+        }
+
+        currentAmountStr = String(urlAmt);
+        currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
+        startQrRenderingFlow();
+        return;
+    }
+
+    // Default Merchant Dashboard / Login Route
     if (localStorage.getItem('mp_logged_in') === 'true' && CURRENT_UID) {
         showScreen('home');
         pingUserGasBackend(false);
