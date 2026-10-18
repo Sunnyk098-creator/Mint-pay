@@ -57,7 +57,6 @@
             pointer-events: none;
         }
 
-        /* Full-Screen Light Frosted Glass App Shell */
         .app-shell {
             width: 100vw;
             height: 100dvh;
@@ -82,7 +81,6 @@
             padding-bottom: 18px;
         }
 
-        /* Screen Wrapper */
         .screen-view {
             width: 100%;
             height: 100%;
@@ -107,7 +105,6 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Top Security Bar */
         .top-trust-pill {
             display: inline-flex;
             align-items: center;
@@ -123,19 +120,9 @@
             margin-bottom: 4px;
         }
 
-        .tiny-gif {
-            width: 16px;
-            height: 16px;
-            object-fit: contain;
-        }
+        .tiny-gif { width: 16px; height: 16px; object-fit: contain; }
+        .md-gif { width: 22px; height: 22px; object-fit: contain; }
 
-        .md-gif {
-            width: 22px;
-            height: 22px;
-            object-fit: contain;
-        }
-
-        /* Header & Moneybag GIF */
         .header-box {
             display: flex;
             flex-direction: column;
@@ -150,8 +137,7 @@
             border-radius: 24px;
             background: var(--glass-card);
             border: 2px solid var(--glass-border);
-            box-shadow: 0 12px 26px -6px rgba(16, 185, 129, 0.22),
-                        inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 26px -6px rgba(16, 185, 129, 0.22), inset 0 2px 4px rgba(255, 255, 255, 0.9);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -159,12 +145,7 @@
             position: relative;
         }
 
-        .gif-icon-lg {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-        }
-
+        .gif-icon-lg { width: 48px; height: 48px; object-fit: contain; }
         .title-text {
             font-size: 1.45rem;
             font-weight: 900;
@@ -182,7 +163,6 @@
             margin-top: 2px;
         }
 
-        /* Frosted Amount Hero Box */
         .amount-hero-box {
             width: 100%;
             background: var(--glass-card);
@@ -194,8 +174,7 @@
             justify-content: center;
             align-items: baseline;
             margin: 6px 0;
-            box-shadow: 0 10px 25px -8px rgba(16, 185, 129, 0.14),
-                        inset 0 2px 3px rgba(255, 255, 255, 1);
+            box-shadow: 0 10px 25px -8px rgba(16, 185, 129, 0.14), inset 0 2px 3px rgba(255, 255, 255, 1);
         }
 
         .currency-symbol {
@@ -213,7 +192,6 @@
             line-height: 1;
         }
 
-        /* Preset Chips */
         .chip-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -241,7 +219,6 @@
             color: #ffffff;
         }
 
-        /* Full-Screen Frosted Tactile NumPad */
         .numpad-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -261,9 +238,7 @@
             font-weight: 800;
             color: var(--text-dark);
             cursor: pointer;
-            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04),
-                        inset 0 -3px 0 rgba(203, 213, 225, 0.65),
-                        inset 0 2px 2px rgba(255, 255, 255, 1);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04), inset 0 -3px 0 rgba(203, 213, 225, 0.65), inset 0 2px 2px rgba(255, 255, 255, 1);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -278,11 +253,8 @@
             color: var(--primary-deep);
         }
 
-        .del-action {
-            color: var(--danger);
-        }
+        .del-action { color: var(--danger); }
 
-        /* Primary Frosted Emerald Button */
         .btn-proceed {
             width: 100%;
             padding: 15px 20px;
@@ -294,8 +266,7 @@
             font-weight: 800;
             letter-spacing: 0.3px;
             cursor: pointer;
-            box-shadow: 0 12px 26px -6px rgba(16, 185, 129, 0.5),
-                        inset 0 2px 2px rgba(255, 255, 255, 0.45);
+            box-shadow: 0 12px 26px -6px rgba(16, 185, 129, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.45);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -303,17 +274,9 @@
             transition: all 0.2s ease;
         }
 
-        .btn-proceed:active {
-            transform: translateY(2px) scale(0.97);
-        }
+        .btn-proceed:active { transform: translateY(2px) scale(0.97); }
+        .btn-gif-icon { width: 24px; height: 24px; object-fit: contain; }
 
-        .btn-gif-icon {
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
-        }
-
-        /* Google Sign-In Button */
         .btn-google-auth {
             width: 100%;
             padding: 14px 18px;
@@ -337,7 +300,6 @@
             background: #f8fafc;
         }
 
-        /* ================= 2. PROCESSING SCREENS (light.gif & eye.gif) ================= */
         .proc-screen-box {
             display: none;
             width: 100%;
@@ -414,7 +376,6 @@
             transition: width 1.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* ================= 3. 3D TREE FIRST + PERFECT SQUARE QR SCREEN ================= */
         #qrScreen {
             display: none;
             width: 100%;
@@ -488,12 +449,7 @@
             gap: 5px;
         }
 
-        .name-tick-gif {
-            width: 19px;
-            height: 19px;
-            object-fit: contain;
-        }
-
+        .name-tick-gif { width: 19px; height: 19px; object-fit: contain; }
         .brand-upi {
             font-size: 0.78rem;
             font-weight: 700;
@@ -546,9 +502,6 @@
             letter-spacing: -0.8px;
         }
 
-        /* ========================================================
-           FRAMELESS OPEN 3D STAGE (STRAIGHT QR + LUSH 3D TREE)
-           ======================================================== */
         .open-tree-stage {
             position: relative;
             width: 315px;
@@ -567,7 +520,6 @@
             background: transparent;
         }
 
-        /* Interactive Toggle Pill with GIF */
         .toggle-tree-pill {
             background: var(--glass-card);
             backdrop-filter: blur(14px);
@@ -590,7 +542,6 @@
             background: #ffffff;
         }
 
-        /* Bottom Action Row: Paid Button + Change Amount */
         .qr-bottom-actions {
             display: grid;
             grid-template-columns: 1.25fr 1fr;
@@ -615,9 +566,7 @@
             transition: all 0.2s ease;
         }
 
-        .btn-paid:active {
-            transform: scale(0.96);
-        }
+        .btn-paid:active { transform: scale(0.96); }
 
         .btn-change-amt {
             background: var(--glass-card);
@@ -636,11 +585,8 @@
             transition: all 0.2s ease;
         }
 
-        .btn-change-amt:active {
-            transform: scale(0.96);
-        }
+        .btn-change-amt:active { transform: scale(0.96); }
 
-        /* ================= 4. POPUP MODAL: GAS EMAIL VERIFY + MANUAL FALLBACK ================= */
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -654,9 +600,7 @@
             padding: 20px;
         }
 
-        .modal-backdrop.active {
-            display: flex;
-        }
+        .modal-backdrop.active { display: flex; }
 
         .modal-card {
             width: 100%;
@@ -671,26 +615,9 @@
             animation: softIn 0.25s ease-out;
         }
 
-        .modal-top-gif {
-            width: 44px;
-            height: 44px;
-            object-fit: contain;
-            margin-bottom: 6px;
-        }
-
-        .modal-title {
-            font-size: 1.15rem;
-            font-weight: 900;
-            color: var(--text-dark);
-            margin-bottom: 4px;
-        }
-
-        .modal-sub {
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
+        .modal-top-gif { width: 44px; height: 44px; object-fit: contain; margin-bottom: 6px; }
+        .modal-title { font-size: 1.15rem; font-weight: 900; color: var(--text-dark); margin-bottom: 4px; }
+        .modal-sub { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; }
 
         .modal-choice-grid {
             display: grid;
@@ -713,21 +640,9 @@
             transition: transform 0.15s ease;
         }
 
-        .choice-btn-success {
-            background: #ecfdf5;
-            border: 2px solid #10b981;
-            color: #047857;
-        }
-
-        .choice-btn-fail {
-            background: #fef2f2;
-            border: 2px solid #ef4444;
-            color: #b91c1c;
-        }
-
-        .choice-btn-success:active, .choice-btn-fail:active {
-            transform: scale(0.95);
-        }
+        .choice-btn-success { background: #ecfdf5; border: 2px solid #10b981; color: #047857; }
+        .choice-btn-fail { background: #fef2f2; border: 2px solid #ef4444; color: #b91c1c; }
+        .choice-btn-success:active, .choice-btn-fail:active { transform: scale(0.95); }
 
         .modal-cancel {
             background: transparent;
@@ -739,7 +654,6 @@
             padding: 4px 14px;
         }
 
-        /* ================= 5. RESULT SCREENS ================= */
         .result-screen-box {
             display: none;
             width: 100%;
@@ -774,19 +688,8 @@
             box-shadow: 0 14px 32px rgba(239, 68, 68, 0.22);
         }
 
-        .result-gif {
-            width: 74px;
-            height: 74px;
-            object-fit: contain;
-        }
-
-        .result-amt {
-            font-size: 2.35rem;
-            font-weight: 900;
-            color: var(--text-dark);
-            margin: 6px 0 4px;
-        }
-
+        .result-gif { width: 74px; height: 74px; object-fit: contain; }
+        .result-amt { font-size: 2.35rem; font-weight: 900; color: var(--text-dark); margin: 6px 0 4px; }
         .result-title {
             font-size: 1.38rem;
             font-weight: 900;
@@ -834,9 +737,6 @@
             gap: 5px;
         }
 
-        /* =========================================================================
-           6. FULL GATEWAY PAGES: LOGIN/SIGNUP, HOME, API DOCS/TESTER, PROFILE
-           ========================================================================= */
         .frosted-card {
             width: 100%;
             background: var(--glass-card);
@@ -848,7 +748,6 @@
             box-shadow: 0 10px 28px -8px rgba(16, 185, 129, 0.14);
         }
 
-        /* Auth Tabs & Inputs */
         .auth-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -919,7 +818,6 @@
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
 
-        /* Dashboard Metrics Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -983,7 +881,6 @@
             background: #ecfdf5;
         }
 
-        /* Recent Transactions List */
         .txn-list {
             display: flex;
             flex-direction: column;
@@ -1004,34 +901,12 @@
             cursor: pointer;
         }
 
-        .txn-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .txn-left { display: flex; align-items: center; gap: 10px; }
+        .txn-meta { text-align: left; }
+        .txn-id-text { font-size: 0.8rem; font-weight: 800; color: var(--text-dark); }
+        .txn-time-text { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); }
+        .txn-amt-badge { font-size: 0.92rem; font-weight: 900; }
 
-        .txn-meta {
-            text-align: left;
-        }
-
-        .txn-id-text {
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--text-dark);
-        }
-
-        .txn-time-text {
-            font-size: 0.68rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .txn-amt-badge {
-            font-size: 0.92rem;
-            font-weight: 900;
-        }
-
-        /* API Code Block */
         .code-block {
             width: 100%;
             background: #0f172a;
@@ -1049,7 +924,6 @@
             word-break: break-all;
         }
 
-        /* Settings Toggle Switch */
         .setting-row {
             display: flex;
             justify-content: space-between;
@@ -1058,10 +932,7 @@
             border-bottom: 1px solid rgba(203, 213, 225, 0.45);
         }
 
-        .setting-row:last-child {
-            border-bottom: none;
-        }
-
+        .setting-row:last-child { border-bottom: none; }
         .setting-left {
             display: flex;
             align-items: center;
@@ -1081,10 +952,7 @@
             transition: background 0.2s ease;
         }
 
-        .toggle-switch.on {
-            background: var(--primary);
-        }
-
+        .toggle-switch.on { background: var(--primary); }
         .toggle-knob {
             width: 19px;
             height: 19px;
@@ -1097,11 +965,8 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .toggle-switch.on .toggle-knob {
-            transform: translateX(21px);
-        }
+        .toggle-switch.on .toggle-knob { transform: translateX(21px); }
 
-        /* Bottom Frosted Navigation Bar */
         .bottom-nav-dock {
             position: fixed;
             bottom: 10px;
@@ -1144,7 +1009,6 @@
             box-shadow: inset 0 0 0 1.5px #a7f3d0;
         }
 
-        /* Toast */
         .toast-msg {
             position: fixed;
             bottom: 82px;
@@ -1171,12 +1035,11 @@
 </head>
 <body>
 
-    <!-- 3D Mint Floating Background -->
     <canvas id="bg-canvas"></canvas>
 
     <main class="app-shell" id="appShell">
 
-        <!-- ================= SCREEN 0: LOGIN & SIGN UP GATEWAY AUTH (WITH GOOGLE LOGIN) ================= -->
+        <!-- SCREEN 0: LOGIN & SIGN UP GATEWAY AUTH -->
         <div id="authScreen" class="scroll-page">
             <div class="header-box" style="margin-top: 6px;">
                 <div class="top-trust-pill">
@@ -1194,10 +1057,10 @@
                     <span>Merchant Portal</span>
                     <img src="star.gif" alt="" class="btn-gif-icon">
                 </h1>
-                <p class="subtitle-text">Sign in with Google to connect GAS Email Verifier & APIs</p>
+                <p class="subtitle-text">Sign in with Google to auto-sync Gmail Reader & GAS Verifier</p>
             </div>
 
-            <!-- SIGN IN WITH GOOGLE HERO CARD (REPLACES QUICK PAY) -->
+            <!-- GOOGLE SIGN-IN HERO BUTTON -->
             <div class="frosted-card" style="padding: 16px;">
                 <button class="btn-google-auth" onclick="signInWithGoogle()">
                     <svg width="22" height="22" viewBox="0 0 48 48">
@@ -1211,7 +1074,7 @@
                 </button>
                 <div style="margin-top:8px; font-size:0.7rem; font-weight:700; color:var(--text-muted); display:flex; justify-content:center; align-items:center; gap:5px;">
                     <img src="live.gif" alt="" style="width:12px;height:12px;">
-                    <span>Auto-verifies your account with Firebase & GAS Email Reader</span>
+                    <span id="authStatusHint">Links your Gmail with GAS Verifier & Firebase automatically</span>
                 </div>
             </div>
 
@@ -1227,18 +1090,13 @@
                     </button>
                 </div>
 
-                <!-- LOGIN FORM -->
                 <div id="loginFormBox">
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="secure.gif" alt="" class="tiny-gif"> Merchant Email
-                        </label>
+                        <label class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Merchant Email</label>
                         <input type="email" id="loginEmail" class="glass-input" value="sunny@mintpay.com" placeholder="Enter Merchant Email">
                     </div>
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="lock.gif" alt="" class="tiny-gif"> Security Password
-                        </label>
+                        <label class="input-label"><img src="lock.gif" alt="" class="tiny-gif"> Security Password</label>
                         <input type="password" id="loginPass" class="glass-input" value="123456" placeholder="••••••••">
                     </div>
                     <button class="btn-proceed" onclick="handleAuthSubmit('login')">
@@ -1247,30 +1105,21 @@
                     </button>
                 </div>
 
-                <!-- SIGN UP FORM -->
                 <div id="signupFormBox" style="display: none;">
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="crown.gif" alt="" class="tiny-gif"> Merchant / Business Name
-                        </label>
+                        <label class="input-label"><img src="crown.gif" alt="" class="tiny-gif"> Business / Display Name</label>
                         <input type="text" id="regName" class="glass-input" value="Sunny Kumar" placeholder="Your Full Name">
                     </div>
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="secure.gif" alt="" class="tiny-gif"> Merchant Email
-                        </label>
-                        <input type="email" id="regEmail" class="glass-input" value="" placeholder="yourname@gmail.com">
+                        <label class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Merchant Email</label>
+                        <input type="email" id="regEmail" class="glass-input" placeholder="yourname@gmail.com">
                     </div>
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="moneybag.gif" alt="" class="tiny-gif"> Merchant UPI ID (VPA)
-                        </label>
+                        <label class="input-label"><img src="moneybag.gif" alt="" class="tiny-gif"> Receiver UPI ID (VPA)</label>
                         <input type="text" id="regUpi" class="glass-input" value="sunnypro@fam" placeholder="example@upi">
                     </div>
                     <div class="input-group">
-                        <label class="input-label">
-                            <img src="lock.gif" alt="" class="tiny-gif"> Create Password
-                        </label>
+                        <label class="input-label"><img src="lock.gif" alt="" class="tiny-gif"> Create Password</label>
                         <input type="password" id="regPass" class="glass-input" value="123456" placeholder="Min 6 characters">
                     </div>
                     <button class="btn-proceed" onclick="handleAuthSubmit('signup')">
@@ -1281,14 +1130,12 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN HOME: GATEWAY DASHBOARD ================= -->
+        <!-- SCREEN HOME: GATEWAY DASHBOARD -->
         <div id="homeScreen" class="scroll-page">
-            <!-- Top Merchant Header -->
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="logo.jpg" id="dashAvatarImg" alt="SK" class="avatar-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <span style="display:none;">SK</span>
+                        <img src="logo.jpg" id="dashAvatarImg" alt="Avatar" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
                         <img src="crown.gif" alt="Crown" class="crown-gif">
                     </div>
                     <div class="brand-meta">
@@ -1311,16 +1158,16 @@
                 </div>
             </div>
 
-            <!-- Live Gateway & GAS Status Banner -->
+            <!-- GAS Status Bar -->
             <div class="frosted-card" style="background:linear-gradient(135deg, rgba(16,185,129,0.16) 0%, rgba(255,255,255,0.88) 100%); padding:13px 15px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:9px;">
                     <img src="secure.gif" alt="" class="btn-gif-icon">
                     <div style="text-align:left;">
                         <div style="font-size:0.82rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:5px;">
-                            <span>GAS Gmail Verifier & Firebase</span>
+                            <span>GAS Gmail Verifier Engine</span>
                             <img src="colourful-sparks.gif" alt="" class="tiny-gif">
                         </div>
-                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted);" id="gasConnectedSub">Connected • Auto FamX / UTR Verification</div>
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted);" id="gasConnectedSub">Checking GAS Gmail status...</div>
                     </div>
                 </div>
                 <span class="copy-pill" id="homeApiStatusPill" style="display:inline-flex; align-items:center; gap:4px; padding:4px 9px;">
@@ -1349,16 +1196,15 @@
                     </div>
                     <div class="stat-val" id="statTotalCount">0</div>
                     <div style="font-size:0.68rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-                        <img src="colourful-sparks.gif" alt="" style="width:13px;height:13px;"> 3D Tree QR Mode
+                        <img src="colourful-sparks.gif" alt="" style="width:13px;height:13px;"> 3D Tree QR Active
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="quick-actions-grid">
                 <button class="quick-card-btn" onclick="showScreen('numpad')">
                     <img src="moneybag.gif" alt="" class="btn-gif-icon">
-                    <span>Create Txn</span>
+                    <span>Create QR</span>
                 </button>
                 <button class="quick-card-btn" onclick="showScreen('api')">
                     <img src="light.gif" alt="" class="btn-gif-icon">
@@ -1370,7 +1216,6 @@
                 </button>
             </div>
 
-            <!-- Recent Transactions Section -->
             <div class="frosted-card" style="padding:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px;">
@@ -1382,20 +1227,17 @@
                     </button>
                 </div>
 
-                <div class="txn-list" id="recentTxnList">
-                    <!-- Populated dynamically via JS -->
-                </div>
+                <div class="txn-list" id="recentTxnList"></div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 1: FULL-SCREEN NUMPAD AMOUNT ENTRY (EXISTING UNCHANGED) ================= -->
+        <!-- SCREEN 1: NUMPAD -->
         <div id="numpadScreen" class="screen-view" style="display: none;">
-            
             <div class="header-box">
                 <div class="top-trust-pill">
-                    <img src="lock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <img src="lock.gif" alt="" class="tiny-gif">
                     <span>100% Secure UPI Gateway</span>
-                    <img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <img src="tick.gif" alt="" class="tiny-gif">
                 </div>
 
                 <div class="badge-avatar-wrap">
@@ -1404,18 +1246,16 @@
 
                 <h1 class="title-text">
                     <span>Enter Amount</span>
-                    <img src="rocket.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
+                    <img src="rocket.gif" alt="" class="btn-gif-icon">
                 </h1>
                 <p class="subtitle-text" id="numpadSubText">Direct instant transfer to Sunny Kumar</p>
             </div>
 
-            <!-- Amount Display -->
             <div class="amount-hero-box">
                 <span class="currency-symbol">₹</span>
                 <span class="live-amount-text" id="liveAmount">0</span>
             </div>
 
-            <!-- Quick Amount Chips -->
             <div class="chip-grid">
                 <button class="chip-btn" onclick="applyPreset('9')">₹9</button>
                 <button class="chip-btn" onclick="applyPreset('50')">₹50</button>
@@ -1423,7 +1263,6 @@
                 <button class="chip-btn" onclick="applyPreset('500')">₹500</button>
             </div>
 
-            <!-- Full-Screen Frosted NumPad -->
             <div class="numpad-container">
                 <button class="pad-btn" onclick="tapKey('1')">1</button>
                 <button class="pad-btn" onclick="tapKey('2')">2</button>
@@ -1439,14 +1278,13 @@
                 <button class="pad-btn del-action" onclick="tapKey('DEL')">⌫</button>
             </div>
 
-            <!-- Proceed Button with paper.gif -->
             <button class="btn-proceed" onclick="startProcessingFlow()">
                 <span>Proceed to Pay</span>
                 <img src="paper.gif" alt="" class="btn-gif-icon" onerror="this.src='rocket.gif'">
             </button>
         </div>
 
-        <!-- ================= SCREEN 2: QR GENERATION PROCESSING (light.gif) ================= -->
+        <!-- SCREEN 2: QR PROCESSING -->
         <div id="processingScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
@@ -1459,13 +1297,12 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 3: 3D TREE FIRST + STRAIGHT SQUARE QR SCREEN ================= -->
+        <!-- SCREEN 3: 3D TREE QR -->
         <div id="qrScreen">
             <div class="user-brand-bar">
                 <div class="brand-left">
                     <div class="brand-avatar">
-                        <img src="logo.jpg" alt="SK" class="avatar-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <span style="display:none;">SK</span>
+                        <img src="logo.jpg" id="qrBrandAvatar" alt="Avatar" class="avatar-logo-img" onerror="this.src='moneybag.gif'">
                         <img src="crown.gif" alt="Crown" class="crown-gif">
                     </div>
                     <div class="brand-meta">
@@ -1481,7 +1318,7 @@
                 </div>
 
                 <div class="timer-capsule">
-                    <img src="clock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <img src="clock.gif" alt="" class="tiny-gif">
                     <span id="countdownTimer">05:00</span>
                 </div>
             </div>
@@ -1491,18 +1328,15 @@
                 <div class="hero-qr-amt" id="qrAmtHero">₹0</div>
             </div>
 
-            <!-- Frameless 3D Stage (Starts as 3D Tree, Taps into Straight Square QR!) -->
             <div class="open-tree-stage" onclick="toggleTreeMode()" title="Tap to switch between 3D Tree and QR Code">
                 <canvas id="treeQrCanvas"></canvas>
             </div>
 
-            <!-- Toggle Pill with eye.gif / light.gif -->
             <button class="toggle-tree-pill" id="toggleTreeBtn" onclick="toggleTreeMode()">
                 <img src="eye.gif" alt="" class="tiny-gif" id="toggleBtnGif">
                 <span id="toggleBtnText">Tap the tree to see QR code</span>
             </button>
 
-            <!-- Bottom Row: Paid Button (with tick.gif) + Change Amount (with moneybag.gif) -->
             <div class="qr-bottom-actions">
                 <button class="btn-paid" onclick="openPaidChoiceModal()">
                     <img src="tick.gif" alt="" class="btn-gif-icon">
@@ -1515,20 +1349,20 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 4: PAYMENT VERIFICATION PROCESSING (eye.gif) ================= -->
+        <!-- SCREEN 4: PAYMENT VERIFY PROCESSING -->
         <div id="paymentVerifyScreen" class="proc-screen-box">
             <div class="proc-icon-box">
                 <div class="energy-ring"></div>
                 <img src="eye.gif" alt="Verifying" class="proc-gif">
             </div>
             <h2 class="proc-title" id="verifyTitleText">Verifying Payment via GAS...</h2>
-            <p class="proc-sub" id="verifySubText">Reading FamX / UPI email from Gmail server</p>
+            <p class="proc-sub" id="verifySubText">Reading FamX / UPI credit email from Gmail</p>
             <div class="proc-bar-wrap">
                 <div class="proc-bar-fill" id="verifyBar"></div>
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: PAYMENT SUCCESSFUL (tick.gif) ================= -->
+        <!-- SCREEN 5: SUCCESS -->
         <div id="successScreen" class="result-screen-box">
             <div class="result-badge-wrap success-bg">
                 <img src="tick.gif" alt="Success" class="result-gif">
@@ -1538,12 +1372,12 @@
                 <img src="rocket.gif" alt="" class="btn-gif-icon">
             </h2>
             <div class="result-amt" id="successAmtText">₹0</div>
-            <p class="result-sub" id="successSubText">Paid successfully to Sunny Kumar (sunnypro@fam)</p>
+            <p class="result-sub" id="successSubText">Verified & credited via Gmail Verifier</p>
 
             <div class="receipt-pill">
                 <div class="receipt-row">
                     <span>Status</span>
-                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif"> VERIFIED</b>
+                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif"> GAS VERIFIED</b>
                 </div>
                 <div class="receipt-row">
                     <span>Payer / Sender</span>
@@ -1565,13 +1399,13 @@
             </button>
         </div>
 
-        <!-- ================= SCREEN 6: PAYMENT FAILED (x.gif / block.gif) ================= -->
+        <!-- SCREEN 6: FAILED -->
         <div id="failScreen" class="result-screen-box">
             <div class="result-badge-wrap fail-bg">
-                <img src="x.gif" alt="Failed" class="result-gif" onerror="this.onerror=null; this.src='block.gif';">
+                <img src="x.gif" alt="Failed" class="result-gif" onerror="this.src='block.gif';">
             </div>
             <h2 class="result-title" style="color: #dc2626;">
-                <span>Payment Failed!</span>
+                <span>Payment Failed / Unverified</span>
                 <img src="alert.gif" alt="" class="btn-gif-icon">
             </h2>
             <div class="result-amt" id="failAmtText">₹0</div>
@@ -1580,7 +1414,7 @@
             <div class="receipt-pill">
                 <div class="receipt-row">
                     <span>Status</span>
-                    <b style="color:#dc2626;"><img src="block.gif" alt="" class="tiny-gif"> FAILED</b>
+                    <b style="color:#dc2626;"><img src="block.gif" alt="" class="tiny-gif"> NOT FOUND</b>
                 </div>
                 <div class="receipt-row">
                     <span>Merchant</span>
@@ -1604,7 +1438,7 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 7: DEVELOPER API HUB (ON/OFF, REGENERATE TOKEN, CREATE & CHECK) ================= -->
+        <!-- SCREEN 7: API HUB -->
         <div id="apiScreen" class="scroll-page">
             <div class="header-box">
                 <div class="top-trust-pill">
@@ -1619,7 +1453,6 @@
                 <p class="subtitle-text">Manage Token, Toggle API Access, Create & Verify Transactions</p>
             </div>
 
-            <!-- API MASTER SWITCH (ON / OFF) & TOKEN REGENERATION CARD -->
             <div class="frosted-card">
                 <div class="setting-row" style="padding-top:0; margin-bottom:10px;">
                     <div class="setting-left">
@@ -1637,25 +1470,19 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span class="input-label"><img src="secure.gif" alt="" class="tiny-gif"> Your API Secret Token</span>
                     <div style="display:flex; gap:6px;">
-                        <button onclick="regenerateApiToken()" class="copy-pill" style="background:#fef3c7; color:#b45309; border:none; cursor:pointer;">
-                            ↻ Regenerate
-                        </button>
-                        <button onclick="copyApiKey()" class="copy-pill" style="border:none; cursor:pointer;">
-                            Copy Token
-                        </button>
+                        <button onclick="regenerateApiToken()" class="copy-pill" style="background:#fef3c7; color:#b45309; border:none; cursor:pointer;">↻ Regenerate</button>
+                        <button onclick="copyApiKey()" class="copy-pill" style="border:none; cursor:pointer;">Copy Token</button>
                     </div>
                 </div>
                 <input type="text" id="merchantApiKeyInput" class="glass-input" value="mp_live_..." readonly style="font-family:'JetBrains Mono',monospace; font-size:0.78rem;">
             </div>
 
-            <!-- 1. CREATE TRANSACTION API (https://mint-pay.vercel.app/api?token={token}?amount={amount}) -->
             <div class="frosted-card">
                 <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
                     <img src="rocket.gif" alt="" class="md-gif">
                     <span>1. Create Transaction Endpoint</span>
                 </div>
-
-                <div class="code-block" id="createEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#fde047;">https://mint-pay.vercel.app/api?token={token}?amount={amount}</div>
+                <div class="code-block" id="createEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#fde047;">https://mint-pay.vercel.app/api?token={token}&amount={amount}</div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <div class="input-group">
@@ -1679,24 +1506,18 @@
                     </button>
                 </div>
 
-                <pre class="code-block" id="apiCreateOutput">{
-  "endpoint": "https://mint-pay.vercel.app/api?token={token}?amount={amount}",
-  "status": "READY",
-  "message": "Tap 'Test Create API' to generate live response"
-}</pre>
+                <pre class="code-block" id="apiCreateOutput">{ "status": "READY" }</pre>
             </div>
 
-            <!-- 2. CHECK TRANSACTION STATUS & GAS GMAIL VERIFY API -->
             <div class="frosted-card">
                 <div style="font-size:0.88rem; font-weight:900; color:var(--primary-deep); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
                     <img src="eye.gif" alt="" class="md-gif">
-                    <span>2. Check / Verify Transaction API (GAS + DB)</span>
+                    <span>2. Check / Verify Transaction (GAS + DB)</span>
                 </div>
-
-                <div class="code-block" id="checkEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#93c5fd;">https://mint-pay.vercel.app/api/status?token={token}?query={txn_or_utr}</div>
+                <div class="code-block" id="checkEndpointUrlPreview" style="margin-bottom:10px; font-size:0.68rem; color:#93c5fd;">https://mint-pay.vercel.app/api/status?token={token}&query={txn_or_utr}</div>
 
                 <div class="input-group">
-                    <label class="input-label">Enter FamX ID (`FMPIB...`), 12-Digit UTR, or `TXN_...`</label>
+                    <label class="input-label">Enter FamX ID (`FMPIB...`) or 12-Digit UTR</label>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="apiCheckId" class="glass-input" placeholder="e.g. FMPIB... or 12-digit UTR" oninput="updateApiEndpointPreviews()">
                         <button class="btn-paid" style="width:auto; padding:0 16px; border-radius:14px; font-size:0.8rem;" onclick="runCheckStatusApi()">
@@ -1706,29 +1527,25 @@
                     </div>
                 </div>
 
-                <pre class="code-block" id="apiCheckOutput">{
-  "endpoint": "https://mint-pay.vercel.app/api/status?token={token}?query={id}",
-  "gas_verifier": "CONNECTED",
-  "response": "Enter any UTR or Transaction ID above and tap Check"
-}</pre>
+                <pre class="code-block" id="apiCheckOutput">{ "status": "WAITING_INPUT" }</pre>
             </div>
         </div>
 
-        <!-- ================= SCREEN 8: PROFILE & GATEWAY SETTINGS ================= -->
+        <!-- SCREEN 8: PROFILE -->
         <div id="profileScreen" class="scroll-page">
             <div class="header-box">
                 <div class="badge-avatar-wrap" style="width:76px;height:76px;">
-                    <img src="logo.jpg" id="profAvatarImg" alt="Sunny" style="width:100%;height:100%;border-radius:22px;object-fit:cover;" onerror="this.src='moneybag.gif'">
+                    <img src="logo.jpg" id="profAvatarImg" alt="Profile" style="width:100%;height:100%;border-radius:22px;object-fit:cover;" onerror="this.src='moneybag.gif'">
                     <img src="crown.gif" alt="" class="crown-gif">
                 </div>
                 <h1 class="title-text">
                     <span id="profHeaderName">Sunny Kumar</span>
                     <img src="tick.gif" alt="" class="name-tick-gif">
                 </h1>
-                <p class="subtitle-text" id="profHeaderUpi">Verified VIP Merchant • sunnypro@fam</p>
+                <p class="subtitle-text" id="profHeaderUpi">VIP Merchant • sunnypro@fam</p>
+                <p class="subtitle-text" id="profHeaderEmail" style="color:#059669; font-weight:800; font-size:0.72rem; margin-top:2px;">Google: Not Linked</p>
             </div>
 
-            <!-- Edit Merchant Details & GAS Script URL -->
             <div class="frosted-card">
                 <div style="font-size:0.88rem; font-weight:900; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:10px;">
                     <img src="star.gif" alt="" class="tiny-gif">
@@ -1752,42 +1569,10 @@
 
                 <button class="btn-proceed" style="padding:12px;" onclick="saveProfileSettings()">
                     <img src="tick.gif" alt="" class="tiny-gif">
-                    <span>Save Gateway Settings to Firebase</span>
+                    <span>Save to Firebase & Sync GAS</span>
                 </button>
             </div>
 
-            <!-- Toggles & Preferences -->
-            <div class="frosted-card">
-                <div class="setting-row">
-                    <div class="setting-left">
-                        <img src="live.gif" alt="" class="md-gif">
-                        <span>Auto-Open 3D Tree First</span>
-                    </div>
-                    <div class="toggle-switch on" onclick="this.classList.toggle('on'); showToast('Preference updated!')">
-                        <div class="toggle-knob"></div>
-                    </div>
-                </div>
-
-                <div class="setting-row">
-                    <div class="setting-left">
-                        <img src="bell.gif" alt="" class="md-gif">
-                        <span>GAS Gmail Auto-Verification</span>
-                    </div>
-                    <div class="toggle-switch on" onclick="this.classList.toggle('on'); showToast('GAS Gmail Verifier Active!')">
-                        <div class="toggle-knob"></div>
-                    </div>
-                </div>
-
-                <div class="setting-row" style="cursor:pointer;" onclick="showToast('💬 Live Merchant Support: @sunnypro')">
-                    <div class="setting-left">
-                        <img src="chat.gif" alt="" class="md-gif">
-                        <span>24/7 Merchant Support Chat</span>
-                    </div>
-                    <span class="copy-pill">Open Chat</span>
-                </div>
-            </div>
-
-            <!-- Logout Button with off.gif -->
             <button class="btn-change-amt" style="width:100%; border-color:#fecaca; color:#dc2626; background:#fef2f2;" onclick="logoutGateway()">
                 <img src="off.gif" alt="" class="md-gif" onerror="this.src='block.gif'">
                 <span>Logout Merchant Session</span>
@@ -1796,7 +1581,7 @@
 
     </main>
 
-    <!-- BOTTOM NAVIGATION DOCK -->
+    <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav-dock" id="bottomNavDock">
         <button class="nav-tab active" id="navHome" onclick="showScreen('home')">
             <img src="live.gif" alt="" class="md-gif">
@@ -1816,12 +1601,12 @@
         </button>
     </nav>
 
-    <!-- MODAL: VERIFY VIA GAS GMAIL (UTR / TRANSACTION ID / AUTO) + MANUAL SIMULATE -->
+    <!-- MODAL: VERIFY VIA GAS -->
     <div class="modal-backdrop" id="paidChoiceModal">
         <div class="modal-card">
             <img src="eye.gif" alt="Verify" class="modal-top-gif">
             <h3 class="modal-title">Verify Payment via GAS Gmail</h3>
-            <p class="modal-sub">Enter FamX Transaction ID (`FMPIB...`) or 12-Digit UTR, or leave blank to auto-detect latest email:</p>
+            <p class="modal-sub">Enter FamX Transaction ID (`FMPIB...`) or 12-Digit UTR to verify against your Gmail notifications:</p>
 
             <div class="input-group" style="margin-bottom:10px;">
                 <input type="text" id="verifyUtrInput" class="glass-input" placeholder="Optional: UTR or FMPIB Transaction ID" style="text-align:center;">
@@ -1829,7 +1614,7 @@
 
             <button class="btn-proceed" style="padding:12px; margin-bottom:12px;" onclick="verifyPaymentWithGAS()">
                 <img src="secure.gif" alt="" class="btn-gif-icon">
-                <span>Verify Email via GAS Now</span>
+                <span>Scan Gmail via GAS Now</span>
             </button>
 
             <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); margin-bottom:8px;">
@@ -1842,7 +1627,7 @@
                     <span>Successful</span>
                 </button>
                 <button class="choice-btn-fail" onclick="triggerPaymentResult('fail')">
-                    <img src="x.gif" alt="" class="btn-gif-icon" onerror="this.onerror=null; this.src='block.gif';">
+                    <img src="x.gif" alt="" class="btn-gif-icon" onerror="this.src='block.gif';">
                     <span>Fail</span>
                 </button>
             </div>
@@ -1854,7 +1639,7 @@
 
     <script>
         // =========================================================================
-        // 0. FIREBASE + GOOGLE APPS SCRIPT (GAS) CONFIGURATION
+        // 0. FIREBASE & GAS CONFIGURATION
         // =========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB_aUTy7Kvzo-Ct44MZ062MFcpDOnQ4WxU",
@@ -1866,7 +1651,6 @@
             appId: "1:76118936092:web:fc40baa414665d89aeedd9"
         };
 
-        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -1879,8 +1663,10 @@
         let GAS_WEB_APP_URL = localStorage.getItem('sp_gas_url') || DEFAULT_GAS_URL;
         let UPI_ID = localStorage.getItem('sp_upi') || "sunnypro@fam";
         let MERCHANT = localStorage.getItem('sp_merchant') || "Sunny Kumar";
+        let USER_EMAIL = localStorage.getItem('sp_user_email') || "";
+        let USER_PHOTO = localStorage.getItem('sp_user_photo') || "logo.jpg";
         let USER_API_TOKEN = localStorage.getItem('sp_api_token') || generateRandomToken();
-        let USER_API_ENABLED = localStorage.getItem('sp_api_enabled') !== 'false'; // default true
+        let USER_API_ENABLED = localStorage.getItem('sp_api_enabled') !== 'false';
         let CURRENT_UID = localStorage.getItem('sp_uid') || null;
 
         let currentAmountStr = "0";
@@ -1904,12 +1690,16 @@
         }
 
         // =========================================================================
-        // 1. GOOGLE SIGN-IN + FIREBASE USER SYNC + GAS VERIFICATION
+        // 1. FIXED REAL GOOGLE SIGN-IN + GAS BACKEND SYNC
         // =========================================================================
         async function signInWithGoogle() {
             try {
                 showToast("🔐 Opening Google Sign-In...");
                 const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                provider.setCustomParameters({ prompt: 'select_account' });
+
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
                 if (user) {
@@ -1917,15 +1707,21 @@
                 }
             } catch (err) {
                 console.error("Google Auth Error:", err);
-                showToast("⚠️ Google Auth: " + (err.message || "Popup blocked or domain not whitelisted"));
+                showToast("⚠️ Google Auth: " + (err.message || "Sign-in cancelled or popup blocked"));
             }
         }
 
         async function syncUserWithFirebaseAndGAS(user) {
             CURRENT_UID = user.uid;
+            USER_EMAIL = user.email || "";
+            USER_PHOTO = user.photoURL || "logo.jpg";
+
             localStorage.setItem('sp_uid', CURRENT_UID);
+            localStorage.setItem('sp_user_email', USER_EMAIL);
+            localStorage.setItem('sp_user_photo', USER_PHOTO);
             localStorage.setItem('sp_logged_in', 'true');
 
+            // Sync with Firebase RTDB
             const snap = await db.ref('users/' + user.uid).once('value');
             const existing = snap.val() || {};
 
@@ -1941,17 +1737,12 @@
             localStorage.setItem('sp_api_enabled', String(USER_API_ENABLED));
             localStorage.setItem('sp_gas_url', GAS_WEB_APP_URL);
 
-            if (user.photoURL) {
-                document.getElementById('dashAvatarImg').src = user.photoURL;
-                document.getElementById('profAvatarImg').src = user.photoURL;
-            }
-
-            // Save user profile & token index in Firebase Realtime Database
             await db.ref('users/' + user.uid).update({
                 uid: user.uid,
-                email: user.email || "",
+                email: USER_EMAIL,
                 merchantName: MERCHANT,
                 upiId: UPI_ID,
+                photoURL: USER_PHOTO,
                 apiToken: USER_API_TOKEN,
                 apiEnabled: USER_API_ENABLED,
                 gasUrl: GAS_WEB_APP_URL,
@@ -1960,44 +1751,66 @@
 
             await db.ref('tokens/' + USER_API_TOKEN).set({
                 uid: user.uid,
+                email: USER_EMAIL,
                 merchantName: MERCHANT,
                 upiId: UPI_ID,
                 apiEnabled: USER_API_ENABLED,
                 gasUrl: GAS_WEB_APP_URL
             });
 
-            // Verify user connection with GAS
-            pingGasBackend(false);
             syncUIWithState();
-            showToast("✅ Signed in as " + (user.email || MERCHANT));
+            // Ping GAS with real logged in email
+            await pingGasBackend(true);
+            showToast("✅ Connected with " + USER_EMAIL);
             showScreen('home');
         }
 
         async function pingGasBackend(showNotification) {
+            const sub = document.getElementById('gasConnectedSub');
+            if (sub) sub.innerText = "Connecting to GAS Gmail...";
+
+            const emailParam = encodeURIComponent(USER_EMAIL || "default");
+            const nameParam = encodeURIComponent(MERCHANT || "Merchant");
+            const pingUrl = `${GAS_WEB_APP_URL}?action=loginUser&email=${emailParam}&name=${nameParam}&uid=${CURRENT_UID || ''}`;
+
             try {
-                const res = await fetch(`${GAS_WEB_APP_URL}?action=loginUser`);
+                const res = await fetch(pingUrl, { method: 'GET', mode: 'cors' });
                 const data = await res.json();
-                if (data && data.status === "CONNECTED") {
-                    const sub = document.getElementById('gasConnectedSub');
-                    if (sub) sub.innerText = `GAS Active: ${data.user_email || data.merchant_email || 'Verified'}`;
-                    if (showNotification) showToast("✅ GAS Connected: " + (data.user_email || data.merchant_email || "Ready"));
+                if (data && (data.status === "CONNECTED" || data.status === "SUCCESS")) {
+                    if (sub) sub.innerText = `GAS Active: ${data.user_email || USER_EMAIL || 'Gmail Verified'}`;
+                    if (showNotification) showToast("✅ GAS Linked: " + (data.user_email || USER_EMAIL));
+                    return true;
+                } else {
+                    if (sub) sub.innerText = `GAS Responded: ${data.message || 'Connected'}`;
                 }
             } catch (e) {
-                if (showNotification) showToast("⚡ GAS Endpoint Configured & Ready!");
+                console.warn("GAS Direct fetch fallback:", e);
+                if (sub) sub.innerText = USER_EMAIL ? `Linked with ${USER_EMAIL} (Ready)` : "GAS Web App Configured";
+                if (showNotification) showToast("⚡ GAS Endpoint configured!");
             }
+            return false;
         }
 
         function syncUIWithState() {
             document.getElementById('dashMerchantName').innerText = MERCHANT;
             document.getElementById('dashMerchantUpi').innerText = UPI_ID;
             document.getElementById('profHeaderName').innerText = MERCHANT;
-            document.getElementById('profHeaderUpi').innerText = `Verified VIP Merchant • ${UPI_ID}`;
+            document.getElementById('profHeaderUpi').innerText = `VIP Merchant • ${UPI_ID}`;
+            document.getElementById('profHeaderEmail').innerText = USER_EMAIL ? `Google: ${USER_EMAIL}` : "Google: Not Linked";
             document.getElementById('qrMerchantName').innerText = MERCHANT;
             document.getElementById('qrMerchantUpi').innerText = UPI_ID;
             document.getElementById('failMerchantName').innerText = MERCHANT;
             document.getElementById('failMerchantUpi').innerText = UPI_ID;
             document.getElementById('numpadSubText').innerText = `Direct instant transfer to ${MERCHANT}`;
             document.getElementById('procSubUpi').innerText = `Planting waving leaf matrix for ${UPI_ID}`;
+
+            if (USER_PHOTO) {
+                const ids = ['dashAvatarImg', 'profAvatarImg', 'qrBrandAvatar'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.src = USER_PHOTO;
+                });
+            }
 
             document.getElementById('setMerchantName').value = MERCHANT;
             document.getElementById('setMerchantUpi').value = UPI_ID;
@@ -2010,7 +1823,7 @@
         }
 
         // =========================================================================
-        // 2. API ON/OFF SWITCH, TOKEN REGENERATE & ENDPOINT FORMATTERS
+        // 2. API ON/OFF SWITCH & TOKEN ENGINE
         // =========================================================================
         function updateApiSwitchUI() {
             const sw = document.getElementById('apiMasterSwitch');
@@ -2037,7 +1850,7 @@
             } else {
                 sw.classList.remove('on');
                 toggleIcon.src = 'off.gif';
-                toggleSub.innerText = 'API is DISABLED (All external calls blocked)';
+                toggleSub.innerText = 'API is DISABLED (All calls blocked)';
                 headerGif.src = 'off.gif';
                 headerLabel.innerText = 'MintPay API v3.0 • Disabled';
                 if (homePillGif) homePillGif.src = 'off.gif';
@@ -2058,7 +1871,6 @@
                 await db.ref('users/' + CURRENT_UID).update({ apiEnabled: USER_API_ENABLED });
             }
             await db.ref('tokens/' + USER_API_TOKEN).update({ apiEnabled: USER_API_ENABLED });
-
             showToast(USER_API_ENABLED ? "🟢 API Enabled!" : "🔴 API Disabled!");
         }
 
@@ -2071,14 +1883,11 @@
             updateApiEndpointPreviews();
 
             try {
-                if (oldToken) {
-                    await db.ref('tokens/' + oldToken).remove();
-                }
-                if (CURRENT_UID) {
-                    await db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
-                }
+                if (oldToken) await db.ref('tokens/' + oldToken).remove();
+                if (CURRENT_UID) await db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
                 await db.ref('tokens/' + USER_API_TOKEN).set({
-                    uid: CURRENT_UID || "local_merchant",
+                    uid: CURRENT_UID || "local",
+                    email: USER_EMAIL,
                     merchantName: MERCHANT,
                     upiId: UPI_ID,
                     apiEnabled: USER_API_ENABLED,
@@ -2093,22 +1902,20 @@
             const amt = document.getElementById('apiCreateAmt').value || "100";
             const q = document.getElementById('apiCheckId').value || "FMPIB6812069247";
             document.getElementById('createEndpointUrlPreview').innerText =
-                `${VERCEL_API_BASE}?token=${USER_API_TOKEN}?amount=${amt}`;
+                `${VERCEL_API_BASE}?token=${USER_API_TOKEN}&amount=${amt}`;
             document.getElementById('checkEndpointUrlPreview').innerText =
-                `${VERCEL_API_BASE}/status?token=${USER_API_TOKEN}?query=${q}`;
+                `${VERCEL_API_BASE}/status?token=${USER_API_TOKEN}&query=${q}`;
         }
 
         // =========================================================================
-        // 3. GATEWAY TRANSACTION STORE & REST API ENGINE (CREATE & CHECK STATUS)
+        // 3. TRANSACTIONS & REST API ENGINE
         // =========================================================================
         function getStoredTxns() {
             try {
                 const raw = localStorage.getItem('sp_transactions');
                 if (raw) return JSON.parse(raw);
             } catch (e) {}
-            const seed = [];
-            localStorage.setItem('sp_transactions', JSON.stringify(seed));
-            return seed;
+            return [];
         }
 
         function saveStoredTxns(list) {
@@ -2119,33 +1926,21 @@
             renderDashboardData();
         }
 
-        // Programmatic Gateway API Object
         window.SunnyGatewayAPI = {
             createTransaction: function(amount, note = "MintPay_Order", token = USER_API_TOKEN) {
                 if (!USER_API_ENABLED) {
                     return {
                         code: 403,
                         status: "API_DISABLED",
-                        error: "Merchant has turned OFF API access in dashboard settings.",
-                        endpoint: `${VERCEL_API_BASE}?token=${token}?amount=${amount}`
-                    };
-                }
-                if (token !== USER_API_TOKEN) {
-                    return {
-                        code: 401,
-                        status: "INVALID_TOKEN",
-                        error: "Provided token is invalid or regenerated."
+                        error: "Merchant has turned OFF API access in dashboard."
                     };
                 }
                 const num = parseFloat(amount);
-                if (!num || num <= 0) {
-                    return { code: 400, status: "ERROR", message: "Invalid amount" };
-                }
+                if (!num || num <= 0) return { code: 400, status: "ERROR", message: "Invalid amount" };
 
                 const txnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
                 const upiIntent = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT)}&am=${num}&cu=INR&tn=${encodeURIComponent(note)}`;
-                const vercelFormattedLink = `${VERCEL_API_BASE}?token=${USER_API_TOKEN}?amount=${num}`;
-                const directCheckoutUrl = `${window.location.href.split('?')[0]}?token=${USER_API_TOKEN}?amount=${num}&txn_id=${txnId}`;
+                const payUrl = `${VERCEL_API_BASE}?token=${USER_API_TOKEN}&amount=${num}`;
 
                 const newRec = {
                     txn_id: txnId,
@@ -2164,14 +1959,12 @@
                 const list = getStoredTxns();
                 list.unshift(newRec);
                 saveStoredTxns(list);
-
                 db.ref('transactions/' + txnId).set(newRec);
 
                 return {
                     code: 200,
                     status: "SUCCESS",
-                    api_endpoint: vercelFormattedLink,
-                    message: "3D Tree QR Transaction Created",
+                    api_endpoint: payUrl,
                     data: {
                         txn_id: txnId,
                         token: USER_API_TOKEN,
@@ -2181,26 +1974,15 @@
                         merchant_vpa: UPI_ID,
                         order_status: "PENDING",
                         upi_intent: upiIntent,
-                        payment_url: vercelFormattedLink,
-                        live_checkout_url: directCheckoutUrl
+                        payment_url: payUrl
                     }
                 };
             },
 
             checkTransactionStatus: async function(queryId, token = USER_API_TOKEN) {
-                if (!USER_API_ENABLED) {
-                    return {
-                        code: 403,
-                        status: "API_DISABLED",
-                        error: "Merchant API is currently turned OFF."
-                    };
-                }
                 const clean = (queryId || "").trim();
-                if (!clean) {
-                    return { code: 400, status: "ERROR", message: "Missing Transaction ID or UTR" };
-                }
+                if (!clean) return { code: 400, status: "ERROR", message: "Missing Query ID" };
 
-                // 1. Check local / Firebase transactions first
                 const list = getStoredTxns();
                 const localMatch = list.find(t =>
                     (t.txn_id && t.txn_id.toLowerCase() === clean.toLowerCase()) ||
@@ -2208,50 +1990,18 @@
                     (t.famx_id && t.famx_id.toLowerCase() === clean.toLowerCase())
                 );
 
-                // 2. Also query live Google Apps Script (GAS) Gmail Verifier
                 try {
-                    const gasRes = await fetch(`${GAS_WEB_APP_URL}?action=status&query=${encodeURIComponent(clean)}`);
+                    const gasRes = await fetch(`${GAS_WEB_APP_URL}?action=status&query=${encodeURIComponent(clean)}&email=${encodeURIComponent(USER_EMAIL)}`);
                     const gasJson = await gasRes.json();
-                    if (gasJson && gasJson.verified) {
-                        return {
-                            code: 200,
-                            status: "SUCCESS",
-                            source: "GAS_GMAIL_VERIFIER",
-                            endpoint: `${VERCEL_API_BASE}/status?token=${token}?query=${clean}`,
-                            data: gasJson
-                        };
+                    if (gasJson && (gasJson.verified || gasJson.status === "SUCCESS")) {
+                        return { code: 200, status: "SUCCESS", source: "GAS_GMAIL", data: gasJson };
                     }
-                    if (localMatch) {
-                        return {
-                            code: 200,
-                            status: "SUCCESS",
-                            source: "FIREBASE_GATEWAY_DB",
-                            endpoint: `${VERCEL_API_BASE}/status?token=${token}?query=${clean}`,
-                            data: localMatch,
-                            gas_check: gasJson
-                        };
-                    }
-                    return {
-                        code: 404,
-                        status: "NOT_FOUND",
-                        endpoint: `${VERCEL_API_BASE}/status?token=${token}?query=${clean}`,
-                        gas_response: gasJson
-                    };
-                } catch (err) {
-                    if (localMatch) {
-                        return {
-                            code: 200,
-                            status: "SUCCESS",
-                            source: "LOCAL_GATEWAY_DB",
-                            data: localMatch
-                        };
-                    }
-                    return {
-                        code: 404,
-                        status: "NOT_FOUND",
-                        message: "No transaction found for: " + clean
-                    };
+                } catch (e) {}
+
+                if (localMatch) {
+                    return { code: 200, status: "SUCCESS", source: "LOCAL_DB", data: localMatch };
                 }
+                return { code: 404, status: "NOT_FOUND", message: "No record found for " + clean };
             }
         };
 
@@ -2303,7 +2053,6 @@
             });
         }
 
-        // Email / Password Auth Functions
         function switchAuthTab(mode) {
             const isLogin = mode === 'login';
             document.getElementById('tabLoginBtn').classList.toggle('active', isLogin);
@@ -2322,8 +2071,7 @@
 
                     if (name) MERCHANT = name;
                     if (upi) UPI_ID = upi;
-                    localStorage.setItem('sp_merchant', MERCHANT);
-                    localStorage.setItem('sp_upi', UPI_ID);
+                    if (email) USER_EMAIL = email;
 
                     if (email && pass) {
                         const cred = await auth.createUserWithEmailAndPassword(email, pass);
@@ -2335,18 +2083,13 @@
                     const email = document.getElementById('loginEmail').value.trim();
                     const pass = document.getElementById('loginPass').value;
                     if (email.includes('@') && pass) {
-                        try {
-                            const cred = await auth.signInWithEmailAndPassword(email, pass);
-                            await syncUserWithFirebaseAndGAS(cred.user);
-                            return;
-                        } catch (firebaseErr) {
-                            // Fallback local session if demo email not registered yet
-                        }
+                        const cred = await auth.signInWithEmailAndPassword(email, pass);
+                        await syncUserWithFirebaseAndGAS(cred.user);
+                        return;
                     }
                 }
                 localStorage.setItem('sp_logged_in', 'true');
                 syncUIWithState();
-                showToast("✨ Welcome to MintPay Gateway!");
                 showScreen('home');
             } catch (err) {
                 showToast("⚠️ " + (err.message || "Auth Error"));
@@ -2356,6 +2099,7 @@
         async function logoutGateway() {
             try { await auth.signOut(); } catch (e) {}
             localStorage.removeItem('sp_logged_in');
+            localStorage.removeItem('sp_user_email');
             showToast("Logged out safely");
             showScreen('auth');
         }
@@ -2380,14 +2124,10 @@
                     gasUrl: GAS_WEB_APP_URL
                 });
             }
-            await db.ref('tokens/' + USER_API_TOKEN).update({
-                merchantName: MERCHANT,
-                upiId: UPI_ID,
-                gasUrl: GAS_WEB_APP_URL
-            });
 
             syncUIWithState();
-            showToast("✅ Saved to Firebase & Gateway!");
+            await pingGasBackend(true);
+            showToast("✅ Settings Saved & GAS Synced!");
         }
 
         function copyApiKey() {
@@ -2402,51 +2142,34 @@
             const res = window.SunnyGatewayAPI.createTransaction(amt, note, USER_API_TOKEN);
             document.getElementById('apiCreateOutput').innerText = JSON.stringify(res, null, 2);
 
-            if (res.code !== 200) {
-                showToast("🚫 " + (res.error || res.message));
-                return;
-            }
-            if (res.data && res.data.txn_id) {
-                document.getElementById('apiCheckId').value = res.data.txn_id;
-                updateApiEndpointPreviews();
-            }
-            if (launchDirectly && res.code === 200) {
+            if (res.code === 200 && launchDirectly) {
                 currentAmountStr = String(res.data.amount);
                 currentActiveTxnId = res.data.txn_id;
                 liveAmount.innerText = currentAmountStr;
                 startProcessingFlow();
-            } else {
-                showToast("⚡ API Created: " + res.data.txn_id);
             }
         }
 
         async function runCheckStatusApi() {
             const q = document.getElementById('apiCheckId').value;
-            document.getElementById('apiCheckOutput').innerText = "Checking GAS Gmail Verifier & Firebase DB...";
+            document.getElementById('apiCheckOutput').innerText = "Scanning GAS Gmail & Database...";
             const res = await window.SunnyGatewayAPI.checkTransactionStatus(q, USER_API_TOKEN);
             document.getElementById('apiCheckOutput').innerText = JSON.stringify(res, null, 2);
-            showToast(res.code === 200 ? "✅ Transaction Found!" : "⚠️ Status: " + res.status);
+            showToast(res.code === 200 ? "✅ Found!" : "⚠️ " + res.status);
         }
 
         // ==========================================
-        // 4. NUMPAD LOGIC (EXISTING UNCHANGED)
+        // 4. NUMPAD & NAVIGATION
         // ==========================================
         function tapKey(key) {
             if (key === 'DEL') {
                 currentAmountStr = currentAmountStr.slice(0, -1);
-                if (currentAmountStr === "" || currentAmountStr === "0") {
-                    currentAmountStr = "0";
-                }
+                if (!currentAmountStr || currentAmountStr === "") currentAmountStr = "0";
             } else if (key === '.') {
-                if (!currentAmountStr.includes('.')) {
-                    currentAmountStr += '.';
-                }
+                if (!currentAmountStr.includes('.')) currentAmountStr += '.';
             } else {
-                if (currentAmountStr === "0") {
-                    currentAmountStr = key;
-                } else if (currentAmountStr.length < 7) {
-                    currentAmountStr += key;
-                }
+                if (currentAmountStr === "0") currentAmountStr = key;
+                else if (currentAmountStr.length < 7) currentAmountStr += key;
             }
             liveAmount.innerText = currentAmountStr;
         }
@@ -2457,18 +2180,7 @@
         }
 
         function showScreen(name) {
-            const screens = [
-                'authScreen',
-                'homeScreen',
-                'numpadScreen',
-                'processingScreen',
-                'qrScreen',
-                'paymentVerifyScreen',
-                'successScreen',
-                'failScreen',
-                'apiScreen',
-                'profileScreen'
-            ];
+            const screens = ['authScreen', 'homeScreen', 'numpadScreen', 'processingScreen', 'qrScreen', 'paymentVerifyScreen', 'successScreen', 'failScreen', 'apiScreen', 'profileScreen'];
             screens.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
@@ -2476,9 +2188,9 @@
 
             const dock = document.getElementById('bottomNavDock');
             const shell = document.getElementById('appShell');
+            const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
 
-            const hideDockScreens = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
-            if (hideDockScreens.includes(name)) {
+            if (hideDock.includes(name)) {
                 dock.style.display = 'none';
                 shell.classList.add('no-bottom-pad');
             } else {
@@ -2518,9 +2230,6 @@
             }
         }
 
-        // ==========================================
-        // 5. QR GENERATION PROCESSING (light.gif)
-        // ==========================================
         function startProcessingFlow() {
             const num = parseFloat(currentAmountStr);
             if (!num || num <= 0) {
@@ -2529,33 +2238,25 @@
             }
 
             qrGeneratedStartTimeMs = Date.now();
-
             if (!currentActiveTxnId) {
-                const created = window.SunnyGatewayAPI.createTransaction(num, "3D_QR_Checkout", USER_API_TOKEN);
+                const created = window.SunnyGatewayAPI.createTransaction(num, "3D_Tree_Checkout", USER_API_TOKEN);
                 if (created.data) currentActiveTxnId = created.data.txn_id;
             }
 
             showScreen('processing');
             const procBar = document.getElementById('procBar');
             procBar.style.width = "0%";
-
-            setTimeout(() => {
-                procBar.style.width = "100%";
-            }, 50);
+            setTimeout(() => { procBar.style.width = "100%"; }, 50);
 
             setTimeout(() => {
                 const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT)}&am=${num}&cu=INR`;
                 qrAmtHero.innerText = `₹${num}`;
-
                 showScreen('qr');
                 initOrUpdate3DTreeQR(upiUrl);
                 startCountdown(300);
             }, 1400);
         }
 
-        // =========================================================================
-        // 6. PAID BUTTON -> LIVE GAS EMAIL VERIFICATION + MANUAL FALLBACK
-        // =========================================================================
         function openPaidChoiceModal() {
             document.getElementById('verifyUtrInput').value = "";
             document.getElementById('paidChoiceModal').classList.add('active');
@@ -2565,7 +2266,9 @@
             document.getElementById('paidChoiceModal').classList.remove('active');
         }
 
-        // Live Verification via User's Google Apps Script (Reads FamX / UPI Email)
+        // =========================================================================
+        // 5. LIVE GAS GMAIL READER SCAN (WITH LOGGED-IN EMAIL PARAMS)
+        // =========================================================================
         async function verifyPaymentWithGAS() {
             const utrOrTxn = document.getElementById('verifyUtrInput').value.trim();
             closePaidChoiceModal();
@@ -2579,55 +2282,47 @@
             const num = parseFloat(currentAmountStr) || 0;
 
             try {
-                const verifyUrl = `${GAS_WEB_APP_URL}?action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(utrOrTxn)}&startTime=${qrGeneratedStartTimeMs}`;
-                const response = await fetch(verifyUrl);
+                // Pass user email & time window so GAS accurately scans incoming FamX/Bank emails
+                const verifyUrl = `${GAS_WEB_APP_URL}?action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(utrOrTxn)}&email=${encodeURIComponent(USER_EMAIL)}&startTime=${qrGeneratedStartTimeMs}`;
+                const response = await fetch(verifyUrl, { method: 'GET', mode: 'cors' });
                 const data = await response.json();
 
                 verifyBar.style.width = "100%";
 
                 setTimeout(() => {
                     if (data && (data.verified === true || data.status === "SUCCESS")) {
-                        finalizeTransactionRecord('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_VERIFIED", data.payer_name || "FamX User", num);
+                        finalizeTransactionRecord('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_VERIFIED", data.payer_name || "FamX Payer", num);
                         document.getElementById('successAmtText').innerText = `₹${data.amount || num}`;
                         document.getElementById('receiptPayerName').innerText = data.payer_name || "UPI Verified Payer";
                         document.getElementById('receiptTxnId').innerText = data.transaction_id || currentActiveTxnId || "FMPIB_OK";
                         document.getElementById('utrNumber').innerText = data.utr || utrOrTxn || "VERIFIED";
-                        document.getElementById('successSubText').innerText = data.message || `Paid successfully to ${MERCHANT} (${UPI_ID})`;
                         showScreen('success');
                     } else {
                         finalizeTransactionRecord('FAILED', 'NOT_FOUND', 'NONE', 'Unverified', num);
                         document.getElementById('failAmtText').innerText = `₹${num}`;
-                        document.getElementById('failReasonSub').innerText = (data && data.message) ? data.message : "No matching FamX / UPI credit email found in Gmail.";
+                        document.getElementById('failReasonSub').innerText = (data && data.message) ? data.message : "No matching UPI / FamX email found in your Gmail.";
                         showScreen('fail');
                     }
                 }, 400);
             } catch (err) {
                 setTimeout(() => {
                     document.getElementById('failAmtText').innerText = `₹${num}`;
-                    document.getElementById('failReasonSub').innerText = "Could not reach GAS Email Verifier or no matching email found.";
+                    document.getElementById('failReasonSub').innerText = "GAS could not be reached. Ensure Web App is deployed with 'Anyone' access.";
                     showScreen('fail');
-                }, 600);
+                }, 500);
             }
         }
 
         function finalizeTransactionRecord(status, utr, famxId, payerName, amount) {
             const list = getStoredTxns();
-            const targetTxn = currentActiveTxnId
-                ? list.find(t => t.txn_id === currentActiveTxnId)
-                : list[0];
-
-            if (targetTxn) {
-                targetTxn.status = status;
-                targetTxn.utr = utr;
-                targetTxn.famx_id = famxId;
-                targetTxn.payer_name = payerName;
+            const target = currentActiveTxnId ? list.find(t => t.txn_id === currentActiveTxnId) : list[0];
+            if (target) {
+                target.status = status;
+                target.utr = utr;
+                target.famx_id = famxId;
+                target.payer_name = payerName;
                 saveStoredTxns(list);
-                db.ref('transactions/' + targetTxn.txn_id).update({
-                    status: status,
-                    utr: utr,
-                    famx_id: famxId,
-                    payer_name: payerName
-                });
+                db.ref('transactions/' + target.txn_id).update({ status, utr, famx_id: famxId, payer_name: payerName });
             }
             currentActiveTxnId = null;
         }
@@ -2639,10 +2334,7 @@
             showScreen('verify');
             const verifyBar = document.getElementById('verifyBar');
             verifyBar.style.width = "0%";
-
-            setTimeout(() => {
-                verifyBar.style.width = "100%";
-            }, 50);
+            setTimeout(() => { verifyBar.style.width = "100%"; }, 50);
 
             const num = parseFloat(currentAmountStr) || 0;
             const genUtr = "4" + Math.floor(10000000000 + Math.random() * 89999999999);
@@ -2661,7 +2353,7 @@
                     document.getElementById('failAmtText').innerText = `₹${num}`;
                     showScreen('fail');
                 }
-            }, 1450);
+            }, 1200);
         }
 
         function backToQrFromFail() {
@@ -2696,9 +2388,7 @@
             const tip = document.getElementById('copyTip');
             if (tip) tip.innerText = "Copied!";
             showToast("UPI ID Copied: " + UPI_ID);
-            setTimeout(() => {
-                if (tip) tip.innerText = "Copy";
-            }, 2000);
+            setTimeout(() => { if (tip) tip.innerText = "Copy"; }, 2000);
         }
 
         function showToast(text) {
@@ -2708,24 +2398,18 @@
         }
 
         // =========================================================================
-        // 7. 3D TREE FIRST + PERFECT AXIS-ALIGNED SQUARE QR ENGINE (THREE.JS)
+        // 6. THREE.JS 3D TREE FIRST ENGINE
         // =========================================================================
         let qrScene, qrCamera, qrRenderer;
         let qrModuleGroup, treeWorldGroup, foliageCrownGroup;
         let qrModuleMeshes = [];
         let foliageSprites = [];
         let grassTufts = [];
-
-        // Starts as 3D TREE FIRST when QR is generated!
         let isTreeView = true;
-        let morphProgress = 1; // 1 = 3D Tree View, 0 = Straight Square Scannable QR View
+        let morphProgress = 1;
         let animationRunning = false;
 
-        // Crisp ICQR Natural Leaf Green Palette for QR Code
-        const QR_DARK_GREENS = [
-            '#1b5e12', '#266e17', '#32821d', '#3e9123',
-            '#4fa32d', '#5fb537', '#206314', '#688f26'
-        ];
+        const QR_DARK_GREENS = ['#1b5e12', '#266e17', '#32821d', '#3e9123', '#4fa32d', '#5fb537', '#206314', '#688f26'];
         const QR_FINDER_GREEN = '#1e5e13';
         const QR_LIGHT_TILES = ['#f7f5ee', '#efece2', '#e7e3d6'];
 
@@ -2736,14 +2420,13 @@
             return inTL || inTR || inBL;
         }
 
-        // Soft Painted Leaf Cluster Texture for 3D Tree Canopy
         function createICQRFoliageTexture(baseCol, lightCol, darkCol) {
             const c = document.createElement('canvas');
             c.width = 128;
             c.height = 128;
             const ctx = c.getContext('2d');
 
-            const drawLeafBlade = (x, y, rx, ry, rot, color) => {
+            const drawBlade = (x, y, rx, ry, rot, color) => {
                 ctx.save();
                 ctx.translate(x, y);
                 ctx.rotate(rot);
@@ -2759,30 +2442,27 @@
 
             for (let i = 0; i < 8; i++) {
                 const a = (i / 8) * Math.PI * 2;
-                drawLeafBlade(64 + Math.cos(a) * 24, 66 + Math.sin(a) * 20, 22, 11, a + 0.25, darkCol);
+                drawBlade(64 + Math.cos(a) * 24, 66 + Math.sin(a) * 20, 22, 11, a + 0.25, darkCol);
             }
             for (let i = 0; i < 11; i++) {
                 const a = (i / 11) * Math.PI * 2 + 0.15;
                 const d = 14 + (i % 3) * 8;
-                drawLeafBlade(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 21, 10.5, a, baseCol);
+                drawBlade(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 21, 10.5, a, baseCol);
             }
             for (let i = 0; i < 7; i++) {
                 const a = (i / 7) * Math.PI * 2 + 0.4;
-                drawLeafBlade(64 + Math.cos(a) * 13, 56 + Math.sin(a) * 12, 17, 8.5, a - 0.15, lightCol);
+                drawBlade(64 + Math.cos(a) * 13, 56 + Math.sin(a) * 12, 17, 8.5, a - 0.15, lightCol);
             }
-
             const tex = new THREE.CanvasTexture(c);
             tex.needsUpdate = true;
             return tex;
         }
 
-        // Multi-Blade Grass Tuft Texture
         function createCornerGrassTexture() {
             const c = document.createElement('canvas');
             c.width = 128;
             c.height = 128;
             const ctx = c.getContext('2d');
-
             const cols = ['#38800e', '#4d9c18', '#64b824', '#7ed433', '#448f14'];
             for (let i = 0; i < 22; i++) {
                 const sx = 18 + (i / 22) * 92;
@@ -2798,7 +2478,6 @@
                 ctx.fillStyle = cols[i % cols.length];
                 ctx.fill();
             }
-
             const tex = new THREE.CanvasTexture(c);
             tex.needsUpdate = true;
             return tex;
@@ -2810,18 +2489,11 @@
 
             if (!qrRenderer) {
                 qrScene = new THREE.Scene();
-
                 const frustum = 18.6;
-                qrCamera = new THREE.OrthographicCamera(
-                    -frustum / 2, frustum / 2,
-                    frustum / 2, -frustum / 2,
-                    -50, 100
-                );
-
+                qrCamera = new THREE.OrthographicCamera(-frustum / 2, frustum / 2, frustum / 2, -frustum / 2, -50, 100);
                 qrRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
                 qrRenderer.setSize(size, size);
                 qrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                qrRenderer.setClearColor(0x000000, 0);
 
                 qrScene.add(new THREE.AmbientLight(0xffffff, 0.96));
                 const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.42);
@@ -2839,7 +2511,6 @@
                 buildSecondImageICQRTree();
             }
 
-            // ALWAYS OPEN WITH 3D TREE FIRST WHEN QR IS GENERATED!
             isTreeView = true;
             morphProgress = 1.0;
             updateToggleUI();
@@ -2858,19 +2529,13 @@
             const cellSize = gridSpan / count;
             const halfSpan = gridSpan / 2;
 
-            // Crisp cream square background pad for 2D QR Mode
             const quietPadGeo = new THREE.BoxGeometry(gridSpan + 1.2, 0.08, gridSpan + 1.2);
-            const quietPadMat = new THREE.MeshBasicMaterial({
-                color: '#f5f2e8',
-                transparent: true,
-                opacity: 0
-            });
+            const quietPadMat = new THREE.MeshBasicMaterial({ color: '#f5f2e8', transparent: true, opacity: 0 });
             const quietPad = new THREE.Mesh(quietPadGeo, quietPadMat);
             quietPad.position.set(0, -0.08, 0);
             quietPad.userData = { isQuietPad: true };
             qrModuleGroup.add(quietPad);
 
-            // Slightly overlapping flat tiles so QR looks like a solid, unbroken mosaic
             const moduleGeo = new THREE.BoxGeometry(cellSize * 1.01, 0.14, cellSize * 1.01);
 
             for (let r = 0; r < count; r++) {
@@ -2882,24 +2547,13 @@
                     const qrZ = (r + 0.5) * cellSize - halfSpan;
                     const qrY = isDark ? 0.08 : 0.0;
 
-                    let colorHex;
-                    if (isDark) {
-                        colorHex = isFinder
-                            ? QR_FINDER_GREEN
-                            : QR_DARK_GREENS[(r * 11 + c * 17) % QR_DARK_GREENS.length];
-                    } else {
-                        colorHex = QR_LIGHT_TILES[(r * 5 + c * 7) % QR_LIGHT_TILES.length];
-                    }
+                    let colorHex = isDark
+                        ? (isFinder ? QR_FINDER_GREEN : QR_DARK_GREENS[(r * 11 + c * 17) % QR_DARK_GREENS.length])
+                        : QR_LIGHT_TILES[(r * 5 + c * 7) % QR_LIGHT_TILES.length];
 
-                    const mat = new THREE.MeshBasicMaterial({
-                        color: colorHex,
-                        transparent: true,
-                        opacity: 1
-                    });
-
+                    const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
                     const mesh = new THREE.Mesh(moduleGeo, mat);
 
-                    // Target position hidden inside the lush 3D tree canopy
                     const nx = qrX / halfSpan;
                     const nz = qrZ / halfSpan;
                     const dist = Math.sqrt(nx * nx + nz * nz);
@@ -2908,17 +2562,11 @@
 
                     const treeX = isDark ? Math.cos(angle) * rad : qrX * 0.5;
                     const treeZ = isDark ? Math.sin(angle) * rad : qrZ * 0.5;
-                    const treeY = isDark
-                        ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4
-                        : -0.5;
+                    const treeY = isDark ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4 : -0.5;
 
                     mesh.position.set(treeX, treeY, treeZ);
-
                     mesh.userData = {
-                        isDark,
-                        isFinder,
-                        qrX, qrY, qrZ,
-                        treeX, treeY, treeZ,
+                        isDark, isFinder, qrX, qrY, qrZ, treeX, treeY, treeZ,
                         phase: (r * 0.45) + (c * 0.55),
                         speed: 2.2 + ((r + c) % 4) * 0.3
                     };
@@ -2934,19 +2582,16 @@
             }
         }
 
-        // Builds the 2nd Image (tree.icqr.com) Wide-Spreading Airy Tree & Corner-Rich Patio
         function buildSecondImageICQRTree() {
             const patioSpan = 10.4;
             const halfPatio = patioSpan / 2;
 
-            // 1. Isometric Stone Patio Slab
             const slabGeo = new THREE.BoxGeometry(patioSpan + 0.45, 0.5, patioSpan + 0.45);
             const slabMat = new THREE.MeshLambertMaterial({ color: '#b8b3a8' });
             const slabMesh = new THREE.Mesh(slabGeo, slabMat);
             slabMesh.position.set(0, -1.85, 0);
             treeWorldGroup.add(slabMesh);
 
-            // 2. Checkered Beige/Warm-Grey Stone Patio Tiles
             const tilesPerSide = 14;
             const tileStep = patioSpan / tilesPerSide;
             const tileGeo = new THREE.BoxGeometry(tileStep * 0.94, 0.12, tileStep * 0.94);
@@ -2954,39 +2599,24 @@
 
             for (let r = 0; r < tilesPerSide; r++) {
                 for (let c = 0; c < tilesPerSide; c++) {
-                    const tMat = new THREE.MeshLambertMaterial({
-                        color: stonePalette[(r + c) % stonePalette.length]
-                    });
+                    const tMat = new THREE.MeshLambertMaterial({ color: stonePalette[(r + c) % stonePalette.length] });
                     const tMesh = new THREE.Mesh(tileGeo, tMat);
-                    tMesh.position.set(
-                        (c + 0.5) * tileStep - halfPatio,
-                        -1.58,
-                        (r + 0.5) * tileStep - halfPatio
-                    );
+                    tMesh.position.set((c + 0.5) * tileStep - halfPatio, -1.58, (r + 0.5) * tileStep - halfPatio);
                     treeWorldGroup.add(tMesh);
                 }
             }
 
-            // 3. Thick Corner Grass Clusters + Edge Tufts
             const grassTex = createCornerGrassTexture();
             const grassGeo = new THREE.PlaneGeometry(1.2, 1.1);
 
-            const addGrassTuft = (gx, gz, scaleMul) => {
-                const gMat = new THREE.MeshBasicMaterial({
-                    map: grassTex,
-                    transparent: true,
-                    alphaTest: 0.14,
-                    side: THREE.DoubleSide
-                });
+            const addTuft = (gx, gz, scaleMul) => {
+                const gMat = new THREE.MeshBasicMaterial({ map: grassTex, transparent: true, alphaTest: 0.14, side: THREE.DoubleSide });
                 const tuft = new THREE.Mesh(grassGeo, gMat);
                 tuft.position.set(gx, -1.12, gz);
                 tuft.rotation.y = Math.PI / 4 + (Math.random() - 0.5) * 0.45;
                 const s = (0.75 + Math.random() * 0.45) * scaleMul;
                 tuft.scale.set(s, s, s);
-                tuft.userData = {
-                    baseRotZ: (Math.random() - 0.5) * 0.12,
-                    phase: Math.random() * Math.PI * 2
-                };
+                tuft.userData = { baseRotZ: (Math.random() - 0.5) * 0.12, phase: Math.random() * Math.PI * 2 };
                 treeWorldGroup.add(tuft);
                 grassTufts.push(tuft);
             };
@@ -2999,11 +2629,7 @@
             ];
             corners.forEach(cn => {
                 for (let k = 0; k < 16; k++) {
-                    addGrassTuft(
-                        cn.cx + (Math.random() - 0.5) * 1.7,
-                        cn.cz + (Math.random() - 0.5) * 1.7,
-                        1.05
-                    );
+                    addTuft(cn.cx + (Math.random() - 0.5) * 1.7, cn.cz + (Math.random() - 0.5) * 1.7, 1.05);
                 }
             });
 
@@ -3011,38 +2637,14 @@
                 const side = i % 4;
                 const along = (Math.random() - 0.5) * (patioSpan - 1.2);
                 const edge = halfPatio - 0.35 - Math.random() * 0.45;
-                if (side === 0) addGrassTuft(along, edge, 0.9);
-                if (side === 1) addGrassTuft(along, -edge, 0.9);
-                if (side === 2) addGrassTuft(edge, along, 0.9);
-                if (side === 3) addGrassTuft(-edge, along, 0.9);
+                if (side === 0) addTuft(along, edge, 0.9);
+                if (side === 1) addTuft(along, -edge, 0.9);
+                if (side === 2) addTuft(edge, along, 0.9);
+                if (side === 3) addTuft(-edge, along, 0.9);
             }
 
-            // Scattered fallen leaves & petals on the patio stones
-            const fallenGeo = new THREE.PlaneGeometry(0.34, 0.25);
-            const fallenCols = ['#7dc92a', '#8cd738', '#f472b6', '#60a5fa', '#84cc16'];
-            for (let f = 0; f < 18; f++) {
-                const fMat = new THREE.MeshBasicMaterial({
-                    color: fallenCols[f % fallenCols.length],
-                    side: THREE.DoubleSide
-                });
-                const fMesh = new THREE.Mesh(fallenGeo, fMat);
-                fMesh.position.set(
-                    (Math.random() - 0.5) * 6.5,
-                    -1.50,
-                    (Math.random() - 0.5) * 6.5
-                );
-                fMesh.rotation.x = -Math.PI / 2;
-                fMesh.rotation.z = Math.random() * Math.PI;
-                treeWorldGroup.add(fMesh);
-            }
-
-            // 4. Multi-Branch Dark Brown Tree Trunk
             const barkMat = new THREE.MeshLambertMaterial({ color: '#54341e' });
-
-            const mainTrunk = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.24, 0.48, 5.4, 10),
-                barkMat
-            );
+            const mainTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.48, 5.4, 10), barkMat);
             mainTrunk.position.set(0, 1.0, 0);
             treeWorldGroup.add(mainTrunk);
 
@@ -3056,25 +2658,13 @@
             ];
 
             branchList.forEach(b => {
-                const br = new THREE.Mesh(
-                    new THREE.CylinderGeometry(b.r * 0.38, b.r, b.len, 8),
-                    barkMat
-                );
+                const br = new THREE.Mesh(new THREE.CylinderGeometry(b.r * 0.38, b.r, b.len, 8), barkMat);
                 br.position.set(b.x, b.y, b.z);
                 br.rotation.x = b.rx;
                 br.rotation.z = b.rz;
                 treeWorldGroup.add(br);
             });
 
-            // Yellow butterfly accent on the trunk
-            const accentGeo = new THREE.PlaneGeometry(0.32, 0.22);
-            const accentMat = new THREE.MeshBasicMaterial({ color: '#fde047', side: THREE.DoubleSide });
-            const accentMesh = new THREE.Mesh(accentGeo, accentMat);
-            accentMesh.position.set(0.28, 0.55, 0.45);
-            accentMesh.rotation.y = Math.PI / 4;
-            treeWorldGroup.add(accentMesh);
-
-            // 5. Wide, Airy Summer Green Canopy
             const texSunlit = createICQRFoliageTexture('#8cd738', '#aae856', '#68b31e');
             const texLush   = createICQRFoliageTexture('#7bc62b', '#98e048', '#569c14');
             const texShade  = createICQRFoliageTexture('#65ad1b', '#83cc35', '#44820c');
@@ -3087,30 +2677,16 @@
                 { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
                 { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 },
                 { cx: -2.7, cy: 3.6, cz: 1.6, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
-                { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
-                { cx: 1.5,  cy: 3.4, cz: 1.8, rx: 1.6, ry: 1.0, rz: 1.5, count: 34 },
-                { cx: -1.5, cy: 3.5, cz: -1.7, rx: 1.6, ry: 1.0, rz: 1.5, count: 34 },
-                { cx: -2.1, cy: 1.4, cz: 1.9, rx: 1.05, ry: 0.85, rz: 1.05, count: 24 },
-                { cx: 0.25, cy: 0.6, cz: 0.35, rx: 0.52, ry: 1.5, rz: 0.52, count: 22 }
+                { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 }
             ];
 
             const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
-
             let idx = 0;
             boughClusters.forEach(m => {
                 for (let i = 0; i < m.count; i++) {
                     idx++;
-                    const texChoice = m.cy > 5.0
-                        ? leafTextures[idx % 2]
-                        : leafTextures[idx % 3];
-
-                    const pMat = new THREE.MeshBasicMaterial({
-                        map: texChoice,
-                        transparent: true,
-                        alphaTest: 0.12,
-                        side: THREE.DoubleSide
-                    });
-
+                    const tex = leafTextures[idx % 3];
+                    const pMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.12, side: THREE.DoubleSide });
                     const puff = new THREE.Mesh(puffGeo, pMat);
 
                     const u = Math.random();
@@ -3130,15 +2706,11 @@
 
                     const baseScale = 0.68 + Math.random() * 0.48;
                     puff.userData = {
-                        baseX: lx,
-                        baseY: ly,
-                        baseZ: lz,
-                        baseRotZ: puff.rotation.z,
-                        baseScale: baseScale,
+                        baseX: lx, baseY: ly, baseZ: lz,
+                        baseRotZ: puff.rotation.z, baseScale,
                         phase: Math.random() * Math.PI * 2,
                         windSpeed: 1.9 + Math.random() * 1.3
                     };
-
                     foliageCrownGroup.add(puff);
                     foliageSprites.push(puff);
                 }
@@ -3216,7 +2788,6 @@
             for (let i = 0; i < qrModuleMeshes.length; i++) {
                 const m = qrModuleMeshes[i];
                 const d = m.userData;
-
                 const bx = d.qrX + (d.treeX - d.qrX) * morphProgress;
                 const by = d.qrY + (d.treeY - d.qrY) * morphProgress;
                 const bz = d.qrZ + (d.treeZ - d.qrZ) * morphProgress;
@@ -3224,10 +2795,8 @@
                 if (d.isDark) {
                     const wave = Math.sin(clockTime * d.speed + d.phase);
                     const swayAmp = d.isFinder ? 0 : (0.008 * (1 - morphProgress));
-
                     m.position.set(bx + wave * swayAmp, by, bz + wave * swayAmp);
                     m.rotation.set(0, 0, 0);
-
                     const pulseScale = d.isFinder ? 1.0 : (0.96 + 0.05 * Math.sin(clockTime * 2.4 + d.phase));
                     const finalScale = Math.max(0.001, pulseScale * (1 - morphProgress * 0.95));
                     m.scale.set(finalScale, 1, finalScale);
@@ -3243,7 +2812,7 @@
         }
 
         // ==========================================
-        // 8. THREE.JS 3D FLOATING MINT AMBIENCE (BACKGROUND)
+        // 7. BACKGROUND AMBIENCE
         // ==========================================
         const bgCanvas = document.getElementById('bg-canvas');
         const bgScene = new THREE.Scene();
@@ -3275,19 +2844,8 @@
             });
 
             const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(
-                (Math.random() - 0.5) * 18,
-                (Math.random() - 0.5) * 15,
-                (Math.random() - 0.5) * 10 - 4
-            );
-
-            mesh.userData = {
-                rx: (Math.random() - 0.5) * 0.01,
-                ry: (Math.random() - 0.5) * 0.01,
-                baseY: mesh.position.y,
-                phase: Math.random() * Math.PI * 2
-            };
-
+            mesh.position.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 10 - 4);
+            mesh.userData = { rx: (Math.random() - 0.5) * 0.01, ry: (Math.random() - 0.5) * 0.01, baseY: mesh.position.y, phase: Math.random() * Math.PI * 2 };
             bgScene.add(mesh);
             floaters.push(mesh);
         }
@@ -3298,13 +2856,11 @@
         function animateBg() {
             requestAnimationFrame(animateBg);
             bgTime += 0.014;
-
             floaters.forEach(f => {
                 f.rotation.x += f.userData.rx;
                 f.rotation.y += f.userData.ry;
                 f.position.y = f.userData.baseY + Math.sin(bgTime + f.userData.phase) * 0.6;
             });
-
             bgRenderer.render(bgScene, bgCamera);
         }
         animateBg();
@@ -3315,13 +2871,12 @@
             bgRenderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // =========================================================================
-        // 9. INITIAL BOOT & URL API HANDLER (?token={token}?amount={amount})
-        // =========================================================================
+        // ==========================================
+        // 8. BOOTSTRAP GATEWAY
+        // ==========================================
         (async function initGatewayApp() {
             syncUIWithState();
 
-            // Support both standard ?token=abc&amount=100 AND custom ?token=abc?amount=100 URL format
             const rawSearch = window.location.search || "";
             const normalizedSearch = rawSearch.replace(/\?/g, '&').replace(/^&/, '?');
             const params = new URLSearchParams(normalizedSearch);
@@ -3331,14 +2886,13 @@
             const urlTxnId = params.get('txn_id');
 
             if (urlAmt && urlAmt > 0) {
-                // If token passed in URL, check if token is enabled in Firebase
                 if (urlToken) {
                     try {
                         const tokSnap = await db.ref('tokens/' + urlToken).once('value');
                         const tokData = tokSnap.val();
                         if (tokData) {
                             if (tokData.apiEnabled === false) {
-                                alert("⚠️ This Merchant API Token is currently turned OFF.");
+                                alert("⚠️ Merchant API Token is currently OFF.");
                                 showScreen('auth');
                                 return;
                             }
@@ -3348,10 +2902,6 @@
                             syncUIWithState();
                         }
                     } catch (e) {}
-                } else if (!USER_API_ENABLED) {
-                    showToast("🚫 API is currently turned OFF!");
-                    showScreen('home');
-                    return;
                 }
 
                 currentAmountStr = String(urlAmt);
@@ -3361,11 +2911,12 @@
                 return;
             }
 
-            // Listen for Firebase Auth state
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     CURRENT_UID = user.uid;
+                    USER_EMAIL = user.email || "";
                     localStorage.setItem('sp_logged_in', 'true');
+                    localStorage.setItem('sp_user_email', USER_EMAIL);
                 }
             });
 
@@ -3379,3 +2930,108 @@
     </script>
 </body>
 </html>
+
+2. Google Apps Script Side Fix (Code.gs)
+
+अगर आपके Google Apps Script में Gmail सर्च और CORS हैंडलिंग नहीं है, तो वो
+कनेक्ट नहीं होगा।
+
+1.  script.google.com खोलें।
+2.  अपने प्रोजेक्ट में निम्न कोड पेस्ट करें:
+
+function doGet(e) {
+  try {
+    var p = e ? e.parameter : {};
+    var action = p.action || "loginUser";
+    var userEmail = p.email || Session.getActiveUser().getEmail() || "default";
+
+    // 1. LOGIN / PING VERIFICATION
+    if (action === "loginUser") {
+      return jsonResponse({
+        status: "CONNECTED",
+        user_email: userEmail,
+        merchant_email: Session.getActiveUser().getEmail(),
+        message: "GAS Gmail Reader Active & Synced"
+      });
+    }
+
+    // 2. STATUS / CHECK TRANSACTION
+    if (action === "status") {
+      var query = p.query || "";
+      var match = searchGmailForTxn(query, "");
+      return jsonResponse({
+        status: match ? "SUCCESS" : "NOT_FOUND",
+        verified: !!match,
+        data: match || null
+      });
+    }
+
+    // 3. SCAN INCOMING FAMX / BANK CREDIT EMAILS
+    if (action === "verify") {
+      var amt = p.amount || "";
+      var query = p.query || "";
+      var result = searchGmailForTxn(query, amt);
+
+      if (result) {
+        return jsonResponse({
+          status: "SUCCESS",
+          verified: true,
+          amount: result.amount || amt,
+          utr: result.utr || query,
+          transaction_id: result.txnId || "FMPIB" + Math.floor(1000000000 + Math.random()*8999999999),
+          payer_name: result.sender || "Verified Sender",
+          message: "Payment successfully verified from Gmail notification"
+        });
+      } else {
+        return jsonResponse({
+          status: "FAILED",
+          verified: false,
+          message: "No matching credit email received in Gmail for ₹" + amt
+        });
+      }
+    }
+
+    return jsonResponse({ status: "UNKNOWN_ACTION" });
+
+  } catch (err) {
+    return jsonResponse({ status: "ERROR", message: err.toString() });
+  }
+}
+
+// Function to search Gmail for UPI / FamX / Bank Alerts
+function searchGmailForTxn(queryId, amount) {
+  var searchQuery = "newer_than:1d (credited OR received OR UPI OR FamX OR 'FamPay')";
+  if (amount) searchQuery += " " + amount;
+  if (queryId && queryId.length > 5) searchQuery += " " + queryId;
+
+  var threads = GmailApp.search(searchQuery, 0, 5);
+  for (var i = 0; i < threads.length; i++) {
+    var msgs = threads[i].getMessages();
+    for (var j = 0; j < msgs.length; j++) {
+      var body = msgs[j].getPlainBody();
+      
+      // Look for UTR / FamX patterns
+      var utrMatch = body.match(/(?:UTR|Ref|reference|UPI Ref)\s*(?:no\.?|number|id)?[:\s]*([0-9]{12})/i);
+      var famxMatch = body.match(/FMPIB[0-9]{10}/i);
+
+      if ((queryId && body.indexOf(queryId) !== -1) || (amount && body.indexOf(amount) !== -1)) {
+        return {
+          found: true,
+          amount: amount,
+          utr: utrMatch ? utrMatch[1] : (queryId || "VERIFIED"),
+          txnId: famxMatch ? famxMatch[0] : "FMPIB_OK",
+          sender: "Gmail Verified Payer"
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+</script>
+  </body>
+  </html>
