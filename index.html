@@ -830,10 +830,10 @@
                     <b style="color:#dc2626;"><img src="block.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> UNCONFIRMED</b>
                 </div>
                 <div class="receipt-row">
-                    <span>Searched UTR</span>
+                    <span>Searched UTR / ID</span>
                     <b id="failSearchedUtr">None</b>
                 </div>
-                <div class="receipt-row">
+                <div class="receipt-row" style="display:none;">
                     <span>Searched Txn ID</span>
                     <b id="failSearchedTxnId">None</b>
                 </div>
@@ -913,27 +913,34 @@
         </div>
     </div>
 
-    <!-- MODAL 3: UTR & TRANSACTION ID DUAL ENTRY (SAVES BOTH TO DATABASE) -->
+    <!-- MODAL 3: UNIFIED SINGLE INPUT FOR UTR OR TRANSACTION ID -->
     <div class="modal-backdrop" id="paidVerifyModal">
         <div class="modal-card">
             <img src="eye.gif" alt="" class="modal-top-gif" onerror="this.style.display='none'">
             <h3 class="modal-title">Confirm & Verify Payment</h3>
             <p class="modal-sub">
-                Enter the <b>12-Digit UTR</b> and <b>Transaction ID</b> to verify with Creator's backend:
+                Enter your <b>12-Digit UTR</b> OR <b>FamX Transaction ID</b> (`FMPIB...`) below to verify payment:
             </p>
 
-            <div class="input-group" style="margin-bottom: 8px;">
-                <label class="input-label">12-Digit Bank UTR Number</label>
-                <input type="text" id="verifyUtrInput" class="glass-input" placeholder="e.g. 629027145452" style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
-            </div>
-
             <div class="input-group" style="margin-bottom: 14px;">
-                <label class="input-label">FamX / Payment Transaction ID</label>
-                <input type="text" id="verifyTxnInput" class="glass-input" placeholder="e.g. FMPIB6811724682" style="text-align: center; font-weight: 800; letter-spacing: 0.5px;">
+                <label class="input-label">
+                    <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <span>UTR Number or Transaction ID</span>
+                </label>
+                <input
+                    type="text"
+                    id="verifyUtrInput"
+                    class="glass-input"
+                    placeholder="e.g. 629027145452 or FMPIB6811724682"
+                    style="text-align: center; font-weight: 800; letter-spacing: 0.5px;"
+                    oninput="const t = document.getElementById('verifyTxnInput'); if(t) t.value = this.value;"
+                >
+                <!-- Hidden synced input so existing app.js dual-field logic never breaks -->
+                <input type="hidden" id="verifyTxnInput" value="">
             </div>
 
             <div class="real-verify-actions">
-                <button class="btn-proceed" style="padding: 13px;" onclick="executeRealPaymentVerification()">
+                <button class="btn-proceed" style="padding: 13px;" onclick="const u = document.getElementById('verifyUtrInput'); const t = document.getElementById('verifyTxnInput'); if(u && t) t.value = u.value; executeRealPaymentVerification();">
                     <img src="secure.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
                     <span>Verify Payment Now</span>
                 </button>
@@ -949,5 +956,57 @@
 
     <!-- Logic Script -->
     <script src="app.js"></script>
+
+    <!-- Full-Screen Payment Link & Nav Bar Guard -->
+    <script>
+        (function enforceFullScreenCheckoutOnLink() {
+            const rawQuery = window.location.search || "";
+            const isPaymentLink = /(?:[?&])(id|txn_id|txn-id|amount|am)=/i.test(rawQuery);
+
+            if (isPaymentLink) {
+                document.body.classList.add('checkout-link-mode');
+                const shell = document.getElementById('appShell');
+                const dock = document.getElementById('bottomNavDock');
+                if (shell) shell.classList.add('no-bottom-pad');
+                if (dock) dock.style.display = 'none';
+            }
+
+            // Observe screen switches so qrScreen / processingScreen / result screens always stay full-screen without nav bar
+            const observer = new MutationObserver(() => {
+                const qrEl = document.getElementById('qrScreen');
+                const procEl = document.getElementById('processingScreen');
+                const verEl = document.getElementById('paymentVerifyScreen');
+                const sucEl = document.getElementById('successScreen');
+                const failEl = document.getElementById('failScreen');
+                const authEl = document.getElementById('authScreen');
+                const dock = document.getElementById('bottomNavDock');
+                const shell = document.getElementById('appShell');
+
+                const isFullScreenActive =
+                    document.body.classList.contains('checkout-link-mode') ||
+                    (qrEl && qrEl.style.display !== 'none') ||
+                    (procEl && procEl.style.display !== 'none' && procEl.style.display !== '') ||
+                    (verEl && verEl.style.display !== 'none' && verEl.style.display !== '') ||
+                    (sucEl && sucEl.style.display !== 'none' && sucEl.style.display !== '') ||
+                    (failEl && failEl.style.display !== 'none' && failEl.style.display !== '') ||
+                    (authEl && authEl.style.display !== 'none' && authEl.style.display !== '');
+
+                if (dock && shell) {
+                    if (isFullScreenActive) {
+                        dock.style.setProperty('display', 'none', 'important');
+                        shell.classList.add('no-bottom-pad');
+                    } else {
+                        dock.style.setProperty('display', 'flex', 'important');
+                        shell.classList.remove('no-bottom-pad');
+                    }
+                }
+            });
+
+            const shellEl = document.getElementById('appShell');
+            if (shellEl) {
+                observer.observe(shellEl, { attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
+            }
+        })();
+    </script>
 </body>
 </html>
