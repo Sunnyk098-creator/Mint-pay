@@ -39,7 +39,7 @@ let USER_API_ENABLED = localStorage.getItem('mp_api_enabled') !== 'false';
 
 // Dynamic Flow State
 let currentAmountStr = "0";
-let currentTxnNote = "";
+let currentTxnNote = "MintPay_Order";
 let currentActiveTxnId = null;
 let activeBillPayload = null;
 let timerInterval = null;
@@ -65,10 +65,15 @@ function generateRandomToken() {
 // =========================================================================
 function switchAuthTab(mode) {
     const isLogin = mode === 'login';
-    document.getElementById('tabLoginBtn').classList.toggle('active', isLogin);
-    document.getElementById('tabSignupBtn').classList.toggle('active', !isLogin);
-    document.getElementById('loginFormBox').style.display = isLogin ? 'block' : 'none';
-    document.getElementById('signupFormBox').style.display = isLogin ? 'none' : 'block';
+    const tabLoginBtn = document.getElementById('tabLoginBtn');
+    const tabSignupBtn = document.getElementById('tabSignupBtn');
+    const loginFormBox = document.getElementById('loginFormBox');
+    const signupFormBox = document.getElementById('signupFormBox');
+
+    if (tabLoginBtn) tabLoginBtn.classList.toggle('active', isLogin);
+    if (tabSignupBtn) tabSignupBtn.classList.toggle('active', !isLogin);
+    if (loginFormBox) loginFormBox.style.display = isLogin ? 'block' : 'none';
+    if (signupFormBox) signupFormBox.style.display = isLogin ? 'none' : 'block';
 }
 
 function validatePasswordRules(pass) {
@@ -77,21 +82,33 @@ function validatePasswordRules(pass) {
     const isUpper = /[A-Z]/.test(pass);
     const isSpecial = /[@#$%^&*!_~-]/.test(pass);
 
-    document.getElementById('ruleLen').classList.toggle('valid', isLen);
-    document.getElementById('ruleNum').classList.toggle('valid', isNum);
-    document.getElementById('ruleUpper').classList.toggle('valid', isUpper);
-    document.getElementById('ruleSpecial').classList.toggle('valid', isSpecial);
+    const rLen = document.getElementById('ruleLen');
+    const rNum = document.getElementById('ruleNum');
+    const rUpper = document.getElementById('ruleUpper');
+    const rSpecial = document.getElementById('ruleSpecial');
+
+    if (rLen) rLen.classList.toggle('valid', isLen);
+    if (rNum) rNum.classList.toggle('valid', isNum);
+    if (rUpper) rUpper.classList.toggle('valid', isUpper);
+    if (rSpecial) rSpecial.classList.toggle('valid', isSpecial);
 
     return isLen && isNum && isUpper && isSpecial;
 }
 
 async function handleDatabaseSignup() {
-    const name = document.getElementById('regName').value.trim();
-    const phone = document.getElementById('regNumber').value.trim();
-    const email = document.getElementById('regEmail').value.trim().toLowerCase();
-    const upi = document.getElementById('regUpi').value.trim();
-    const pass = document.getElementById('regPass').value;
-    const confirmPass = document.getElementById('regConfirmPass').value;
+    const nameEl = document.getElementById('regName');
+    const phoneEl = document.getElementById('regNumber');
+    const emailEl = document.getElementById('regEmail');
+    const upiEl = document.getElementById('regUpi');
+    const passEl = document.getElementById('regPass');
+    const confirmPassEl = document.getElementById('regConfirmPass');
+
+    const name = nameEl ? nameEl.value.trim() : "";
+    const phone = phoneEl ? phoneEl.value.trim() : "";
+    const email = emailEl ? emailEl.value.trim().toLowerCase() : "";
+    const upi = upiEl ? upiEl.value.trim() : "";
+    const pass = passEl ? passEl.value : "";
+    const confirmPass = confirmPassEl ? confirmPassEl.value : "";
 
     if (!name || !phone || !email || !upi || !pass) {
         showToast("⚠️ All fields are required!");
@@ -168,8 +185,11 @@ async function handleDatabaseSignup() {
 }
 
 async function handleDatabaseLogin() {
-    const identifier = document.getElementById('loginIdentifier').value.trim().toLowerCase();
-    const pass = document.getElementById('loginPassword').value;
+    const idEl = document.getElementById('loginIdentifier');
+    const passEl = document.getElementById('loginPassword');
+
+    const identifier = idEl ? idEl.value.trim().toLowerCase() : "";
+    const pass = passEl ? passEl.value : "";
 
     if (!identifier || !pass) {
         showToast("⚠️ Please enter Email/Phone and Password!");
@@ -286,25 +306,34 @@ function updateAllAvatars(photoSrc) {
 }
 
 function syncUIWithState() {
-    document.getElementById('dashMerchantName').innerText = MERCHANT;
-    document.getElementById('dashMerchantUpi').innerText = UPI_ID;
-    document.getElementById('profHeaderName').innerText = MERCHANT;
-    document.getElementById('profHeaderUpi').innerText = `VIP Merchant • ${UPI_ID}`;
-    document.getElementById('profHeaderPhone').innerText = `Mobile: ${USER_PHONE}`;
-    document.getElementById('qrMerchantName').innerText = MERCHANT;
-    document.getElementById('qrMerchantUpi').innerText = UPI_ID;
-    document.getElementById('failMerchantUpi').innerText = UPI_ID;
-    document.getElementById('numpadSubText').innerText = `Direct credit to ${MERCHANT}`;
-    document.getElementById('procSubUpi').innerText = `Rendering ${USER_QR_STYLE.toUpperCase()} QR for ${UPI_ID}`;
+    const setTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+    };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
+
+    setTxt('dashMerchantName', MERCHANT);
+    setTxt('dashMerchantUpi', UPI_ID);
+    setTxt('profHeaderName', MERCHANT);
+    setTxt('profHeaderUpi', `VIP Merchant • ${UPI_ID}`);
+    setTxt('profHeaderPhone', `Mobile: ${USER_PHONE}`);
+    setTxt('qrMerchantName', MERCHANT);
+    setTxt('qrMerchantUpi', UPI_ID);
+    setTxt('failMerchantUpi', UPI_ID);
+    setTxt('numpadSubText', `Direct credit to ${MERCHANT}`);
+    setTxt('procSubUpi', `Rendering ${USER_QR_STYLE.toUpperCase()} QR for ${UPI_ID}`);
 
     const styleLabelMap = { tree: "3D Tree QR Active", static: "Static QR Active", animated: "Animated QR Active" };
-    document.getElementById('currentQrBadgeStyle').innerText = styleLabelMap[USER_QR_STYLE] || "3D Tree QR Active";
+    setTxt('currentQrBadgeStyle', styleLabelMap[USER_QR_STYLE] || "3D Tree QR Active");
 
-    document.getElementById('setMerchantName').value = MERCHANT;
-    document.getElementById('setMerchantPhone').value = USER_PHONE;
-    document.getElementById('setMerchantUpi').value = UPI_ID;
-    document.getElementById('setGasUrl').value = USER_GAS_URL;
-    document.getElementById('merchantApiKeyInput').value = USER_API_TOKEN;
+    setVal('setMerchantName', MERCHANT);
+    setVal('setMerchantPhone', USER_PHONE);
+    setVal('setMerchantUpi', UPI_ID);
+    setVal('setGasUrl', USER_GAS_URL);
+    setVal('merchantApiKeyInput', USER_API_TOKEN);
 
     handleQrStyleChange(USER_QR_STYLE, false);
     updateAllAvatars(USER_PHOTO);
@@ -321,9 +350,8 @@ function handleQrStyleChange(styleKey, doSave = true) {
         if (el) el.classList.remove('active');
     });
 
-    if (styleKey === 'tree') document.getElementById('qrStyleTreeLabel').classList.add('active');
-    if (styleKey === 'static') document.getElementById('qrStyleStaticLabel').classList.add('active');
-    if (styleKey === 'animated') document.getElementById('qrStyleAnimatedLabel').classList.add('active');
+    const activeEl = document.getElementById(`qrStyle${styleKey.charAt(0).toUpperCase() + styleKey.slice(1)}Label`);
+    if (activeEl) activeEl.classList.add('active');
 
     if (doSave) {
         localStorage.setItem('mp_qr_style', USER_QR_STYLE);
@@ -335,10 +363,15 @@ function handleQrStyleChange(styleKey, doSave = true) {
 }
 
 async function saveProfileSettings() {
-    const name = document.getElementById('setMerchantName').value.trim();
-    const phone = document.getElementById('setMerchantPhone').value.trim();
-    const upi = document.getElementById('setMerchantUpi').value.trim();
-    const gas = document.getElementById('setGasUrl').value.trim();
+    const nameEl = document.getElementById('setMerchantName');
+    const phoneEl = document.getElementById('setMerchantPhone');
+    const upiEl = document.getElementById('setMerchantUpi');
+    const gasEl = document.getElementById('setGasUrl');
+
+    const name = nameEl ? nameEl.value.trim() : "";
+    const phone = phoneEl ? phoneEl.value.trim() : "";
+    const upi = upiEl ? upiEl.value.trim() : "";
+    const gas = gasEl ? gasEl.value.trim() : "";
 
     if (!name || !upi) {
         showToast("⚠️ Name and UPI ID are required!");
@@ -369,11 +402,13 @@ async function saveProfileSettings() {
 // 3. DELETE ALL TRANSACTIONS
 // =========================================================================
 function openDeleteAllConfirmModal() {
-    document.getElementById('deleteAllModal').classList.add('active');
+    const el = document.getElementById('deleteAllModal');
+    if (el) el.classList.add('active');
 }
 
 function closeDeleteAllModal() {
-    document.getElementById('deleteAllModal').classList.remove('active');
+    const el = document.getElementById('deleteAllModal');
+    if (el) el.classList.remove('active');
 }
 
 async function confirmDeleteAllTransactions() {
@@ -413,15 +448,17 @@ function renderDashboardData() {
     const completed = list.filter(t => t.status === 'COMPLETED');
     const totalVol = completed.reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
-    document.getElementById('statTotalVol').innerText = `₹${totalVol.toFixed(1)}`;
-    document.getElementById('statTotalCount').innerText = list.length;
+    const volEl = document.getElementById('statTotalVol');
+    const countEl = document.getElementById('statTotalCount');
+    if (volEl) volEl.innerText = `₹${totalVol.toFixed(1)}`;
+    if (countEl) countEl.innerText = list.length;
 
     const container = document.getElementById('recentTxnList');
     if (!container) return;
     container.innerHTML = "";
 
     if (list.length === 0) {
-        container.innerHTML = `<div style="padding:18px;font-size:0.78rem;font-weight:700;color:var(--text-muted);">No records found. Generate a bill to start!</div>`;
+        container.innerHTML = `<div style="padding:18px;font-size:0.78rem;font-weight:700;color:var(--text-muted);text-align:center;">No records found. Generate a link to start!</div>`;
         return;
     }
 
@@ -434,7 +471,8 @@ function renderDashboardData() {
         const row = document.createElement('div');
         row.className = 'txn-item';
         row.onclick = () => {
-            document.getElementById('checkPaymentSearchInput').value = t.txn_id;
+            const searchInp = document.getElementById('checkPaymentSearchInput');
+            if (searchInp) searchInp.value = t.txn_id;
             showScreen('check');
             executePaymentCheckSearch();
         };
@@ -456,7 +494,7 @@ function renderDashboardData() {
 }
 
 // =========================================================================
-// 4. BILL INVOICE & SAFE URL CREATOR (FIXES "PAGE NOT AVAILABLE" 404)
+// 4. BILL INVOICE & SAFE URL CREATOR (CRASH FIXED)
 // =========================================================================
 function tapKey(key) {
     if (key === 'DEL') {
@@ -468,14 +506,15 @@ function tapKey(key) {
         if (currentAmountStr === "0") currentAmountStr = key;
         else if (currentAmountStr.length < 7) currentAmountStr += key;
     }
-    liveAmount.innerText = currentAmountStr;
+    if (liveAmount) liveAmount.innerText = currentAmountStr;
 }
 
 function applyPreset(val) {
     currentAmountStr = val;
-    liveAmount.innerText = currentAmountStr;
+    if (liveAmount) liveAmount.innerText = currentAmountStr;
 }
 
+// FIXED: Removed missing 'txnCustomNote' element lookup that was breaking the button
 function generateBillInvoice() {
     const num = parseFloat(currentAmountStr);
     if (!num || num <= 0) {
@@ -483,10 +522,10 @@ function generateBillInvoice() {
         return;
     }
 
-    currentTxnNote = document.getElementById('txnCustomNote').value.trim() || "None";
+    // Default note since input field is removed from UI (API-only)
+    currentTxnNote = "MintPay_Order";
     currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
 
-    // FIXED: Use Query Parameter on root to avoid Vercel 404 "Page Not Available"
     const payUrl = `${HOSTED_DOMAIN}/?id=${currentActiveTxnId}`;
 
     activeBillPayload = {
@@ -509,16 +548,23 @@ function generateBillInvoice() {
     saveStoredTxns(list);
     db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
 
-    document.getElementById('billAmtText').innerText = num;
-    document.getElementById('billTxnId').innerText = currentActiveTxnId;
-    document.getElementById('billMerchantName').innerText = MERCHANT;
-    document.getElementById('billMerchantUpi').innerText = UPI_ID;
-    document.getElementById('billNoteText').innerText = currentTxnNote;
-    document.getElementById('billShortUrl').innerText = payUrl;
-    document.getElementById('billDateText').innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    // Safely populate Invoice Preview elements
+    const billAmt = document.getElementById('billAmtText');
+    const billTxn = document.getElementById('billTxnId');
+    const billMerch = document.getElementById('billMerchantName');
+    const billUpi = document.getElementById('billMerchantUpi');
+    const billUrl = document.getElementById('billShortUrl');
+    const billDate = document.getElementById('billDateText');
+
+    if (billAmt) billAmt.innerText = num;
+    if (billTxn) billTxn.innerText = currentActiveTxnId;
+    if (billMerch) billMerch.innerText = MERCHANT;
+    if (billUpi) billUpi.innerText = UPI_ID;
+    if (billUrl) billUrl.innerText = payUrl;
+    if (billDate) billDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
     showScreen('bill');
-    showToast("🧾 Bill Created Successfully!");
+    showToast("🧾 Payment Link Generated!");
 }
 
 function copyBillPaymentLink() {
@@ -553,23 +599,26 @@ function viewQrFromBill() {
 }
 
 // =========================================================================
-// 5. MULTI-STYLE QR RENDERING FLOW
+// 5. MULTI-STYLE QR RENDERING FLOW (FULL SCREEN MATCHING SCREENSHOT 5)
 // =========================================================================
 function startQrRenderingFlow() {
     const num = parseFloat(currentAmountStr);
     showScreen('processing');
     const procBar = document.getElementById('procBar');
-    procBar.style.width = "0%";
-    setTimeout(() => { procBar.style.width = "100%"; }, 50);
+    if (procBar) {
+        procBar.style.width = "0%";
+        setTimeout(() => { procBar.style.width = "100%"; }, 50);
+    }
 
     setTimeout(() => {
-        const noteParam = currentTxnNote && currentTxnNote !== "None" ? `&tn=${encodeURIComponent(currentTxnNote)}` : "";
-        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT)}&am=${num}&cu=INR${noteParam}`;
-        qrAmtHero.innerText = `₹${num}`;
+        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT)}&am=${num}&cu=INR`;
+        if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
+        
+        // Show pure full-screen checkout without navigation bar
         showScreen('qr');
         renderSelectedQrType(upiUrl);
         startCountdown(300);
-    }, 1200);
+    }, 1100);
 }
 
 function renderSelectedQrType(upiUrl) {
@@ -578,22 +627,26 @@ function renderSelectedQrType(upiUrl) {
     const toggleBtn = document.getElementById('toggleTreeBtn');
 
     if (USER_QR_STYLE === 'tree') {
-        treeCanvas.style.display = 'block';
-        staticBox.style.display = 'none';
-        toggleBtn.style.display = 'inline-flex';
+        if (treeCanvas) treeCanvas.style.display = 'block';
+        if (staticBox) staticBox.style.display = 'none';
+        if (toggleBtn) toggleBtn.style.display = 'inline-flex';
         initOrUpdate3DTreeQR(upiUrl);
     } else if (USER_QR_STYLE === 'static') {
-        treeCanvas.style.display = 'none';
-        staticBox.style.display = 'flex';
-        staticBox.className = 'static-qr-container';
-        toggleBtn.style.display = 'none';
-        render2DStaticQr(upiUrl, staticBox, false);
+        if (treeCanvas) treeCanvas.style.display = 'none';
+        if (staticBox) {
+            staticBox.style.display = 'flex';
+            staticBox.className = 'static-qr-container';
+            render2DStaticQr(upiUrl, staticBox, false);
+        }
+        if (toggleBtn) toggleBtn.style.display = 'none';
     } else if (USER_QR_STYLE === 'animated') {
-        treeCanvas.style.display = 'none';
-        staticBox.style.display = 'flex';
-        staticBox.className = 'static-qr-container animated-qr-matrix';
-        toggleBtn.style.display = 'none';
-        render2DStaticQr(upiUrl, staticBox, true);
+        if (treeCanvas) treeCanvas.style.display = 'none';
+        if (staticBox) {
+            staticBox.style.display = 'flex';
+            staticBox.className = 'static-qr-container animated-qr-matrix';
+            render2DStaticQr(upiUrl, staticBox, true);
+        }
+        if (toggleBtn) toggleBtn.style.display = 'none';
     }
 }
 
@@ -632,26 +685,31 @@ function openGasModal(type) {
     const title = document.getElementById('gasModalTitle');
     const content = document.getElementById('gasModalContent');
 
+    if (!modal) return;
+
     if (type === 'guide') {
-        title.innerText = "📖 Backend Code Setup Guide";
-        content.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <p><b>1. Open Script:</b> Visit <a href="https://script.google.com" target="_blank" style="color:#059669;font-weight:800;">script.google.com</a>.</p>
-                <p><b>2. Deploy as Web App:</b> Click <b>Deploy > New Deployment > Web App</b>.</p>
-                <p><b>3. Mandatory Settings:</b></p>
-                <ul style="padding-left:16px;">
-                    <li><b>Execute as:</b> Me (your email)</li>
-                    <li><b>Who has access:</b> Anyone (Mandatory)</li>
-                </ul>
-                <p><b>4. Copy URL:</b> Paste the /exec URL into Settings.</p>
-            </div>
-        `;
+        if (title) title.innerText = "📖 Backend Code Setup Guide";
+        if (content) {
+            content.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <p><b>1. Open Script:</b> Visit <a href="https://script.google.com" target="_blank" style="color:#059669;font-weight:800;">script.google.com</a>.</p>
+                    <p><b>2. Deploy as Web App:</b> Click <b>Deploy > New Deployment > Web App</b>.</p>
+                    <p><b>3. Mandatory Settings:</b></p>
+                    <ul style="padding-left:16px;">
+                        <li><b>Execute as:</b> Me (your email)</li>
+                        <li><b>Who has access:</b> Anyone (Mandatory)</li>
+                    </ul>
+                    <p><b>4. Copy URL:</b> Paste the /exec URL into Settings.</p>
+                </div>
+            `;
+        }
     } else {
-        title.innerText = "⚙️ Required Features in Code";
-        content.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <p>Your script must handle <code>action=verify</code> and return JSON:</p>
-                <div class="code-block">function doGet(e) {
+        if (title) title.innerText = "⚙️ Required Features in Code";
+        if (content) {
+            content.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <p>Your script must handle <code>action=verify</code> and return JSON:</p>
+                    <div class="code-block">function doGet(e) {
   var p = e.parameter;
   return ContentService.createTextOutput(JSON.stringify({
     status: "SUCCESS",
@@ -662,34 +720,42 @@ function openGasModal(type) {
     payer_name: "Verified Payer"
   })).setMimeType(ContentService.MimeType.JSON);
 }</div>
-            </div>
-        `;
+                </div>
+            `;
+        }
     }
     modal.classList.add('active');
 }
 
 function closeGasModal() {
-    document.getElementById('gasInfoModal').classList.remove('active');
+    const modal = document.getElementById('gasInfoModal');
+    if (modal) modal.classList.remove('active');
 }
 
 function openPaidVerificationModal() {
-    document.getElementById('verifyUtrInput').value = "";
-    document.getElementById('paidVerifyModal').classList.add('active');
+    const inp = document.getElementById('verifyUtrInput');
+    if (inp) inp.value = "";
+    const modal = document.getElementById('paidVerifyModal');
+    if (modal) modal.classList.add('active');
 }
 
 function closePaidVerificationModal() {
-    document.getElementById('paidVerifyModal').classList.remove('active');
+    const modal = document.getElementById('paidVerifyModal');
+    if (modal) modal.classList.remove('active');
 }
 
 async function executeRealPaymentVerification() {
-    const utrOrTxn = document.getElementById('verifyUtrInput').value.trim();
+    const inp = document.getElementById('verifyUtrInput');
+    const utrOrTxn = inp ? inp.value.trim() : "";
     closePaidVerificationModal();
     if (timerInterval) clearInterval(timerInterval);
 
     showScreen('verify');
     const verifyBar = document.getElementById('verifyBar');
-    verifyBar.style.width = "0%";
-    setTimeout(() => { verifyBar.style.width = "75%"; }, 80);
+    if (verifyBar) {
+        verifyBar.style.width = "0%";
+        setTimeout(() => { verifyBar.style.width = "75%"; }, 80);
+    }
 
     const num = parseFloat(currentAmountStr) || 0;
     const gasEndpoint = USER_GAS_URL || DEFAULT_GAS_URL;
@@ -699,33 +765,49 @@ async function executeRealPaymentVerification() {
         const res = await fetch(verifyUrl, { method: 'GET', mode: 'cors' });
         const data = await res.json();
 
-        verifyBar.style.width = "100%";
+        if (verifyBar) verifyBar.style.width = "100%";
 
         setTimeout(() => {
             if (data && (data.verified === true || data.status === "SUCCESS")) {
                 finalizeTxnStatus('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_OK", data.payer_name || "PRATIMA FARIKAR", num);
-                document.getElementById('successAmtText').innerText = `₹${data.amount || num}`;
-                document.getElementById('receiptPayerName').innerText = data.payer_name || "PRATIMA FARIKAR";
-                document.getElementById('receiptTxnId').innerText = data.transaction_id || currentActiveTxnId || "FMPIB6811724682";
-                document.getElementById('receiptUtrNumber').innerText = data.utr || utrOrTxn || "629027145452";
-                document.getElementById('receiptDateText').innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                
+                const sAmt = document.getElementById('successAmtText');
+                const sPayer = document.getElementById('receiptPayerName');
+                const sTxn = document.getElementById('receiptTxnId');
+                const sUtr = document.getElementById('receiptUtrNumber');
+                const sDate = document.getElementById('receiptDateText');
+
+                if (sAmt) sAmt.innerText = `₹${data.amount || num}`;
+                if (sPayer) sPayer.innerText = data.payer_name || "PRATIMA FARIKAR";
+                if (sTxn) sTxn.innerText = data.transaction_id || currentActiveTxnId || "FMPIB6811724682";
+                if (sUtr) sUtr.innerText = data.utr || utrOrTxn || "629027145452";
+                if (sDate) sDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                
                 showScreen('success');
             } else {
                 finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
-                document.getElementById('failAmtText').innerText = `₹${num}`;
-                document.getElementById('failSearchedQuery').innerText = utrOrTxn || `₹${num}`;
-                document.getElementById('failReasonSub').innerText = data.message || "Payment not verified.";
+                const fAmt = document.getElementById('failAmtText');
+                const fQuery = document.getElementById('failSearchedQuery');
+                const fSub = document.getElementById('failReasonSub');
+
+                if (fAmt) fAmt.innerText = `₹${num}`;
+                if (fQuery) fQuery.innerText = utrOrTxn || `₹${num}`;
+                if (fSub) fSub.innerText = data.message || "Payment not verified.";
                 showScreen('fail');
             }
         }, 400);
 
     } catch (e) {
-        verifyBar.style.width = "100%";
+        if (verifyBar) verifyBar.style.width = "100%";
         setTimeout(() => {
             finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
-            document.getElementById('failAmtText').innerText = `₹${num}`;
-            document.getElementById('failSearchedQuery').innerText = utrOrTxn || "None";
-            document.getElementById('failReasonSub').innerText = "Check verification backend URL deployment.";
+            const fAmt = document.getElementById('failAmtText');
+            const fQuery = document.getElementById('failSearchedQuery');
+            const fSub = document.getElementById('failReasonSub');
+
+            if (fAmt) fAmt.innerText = `₹${num}`;
+            if (fQuery) fQuery.innerText = utrOrTxn || "None";
+            if (fSub) fSub.innerText = "Check verification backend URL deployment.";
             showScreen('fail');
         }, 500);
     }
@@ -767,12 +849,13 @@ async function pingUserGasBackend(showToastMsg) {
 }
 
 // =========================================================================
-// 7. CHECK PAYMENT NAVIGATION & DEVELOPER API HUB
+// 7. CHECK PAYMENT NAVIGATION & DEVELOPER API HUB (RAW JSON OUTPUT)
 // =========================================================================
 async function executePaymentCheckSearch() {
-    const q = document.getElementById('checkPaymentSearchInput').value.trim();
+    const inp = document.getElementById('checkPaymentSearchInput');
+    const q = inp ? inp.value.trim() : "";
     if (!q) {
-        showToast("⚠️ Enter Txn ID, Note, or UTR to search");
+        showToast("⚠️ Enter Txn ID or UTR to search");
         return;
     }
 
@@ -781,7 +864,6 @@ async function executePaymentCheckSearch() {
 
     let match = list.find(t =>
         (t.txn_id && t.txn_id.toLowerCase() === q.toLowerCase()) ||
-        (t.note && t.note.toLowerCase().includes(q.toLowerCase())) ||
         (t.utr && t.utr === q) ||
         (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
     );
@@ -794,36 +876,48 @@ async function executePaymentCheckSearch() {
     }
 
     const box = document.getElementById('checkSearchResultBox');
-    box.style.display = 'block';
+    if (box) box.style.display = 'block';
 
     if (match) {
-        document.getElementById('searchResultTitle').innerText = "Transaction Record";
+        const title = document.getElementById('searchResultTitle');
         const pill = document.getElementById('searchResultStatusPill');
-        pill.innerText = match.status;
-        pill.style.background = match.status === 'COMPLETED' ? '#d1fae5' : '#fee2e2';
-        pill.style.color = match.status === 'COMPLETED' ? '#047857' : '#dc2626';
+        const amt = document.getElementById('searchResAmt');
+        const txnId = document.getElementById('searchResTxnId');
+        const utr = document.getElementById('searchResUtr');
+        const time = document.getElementById('searchResTime');
 
-        document.getElementById('searchResAmt').innerText = `₹${match.amount}`;
-        document.getElementById('searchResTxnId').innerText = match.txn_id;
-        document.getElementById('searchResUtr').innerText = match.utr || "PENDING";
-        document.getElementById('searchResNote').innerText = match.note || "None";
-        document.getElementById('searchResTime').innerText = match.timestamp || "Today";
+        if (title) title.innerText = "Transaction Record";
+        if (pill) {
+            pill.innerText = match.status;
+            pill.style.background = match.status === 'COMPLETED' ? '#d1fae5' : '#fee2e2';
+            pill.style.color = match.status === 'COMPLETED' ? '#047857' : '#dc2626';
+        }
+        if (amt) amt.innerText = `₹${match.amount}`;
+        if (txnId) txnId.innerText = match.txn_id;
+        if (utr) utr.innerText = match.utr || "PENDING";
+        if (time) time.innerText = match.timestamp || "Today";
         showToast("✅ Transaction Found!");
     } else {
-        document.getElementById('searchResultTitle').innerText = "No Record Found";
-        document.getElementById('searchResultStatusPill').innerText = "NOT_FOUND";
-        document.getElementById('searchResAmt').innerText = "₹0";
-        document.getElementById('searchResTxnId').innerText = q;
-        document.getElementById('searchResUtr').innerText = "None";
-        document.getElementById('searchResNote').innerText = "None";
-        document.getElementById('searchResTime').innerText = "-";
+        const title = document.getElementById('searchResultTitle');
+        const pill = document.getElementById('searchResultStatusPill');
+        const amt = document.getElementById('searchResAmt');
+        const txnId = document.getElementById('searchResTxnId');
+        const utr = document.getElementById('searchResUtr');
+        const time = document.getElementById('searchResTime');
+
+        if (title) title.innerText = "No Record Found";
+        if (pill) pill.innerText = "NOT_FOUND";
+        if (amt) amt.innerText = "₹0";
+        if (txnId) txnId.innerText = q;
+        if (utr) utr.innerText = "None";
+        if (time) time.innerText = "-";
         showToast("⚠️ No matching transaction found");
     }
 }
 
-// Developer API Endpoints
+// Developer API Endpoints (Strict Raw JSON Execution)
 window.MintPayEngine = {
-    createTxn: function(amount, note = "3D_Tree_Checkout") {
+    createTxn: function(amount, note = "MintPay_Order") {
         if (!USER_API_ENABLED) {
             return { code: 403, status: "API_DISABLED", message: "API Gateway is turned off." };
         }
@@ -893,17 +987,25 @@ window.MintPayEngine = {
 };
 
 function runCreateTxnApi() {
-    const amt = document.getElementById('apiCreateAmt').value || "1";
-    const note = document.getElementById('apiCreateNote').value || "MintPay_Order";
+    const amtEl = document.getElementById('apiCreateAmt');
+    const noteEl = document.getElementById('apiCreateNote');
+    const outEl = document.getElementById('apiCreateOutput');
+
+    const amt = amtEl ? amtEl.value || "1" : "1";
+    const note = noteEl ? noteEl.value || "MintPay_Order" : "MintPay_Order";
+    
     const res = window.MintPayEngine.createTxn(amt, note);
-    document.getElementById('apiCreateOutput').innerText = JSON.stringify(res, null, 2);
+    if (outEl) outEl.innerText = JSON.stringify(res, null, 2);
     showToast("✅ Create API Executed!");
 }
 
 function runCheckStatusApi() {
-    const id = document.getElementById('apiCheckId').value.trim();
+    const inp = document.getElementById('apiCheckId');
+    const outEl = document.getElementById('apiCheckOutput');
+
+    const id = inp ? inp.value.trim() : "TXN_720326";
     const res = window.MintPayEngine.checkTxn(id);
-    document.getElementById('apiCheckOutput').innerText = JSON.stringify(res, null, 2);
+    if (outEl) outEl.innerText = JSON.stringify(res, null, 2);
     showToast("✅ Status Checked!");
 }
 
@@ -922,12 +1024,12 @@ function updateApiSwitchUI() {
     const headerLabel = document.getElementById('apiHeaderStatusLabel');
 
     if (USER_API_ENABLED) {
-        sw.classList.add('on');
+        if (sw) sw.classList.add('on');
         if (toggleIcon) toggleIcon.src = 'live.gif';
         if (toggleSub) toggleSub.innerText = 'Requests are ENABLED';
         if (headerLabel) headerLabel.innerText = 'MintPay API v3.0 • Active';
     } else {
-        sw.classList.remove('on');
+        if (sw) sw.classList.remove('on');
         if (toggleIcon) toggleIcon.src = 'off.gif';
         if (toggleSub) toggleSub.innerText = 'API is DISABLED';
         if (headerLabel) headerLabel.innerText = 'MintPay API v3.0 • Disabled';
@@ -935,19 +1037,25 @@ function updateApiSwitchUI() {
 }
 
 function updateApiEndpointPreviews() {
-    const amt = document.getElementById('apiCreateAmt').value || "1";
-    const note = document.getElementById('apiCreateNote').value || "MintPay_Order";
-    const id = document.getElementById('apiCheckId').value || "TXN_720326";
+    const amtEl = document.getElementById('apiCreateAmt');
+    const noteEl = document.getElementById('apiCreateNote');
+    const idEl = document.getElementById('apiCheckId');
 
-    document.getElementById('createEndpointUrlPreview').innerText =
-        `${HOSTED_DOMAIN}/?api_create=1&token=${USER_API_TOKEN}&amount=${amt}&note=${encodeURIComponent(note)}`;
-    document.getElementById('checkEndpointUrlPreview').innerText =
-        `${HOSTED_DOMAIN}/?api_check=1&token=${USER_API_TOKEN}&txn-id=${id}`;
+    const amt = amtEl ? amtEl.value || "1" : "1";
+    const note = noteEl ? noteEl.value || "MintPay_Order" : "MintPay_Order";
+    const id = idEl ? idEl.value || "TXN_720326" : "TXN_720326";
+
+    const createPre = document.getElementById('createEndpointUrlPreview');
+    const checkPre = document.getElementById('checkEndpointUrlPreview');
+
+    if (createPre) createPre.innerText = `${HOSTED_DOMAIN}/?api_create=1&token=${USER_API_TOKEN}&amount=${amt}&note=${encodeURIComponent(note)}`;
+    if (checkPre) checkPre.innerText = `${HOSTED_DOMAIN}/?api_check=1&token=${USER_API_TOKEN}&txn-id=${id}`;
 }
 
 function regenerateApiToken() {
     USER_API_TOKEN = generateRandomToken();
-    document.getElementById('merchantApiKeyInput').value = USER_API_TOKEN;
+    const inp = document.getElementById('merchantApiKeyInput');
+    if (inp) inp.value = USER_API_TOKEN;
     updateApiEndpointPreviews();
     if (CURRENT_UID) db.ref('users/' + CURRENT_UID).update({ apiToken: USER_API_TOKEN });
     showToast("🔄 New API Token Generated!");
@@ -972,7 +1080,8 @@ const QR_DARK_GREENS = ['#1b5e12', '#266e17', '#32821d', '#3e9123', '#4fa32d', '
 
 function initOrUpdate3DTreeQR(upiString) {
     const canvas = document.getElementById('treeQrCanvas');
-    const size = 310;
+    if (!canvas) return;
+    const size = 300;
 
     if (!qrRenderer) {
         qrScene = new THREE.Scene();
@@ -1115,32 +1224,34 @@ function animateTreeQR() {
 
 // Background Canvas
 const bgCanvas = document.getElementById('bg-canvas');
-const bgScene = new THREE.Scene();
-const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
-bgRenderer.setSize(window.innerWidth, window.innerHeight);
+if (bgCanvas) {
+    const bgScene = new THREE.Scene();
+    const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+    bgRenderer.setSize(window.innerWidth, window.innerHeight);
 
-bgScene.add(new THREE.AmbientLight(0xffffff, 0.95));
-const floaters = [];
-for (let i = 0; i < 8; i++) {
-    const geo = new THREE.IcosahedronGeometry(Math.random() * 0.75 + 0.3, 1);
-    const mat = new THREE.MeshPhysicalMaterial({ color: 0x10b981, roughness: 0.2, transparent: true, opacity: 0.2 });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 14, -4);
-    bgScene.add(mesh);
-    floaters.push(mesh);
-}
-bgCamera.position.z = 14;
+    bgScene.add(new THREE.AmbientLight(0xffffff, 0.95));
+    const floaters = [];
+    for (let i = 0; i < 8; i++) {
+        const geo = new THREE.IcosahedronGeometry(Math.random() * 0.75 + 0.3, 1);
+        const mat = new THREE.MeshPhysicalMaterial({ color: 0x10b981, roughness: 0.2, transparent: true, opacity: 0.2 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 14, -4);
+        bgScene.add(mesh);
+        floaters.push(mesh);
+    }
+    bgCamera.position.z = 14;
 
-function animateBg() {
-    requestAnimationFrame(animateBg);
-    floaters.forEach(f => { f.rotation.x += 0.005; f.rotation.y += 0.005; });
-    bgRenderer.render(bgScene, bgCamera);
+    function animateBg() {
+        requestAnimationFrame(animateBg);
+        floaters.forEach(f => { f.rotation.x += 0.005; f.rotation.y += 0.005; });
+        bgRenderer.render(bgScene, bgCamera);
+    }
+    animateBg();
 }
-animateBg();
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP
+// 9. NAVIGATION, TOAST & APP BOOTSTRAP (FIXED FULL SCREEN CHECKOUT)
 // =========================================================================
 function showScreen(name) {
     const screens = [
@@ -1155,14 +1266,16 @@ function showScreen(name) {
 
     const dock = document.getElementById('bottomNavDock');
     const shell = document.getElementById('appShell');
+    
+    // Screens that must NEVER show the bottom navigation bar (Full-screen view)
     const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
 
     if (hideDock.includes(name)) {
-        dock.style.display = 'none';
-        shell.classList.add('no-bottom-pad');
+        if (dock) dock.style.display = 'none';
+        if (shell) shell.classList.add('no-bottom-pad');
     } else {
-        dock.style.display = 'flex';
-        shell.classList.remove('no-bottom-pad');
+        if (dock) dock.style.display = 'flex';
+        if (shell) shell.classList.remove('no-bottom-pad');
     }
 
     ['navHome', 'navPay', 'navCheck', 'navApi', 'navProfile'].forEach(t => {
@@ -1170,36 +1283,67 @@ function showScreen(name) {
         if (btn) btn.classList.remove('active');
     });
 
-    if (name === 'auth') document.getElementById('authScreen').style.display = 'flex';
+    if (name === 'auth') {
+        const el = document.getElementById('authScreen');
+        if (el) el.style.display = 'flex';
+    }
     if (name === 'home') {
         syncUIWithState();
-        document.getElementById('homeScreen').style.display = 'flex';
-        document.getElementById('navHome').classList.add('active');
+        const el = document.getElementById('homeScreen');
+        if (el) el.style.display = 'flex';
+        const tab = document.getElementById('navHome');
+        if (tab) tab.classList.add('active');
     }
     if (name === 'numpad') {
-        document.getElementById('numpadScreen').style.display = 'flex';
-        document.getElementById('navPay').classList.add('active');
+        const el = document.getElementById('numpadScreen');
+        if (el) el.style.display = 'flex';
+        const tab = document.getElementById('navPay');
+        if (tab) tab.classList.add('active');
     }
-    if (name === 'bill') document.getElementById('billScreen').style.display = 'flex';
-    if (name === 'processing') document.getElementById('processingScreen').style.display = 'flex';
-    if (name === 'qr') document.getElementById('qrScreen').style.display = 'flex';
+    if (name === 'bill') {
+        const el = document.getElementById('billScreen');
+        if (el) el.style.display = 'flex';
+    }
+    if (name === 'processing') {
+        const el = document.getElementById('processingScreen');
+        if (el) el.style.display = 'flex';
+    }
+    if (name === 'qr') {
+        const el = document.getElementById('qrScreen');
+        if (el) el.style.display = 'flex';
+    }
     if (name === 'check') {
-        document.getElementById('checkPaymentScreen').style.display = 'flex';
-        document.getElementById('navCheck').classList.add('active');
+        const el = document.getElementById('checkPaymentScreen');
+        if (el) el.style.display = 'flex';
+        const tab = document.getElementById('navCheck');
+        if (tab) tab.classList.add('active');
     }
     if (name === 'api') {
         updateApiEndpointPreviews();
-        document.getElementById('apiScreen').style.display = 'flex';
-        document.getElementById('navApi').classList.add('active');
+        const el = document.getElementById('apiScreen');
+        if (el) el.style.display = 'flex';
+        const tab = document.getElementById('navApi');
+        if (tab) tab.classList.add('active');
     }
     if (name === 'profile') {
         syncUIWithState();
-        document.getElementById('profileScreen').style.display = 'flex';
-        document.getElementById('navProfile').classList.add('active');
+        const el = document.getElementById('profileScreen');
+        if (el) el.style.display = 'flex';
+        const tab = document.getElementById('navProfile');
+        if (tab) tab.classList.add('active');
     }
-    if (name === 'verify') document.getElementById('paymentVerifyScreen').style.display = 'flex';
-    if (name === 'success') document.getElementById('successScreen').style.display = 'flex';
-    if (name === 'fail') document.getElementById('failScreen').style.display = 'flex';
+    if (name === 'verify') {
+        const el = document.getElementById('paymentVerifyScreen');
+        if (el) el.style.display = 'flex';
+    }
+    if (name === 'success') {
+        const el = document.getElementById('successScreen');
+        if (el) el.style.display = 'flex';
+    }
+    if (name === 'fail') {
+        const el = document.getElementById('failScreen');
+        if (el) el.style.display = 'flex';
+    }
 }
 
 function startCountdown(seconds) {
@@ -1214,7 +1358,7 @@ function startCountdown(seconds) {
         }
         const m = String(Math.floor(rem / 60)).padStart(2, '0');
         const s = String(rem % 60).padStart(2, '0');
-        countdownTimer.innerText = `${m}:${s}`;
+        if (countdownTimer) countdownTimer.innerText = `${m}:${s}`;
     }, 1000);
 }
 
@@ -1237,20 +1381,20 @@ function backToQrFromFail() {
 }
 
 function showToast(text) {
+    if (!toast) return;
     toast.innerText = text;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-// Bootstrap Handler
+// Bootstrap Handler: Direct Link Handler (Matches ?id=TXN_... or ?pay=...)
 (async function initMintPay() {
     syncUIWithState();
 
-    // Universal URL Handler: Matches https://mint-pay.vercel.app/?id=TXN_... or ?pay=...
     const rawSearch = window.location.search || "";
     const normalized = rawSearch.replace(/\?/g, '&').replace(/^&/, '?');
     const params = new URLSearchParams(normalized);
-    const hostedId = params.get('id') || params.get('pay') || params.get('');
+    const hostedId = params.get('id') || params.get('pay') || params.get('txn-id');
 
     if (hostedId) {
         showToast("🔍 Loading hosted payment...");
@@ -1260,7 +1404,6 @@ function showToast(text) {
                 const data = snap.val();
                 currentAmountStr = String(data.amount);
                 currentActiveTxnId = data.txn_id;
-                currentTxnNote = data.note || "None";
                 MERCHANT = data.merchant || MERCHANT;
                 UPI_ID = data.upi_id || UPI_ID;
                 syncUIWithState();
