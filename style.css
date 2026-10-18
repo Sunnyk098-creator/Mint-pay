@@ -54,7 +54,7 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 12px 14px 84px;
+    padding: 12px 14px 74px;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -459,7 +459,7 @@ html, body {
     color: var(--primary-dark) !important;
 }
 
-/* Bill Actions Grid (Copy, Share, Open) */
+/* Bill Actions Grid */
 .bill-actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -485,7 +485,7 @@ html, body {
 .share-btn { background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1d4ed8; }
 .open-btn { background: #fefce8; border: 1.5px solid #fef08a; color: #a16207; }
 
-/* QR Style Selector in Profile */
+/* QR STYLE SELECTOR (FIXED: NO DEFAULT UNSTYLED RADIOS) */
 .qr-style-picker-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -493,30 +493,55 @@ html, body {
     width: 100%;
 }
 
-.qr-style-option {
-    background: rgba(255, 255, 255, 0.9);
+.qr-style-card {
+    background: #ffffff;
     border: 2px solid #e2e8f0;
-    border-radius: 18px;
-    padding: 10px 6px;
+    border-radius: 16px;
+    padding: 12px 6px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 5px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.qr-style-option input { display: none; }
-.qr-style-option.active {
-    border-color: var(--primary);
-    background: #ecfdf5;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+/* Native radio buttons permanently hidden */
+.qr-style-card input[type="radio"] {
+    display: none !important;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
-.style-icon { font-size: 1.35rem; }
-.style-name { font-size: 0.76rem; font-weight: 900; color: var(--text-dark); }
-.style-desc { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); }
+.qr-style-card.active {
+    border-color: #10b981 !important;
+    background: #ecfdf5 !important;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2);
+    transform: translateY(-2px);
+}
+
+.style-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.style-name {
+    font-size: 0.76rem;
+    font-weight: 900;
+    color: var(--text-dark);
+}
+
+.style-desc {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
 
 /* Static QR Fallback Box */
 .static-qr-container {
@@ -534,6 +559,15 @@ html, body {
 .static-qr-container canvas {
     width: 100% !important;
     height: 100% !important;
+}
+
+.animated-qr-matrix canvas {
+    animation: pulseMatrix 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulseMatrix {
+    0% { filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4)); transform: scale(0.98); }
+    100% { filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.8)); transform: scale(1.02); }
 }
 
 /* User Profile Upload Badge */
@@ -577,28 +611,36 @@ html, body {
 
 .btn-info-bubble:active { transform: scale(0.96); }
 
-/* 5-Column Navigation Dock */
+/* =========================================================================
+   BOTTOM NAVIGATION BAR: PERMANENTLY LOCKED TO 1 ROW (NEVER WRAPS)
+   ========================================================================= */
 .bottom-nav-dock {
     position: fixed;
     bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 20px);
-    max-width: 460px;
-    background: rgba(255, 255, 255, 0.92);
+    width: calc(100% - 16px);
+    max-width: 440px;
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 2px solid #ffffff;
-    border-radius: 24px;
+    border: 1.5px solid #ffffff;
+    border-radius: 22px;
     padding: 5px 4px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
-    z-index: 95;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    z-index: 100;
+    box-sizing: border-box;
 }
 
 .nav-tab {
+    flex: 1 1 0 !important;
+    max-width: 20% !important;
+    min-width: 0 !important;
     background: transparent;
     border: none;
     border-radius: 14px;
@@ -606,18 +648,28 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    justify-content: center;
+    gap: 2px;
     font-size: 0.65rem;
     font-weight: 800;
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-tab.active {
     background: #ecfdf5;
     color: var(--primary-deep);
     box-shadow: inset 0 0 0 1.5px #a7f3d0;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
 }
 
 /* Generic Cards, Modals & Results */
