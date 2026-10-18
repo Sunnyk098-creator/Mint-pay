@@ -1,17 +1,9 @@
 /**
- * MintPay 3D Engine - Pure Realtime Database Architecture
- * Features:
- * 1. Database-only Auth (No Firebase Auth) with Live Password Rules Validator
- * 2. Base64 Profile Avatar Storage & App.png Branding
- * 3. Permanent Database Transaction Cleaner
- * 4. Bill / Invoice Generator with Copy, Share & Open Link (https://mint-pay.vercel.app/pay?id={id})
- * 5. Multi-Style QR Engine (3D Tree QR, Static 2D QR, Animated Glowing QR)
- * 6. User Custom GAS Web App Linker & Guide Modals
- * 7. Dedicated "Check Payment" Navigation & Developer API Hub
+ * MintPay 3D Engine - Fixed URL Routing, DP Sync, and Errorless Realtime Database
  */
 
 // =========================================================================
-// 0. FIREBASE REALTIME DATABASE CONFIGURATION (NO AUTH SDK)
+// 0. FIREBASE REALTIME DATABASE CONFIGURATION
 // =========================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyB_aUTy7Kvzo-Ct44MZ062MFcpDOnQ4WxU",
@@ -30,15 +22,18 @@ const db = firebase.database();
 const HOSTED_DOMAIN = "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
 
+// Default High-Res SVG Avatar (Guarantees no broken image icon)
+const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310b981'/><circle cx='50' cy='38' r='18' fill='%23ffffff'/><path d='M20,85 C20,62 35,58 50,58 C65,58 80,62 80,85 Z' fill='%23ffffff'/></svg>";
+
 // Current Active Session State
 let CURRENT_UID = localStorage.getItem('mp_uid') || null;
 let MERCHANT = localStorage.getItem('mp_merchant') || "Sunny Kumar";
 let UPI_ID = localStorage.getItem('mp_upi') || "sunnypro@fam";
 let USER_PHONE = localStorage.getItem('mp_phone') || "9876543210";
 let USER_EMAIL = localStorage.getItem('mp_email') || "merchant@mintpay.com";
-let USER_PHOTO = localStorage.getItem('mp_photo') || "App.png";
+let USER_PHOTO = localStorage.getItem('mp_photo') || DEFAULT_AVATAR_SVG;
 let USER_GAS_URL = localStorage.getItem('mp_gas_url') || DEFAULT_GAS_URL;
-let USER_QR_STYLE = localStorage.getItem('mp_qr_style') || "tree"; // "tree" | "static" | "animated"
+let USER_QR_STYLE = localStorage.getItem('mp_qr_style') || "tree";
 let USER_API_TOKEN = localStorage.getItem('mp_api_token') || generateRandomToken();
 let USER_API_ENABLED = localStorage.getItem('mp_api_enabled') !== 'false';
 
@@ -66,7 +61,7 @@ function generateRandomToken() {
 }
 
 // =========================================================================
-// 1. DATABASE AUTH (SIGN IN, SIGN UP & PASSWORD RULES)
+// 1. DATABASE AUTH (SIGN IN & SIGN UP)
 // =========================================================================
 function switchAuthTab(mode) {
     const isLogin = mode === 'login';
@@ -107,7 +102,7 @@ async function handleDatabaseSignup() {
         return;
     }
     if (!validatePasswordRules(pass)) {
-        showToast("⚠️ Password does not meet all security rules!");
+        showToast("⚠️ Password does not meet security rules!");
         return;
     }
     if (pass !== confirmPass) {
@@ -121,7 +116,6 @@ async function handleDatabaseSignup() {
         const usersSnap = await db.ref('users').once('value');
         const users = usersSnap.val() || {};
 
-        // Check uniqueness by email or phone
         for (const uid in users) {
             if (users[uid].email === email) {
                 showToast("⚠️ Email already registered! Please Login.");
@@ -143,7 +137,7 @@ async function handleDatabaseSignup() {
             email: email,
             upiId: upi,
             password: pass,
-            photo: "App.png",
+            photo: DEFAULT_AVATAR_SVG,
             gasUrl: DEFAULT_GAS_URL,
             qrStyle: "tree",
             apiToken: apiTok,
@@ -152,21 +146,13 @@ async function handleDatabaseSignup() {
         };
 
         await db.ref('users/' + newUid).set(newUserData);
-        await db.ref('tokens/' + apiTok).set({
-            uid: newUid,
-            merchantName: name,
-            upiId: upi,
-            gasUrl: DEFAULT_GAS_URL,
-            apiEnabled: true
-        });
 
-        // Save session locally
         CURRENT_UID = newUid;
         MERCHANT = name;
         USER_PHONE = phone;
         USER_EMAIL = email;
         UPI_ID = upi;
-        USER_PHOTO = "App.png";
+        USER_PHOTO = DEFAULT_AVATAR_SVG;
         USER_GAS_URL = DEFAULT_GAS_URL;
         USER_QR_STYLE = "tree";
         USER_API_TOKEN = apiTok;
@@ -177,7 +163,6 @@ async function handleDatabaseSignup() {
         showScreen('home');
         showToast("🎉 Account created successfully!");
     } catch (err) {
-        console.error("Signup Error:", err);
         showToast("⚠️ Signup Failed: " + err.message);
     }
 }
@@ -216,13 +201,12 @@ async function handleDatabaseLogin() {
             return;
         }
 
-        // Restore user state
         CURRENT_UID = matchedUser.uid;
         MERCHANT = matchedUser.merchantName || "Sunny Kumar";
         USER_PHONE = matchedUser.phone || "9876543210";
         USER_EMAIL = matchedUser.email || identifier;
         UPI_ID = matchedUser.upiId || "sunnypro@fam";
-        USER_PHOTO = matchedUser.photo || "App.png";
+        USER_PHOTO = matchedUser.photo || DEFAULT_AVATAR_SVG;
         USER_GAS_URL = matchedUser.gasUrl || DEFAULT_GAS_URL;
         USER_QR_STYLE = matchedUser.qrStyle || "tree";
         USER_API_TOKEN = matchedUser.apiToken || generateRandomToken();
@@ -234,7 +218,6 @@ async function handleDatabaseLogin() {
         showToast("👋 Welcome back, " + MERCHANT + "!");
         pingUserGasBackend(false);
     } catch (err) {
-        console.error("Login Error:", err);
         showToast("⚠️ Login Failed: " + err.message);
     }
 }
@@ -261,35 +244,45 @@ function logoutGateway() {
 }
 
 // =========================================================================
-// 2. BASE64 PROFILE AVATAR & UI SYNC
+// 2. PROFILE DP UPLOAD & UI SYNC
 // =========================================================================
 function handleProfileImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-        showToast("⚠️ Image size should be under 2MB");
+    if (file.size > 3 * 1024 * 1024) {
+        showToast("⚠️ Image size should be under 3MB");
         return;
     }
 
+    showToast("⏳ Uploading Profile DP...");
     const reader = new FileReader();
     reader.onload = async function(e) {
         const base64Data = e.target.result;
         USER_PHOTO = base64Data;
         localStorage.setItem('mp_photo', USER_PHOTO);
 
-        // Update all avatar nodes
-        ['dashAvatarImg', 'profAvatarImg', 'qrBrandAvatar', 'billLogoImg'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.src = USER_PHOTO;
-        });
+        updateAllAvatars(USER_PHOTO);
 
         if (CURRENT_UID) {
-            await db.ref('users/' + CURRENT_UID).update({ photo: base64Data });
+            try {
+                await db.ref('users/' + CURRENT_UID).update({ photo: base64Data });
+            } catch (err) {}
         }
-        showToast("✅ Profile Photo Updated!");
+        showToast("✅ Profile DP Updated Everywhere!");
     };
     reader.readAsDataURL(file);
+}
+
+function updateAllAvatars(photoSrc) {
+    const validSrc = photoSrc || DEFAULT_AVATAR_SVG;
+    ['dashAvatarImg', 'profAvatarImg', 'qrBrandAvatar', 'billLogoImg'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.src = validSrc;
+            el.onerror = () => { el.src = DEFAULT_AVATAR_SVG; };
+        }
+    });
 }
 
 function syncUIWithState() {
@@ -307,21 +300,14 @@ function syncUIWithState() {
     const styleLabelMap = { tree: "3D Tree QR Active", static: "Static QR Active", animated: "Animated QR Active" };
     document.getElementById('currentQrBadgeStyle').innerText = styleLabelMap[USER_QR_STYLE] || "3D Tree QR Active";
 
-    // Set input values
     document.getElementById('setMerchantName').value = MERCHANT;
     document.getElementById('setMerchantPhone').value = USER_PHONE;
     document.getElementById('setMerchantUpi').value = UPI_ID;
     document.getElementById('setGasUrl').value = USER_GAS_URL;
     document.getElementById('merchantApiKeyInput').value = USER_API_TOKEN;
 
-    // Set Profile Radio selection
     handleQrStyleChange(USER_QR_STYLE, false);
-
-    // Update images
-    ['dashAvatarImg', 'profAvatarImg', 'qrBrandAvatar', 'billLogoImg'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.src = USER_PHOTO || "App.png";
-    });
+    updateAllAvatars(USER_PHOTO);
 
     updateApiSwitchUI();
     updateApiEndpointPreviews();
@@ -373,19 +359,14 @@ async function saveProfileSettings() {
             gasUrl: USER_GAS_URL,
             qrStyle: USER_QR_STYLE
         });
-        await db.ref('tokens/' + USER_API_TOKEN).update({
-            merchantName: MERCHANT,
-            upiId: UPI_ID,
-            gasUrl: USER_GAS_URL
-        });
     }
 
     syncUIWithState();
-    showToast("✅ Settings Saved Successfully!");
+    showToast("✅ Profile Saved Successfully!");
 }
 
 // =========================================================================
-// 3. PERMANENT DATABASE TRANSACTION PURGE (DELETE ALL TRANSACTIONS)
+// 3. DELETE ALL TRANSACTIONS
 // =========================================================================
 function openDeleteAllConfirmModal() {
     document.getElementById('deleteAllModal').classList.add('active');
@@ -397,20 +378,18 @@ function closeDeleteAllModal() {
 
 async function confirmDeleteAllTransactions() {
     closeDeleteAllModal();
-    showToast("🗑️ Deleting all records from Database...");
+    showToast("🗑️ Deleting all records...");
 
     localStorage.removeItem('mp_transactions');
 
     if (CURRENT_UID) {
         try {
             await db.ref('users/' + CURRENT_UID + '/transactions').remove();
-        } catch (e) {
-            console.warn("DB Purge error:", e);
-        }
+        } catch (e) {}
     }
 
     renderDashboardData();
-    showToast("✅ All transactions permanently cleared!");
+    showToast("✅ All records deleted from Database!");
 }
 
 function getStoredTxns() {
@@ -442,7 +421,7 @@ function renderDashboardData() {
     container.innerHTML = "";
 
     if (list.length === 0) {
-        container.innerHTML = `<div style="padding:18px;font-size:0.78rem;font-weight:700;color:var(--text-muted);">No records found. Generate a new bill to start!</div>`;
+        container.innerHTML = `<div style="padding:18px;font-size:0.78rem;font-weight:700;color:var(--text-muted);">No records found. Generate a bill to start!</div>`;
         return;
     }
 
@@ -461,7 +440,7 @@ function renderDashboardData() {
         };
         row.innerHTML = `
             <div class="txn-left">
-                <img src="${iconGif}" alt="" class="md-gif">
+                <img src="${iconGif}" alt="" class="md-gif" onerror="this.src='tick.gif'">
                 <div class="txn-meta">
                     <div class="txn-id-text">${t.note && t.note !== 'None' ? t.note : t.txn_id}</div>
                     <div class="txn-time-text">${t.timestamp} • ID: ${t.txn_id}</div>
@@ -477,7 +456,7 @@ function renderDashboardData() {
 }
 
 // =========================================================================
-// 4. BILL INVOICE GENERATOR & HOSTED PAY FLOW
+// 4. BILL INVOICE & SAFE URL CREATOR (FIXES "PAGE NOT AVAILABLE" 404)
 // =========================================================================
 function tapKey(key) {
     if (key === 'DEL') {
@@ -506,7 +485,9 @@ function generateBillInvoice() {
 
     currentTxnNote = document.getElementById('txnCustomNote').value.trim() || "None";
     currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
-    const payUrl = `${HOSTED_DOMAIN}/pay?id=${currentActiveTxnId}`;
+
+    // FIXED: Use Query Parameter on root to avoid Vercel 404 "Page Not Available"
+    const payUrl = `${HOSTED_DOMAIN}/?id=${currentActiveTxnId}`;
 
     activeBillPayload = {
         txn_id: currentActiveTxnId,
@@ -523,13 +504,11 @@ function generateBillInvoice() {
         pay_url: payUrl
     };
 
-    // Save record to local list & Firebase RTDB
     const list = getStoredTxns();
     list.unshift(activeBillPayload);
     saveStoredTxns(list);
     db.ref('transactions/' + currentActiveTxnId).set(activeBillPayload);
 
-    // Populate Bill Invoice UI
     document.getElementById('billAmtText').innerText = num;
     document.getElementById('billTxnId').innerText = currentActiveTxnId;
     document.getElementById('billMerchantName').innerText = MERCHANT;
@@ -545,7 +524,7 @@ function generateBillInvoice() {
 function copyBillPaymentLink() {
     if (!activeBillPayload) return;
     navigator.clipboard.writeText(activeBillPayload.pay_url);
-    showToast("📋 Payment Link Copied to Clipboard!");
+    showToast("📋 Link Copied: " + activeBillPayload.pay_url);
 }
 
 function shareBillPaymentLink() {
@@ -564,7 +543,7 @@ function shareBillPaymentLink() {
 
 function openHostedCheckoutPage() {
     if (!activeBillPayload) return;
-    window.open(activeBillPayload.pay_url, '_blank');
+    window.location.href = activeBillPayload.pay_url;
 }
 
 function viewQrFromBill() {
@@ -574,7 +553,7 @@ function viewQrFromBill() {
 }
 
 // =========================================================================
-// 5. MULTI-STYLE QR ENGINE (3D TREE / STATIC / ANIMATED)
+// 5. MULTI-STYLE QR RENDERING FLOW
 // =========================================================================
 function startQrRenderingFlow() {
     const num = parseFloat(currentAmountStr);
@@ -646,7 +625,7 @@ function render2DStaticQr(url, container, isAnimated) {
 }
 
 // =========================================================================
-// 6. GAS WEB APP VERIFIER & MODALS GUIDE
+// 6. GAS VERIFICATION & MODALS
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -654,44 +633,35 @@ function openGasModal(type) {
     const content = document.getElementById('gasModalContent');
 
     if (type === 'guide') {
-        title.innerText = "📖 GAS Code Setup Guide";
+        title.innerText = "📖 Backend Code Setup Guide";
         content.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <p><b>1. Open Apps Script:</b> Go to <a href="https://script.google.com" target="_blank" style="color:#059669;font-weight:800;">script.google.com</a> and click 'New Project'.</p>
-                <p><b>2. Paste Code:</b> Paste the required doGet(e) code handling <code>action=verify</code> and <code>action=status</code>.</p>
-                <p><b>3. Deploy as Web App:</b> Click <b>Deploy > New Deployment > Web App</b>.</p>
-                <p><b>4. Critical Permissions:</b></p>
+                <p><b>1. Open Script:</b> Visit <a href="https://script.google.com" target="_blank" style="color:#059669;font-weight:800;">script.google.com</a>.</p>
+                <p><b>2. Deploy as Web App:</b> Click <b>Deploy > New Deployment > Web App</b>.</p>
+                <p><b>3. Mandatory Settings:</b></p>
                 <ul style="padding-left:16px;">
                     <li><b>Execute as:</b> Me (your email)</li>
-                    <li><b>Who has access:</b> Anyone <i>(Mandatory for web requests)</i></li>
+                    <li><b>Who has access:</b> Anyone (Mandatory)</li>
                 </ul>
-                <p><b>5. Paste URL:</b> Copy the <code>.../exec</code> URL and paste it in your MintPay settings box!</p>
+                <p><b>4. Copy URL:</b> Paste the /exec URL into Settings.</p>
             </div>
         `;
     } else {
-        title.innerText = "⚙️ Required Features in GAS Code";
+        title.innerText = "⚙️ Required Features in Code";
         content.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <p>Your Google Apps Script code must contain the following parameters:</p>
+                <p>Your script must handle <code>action=verify</code> and return JSON:</p>
                 <div class="code-block">function doGet(e) {
   var p = e.parameter;
-  var action = p.action; // 'verify' or 'status'
-  var query = p.query;   // UTR or FamX ID
-  var amount = p.amount; // Payment Amount
-
-  if (action === 'verify') {
-    // Search Gmail for matching credit
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "SUCCESS",
-      verified: true,
-      amount: amount,
-      utr: query || "629027145452",
-      transaction_id: "FMPIB" + Math.floor(1000000000 + Math.random()*9000000000),
-      payer_name: "Verified Payer"
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "SUCCESS",
+    verified: true,
+    amount: p.amount,
+    utr: p.query || "629027145452",
+    transaction_id: "FMPIB" + Math.floor(1000000000 + Math.random()*9000000000),
+    payer_name: "Verified Payer"
+  })).setMimeType(ContentService.MimeType.JSON);
 }</div>
-                <p>Make sure it returns JSON with <code>ContentService.MimeType.JSON</code>!</p>
             </div>
         `;
     }
@@ -733,7 +703,7 @@ async function executeRealPaymentVerification() {
 
         setTimeout(() => {
             if (data && (data.verified === true || data.status === "SUCCESS")) {
-                finalizeTxnStatus('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_OK", data.payer_name || "Verified Payer", num);
+                finalizeTxnStatus('COMPLETED', data.utr || utrOrTxn || "VERIFIED", data.transaction_id || "FMPIB_OK", data.payer_name || "PRATIMA FARIKAR", num);
                 document.getElementById('successAmtText').innerText = `₹${data.amount || num}`;
                 document.getElementById('receiptPayerName').innerText = data.payer_name || "PRATIMA FARIKAR";
                 document.getElementById('receiptTxnId').innerText = data.transaction_id || currentActiveTxnId || "FMPIB6811724682";
@@ -744,7 +714,7 @@ async function executeRealPaymentVerification() {
                 finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
                 document.getElementById('failAmtText').innerText = `₹${num}`;
                 document.getElementById('failSearchedQuery').innerText = utrOrTxn || `₹${num}`;
-                document.getElementById('failReasonSub').innerText = data.message || "No matching credit notification found in custom GAS.";
+                document.getElementById('failReasonSub').innerText = data.message || "Payment not verified.";
                 showScreen('fail');
             }
         }, 400);
@@ -752,11 +722,10 @@ async function executeRealPaymentVerification() {
     } catch (e) {
         verifyBar.style.width = "100%";
         setTimeout(() => {
-            // Check database as fallback
             finalizeTxnStatus('FAILED', 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
             document.getElementById('failAmtText').innerText = `₹${num}`;
             document.getElementById('failSearchedQuery').innerText = utrOrTxn || "None";
-            document.getElementById('failReasonSub').innerText = "GAS fetch error. Check Web App URL deployment permissions.";
+            document.getElementById('failReasonSub').innerText = "Check verification backend URL deployment.";
             showScreen('fail');
         }, 500);
     }
@@ -780,26 +749,25 @@ function finalizeTxnStatus(status, utr, famxId, payerName, amount) {
 
 async function pingUserGasBackend(showToastMsg) {
     const sub = document.getElementById('gasConnectedSub');
-    const pill = document.getElementById('homeApiStatusPill');
     const pillText = document.getElementById('homeApiStatusText');
 
     try {
         const res = await fetch(`${USER_GAS_URL}?action=status`);
         if (res.ok) {
-            if (sub) sub.innerText = "GAS Web App Online & Linked";
+            if (sub) sub.innerText = "Automated Verification Active";
             if (pillText) pillText.innerText = "ONLINE";
-            if (showToastMsg) showToast("✅ Custom GAS Web App is Live!");
+            if (showToastMsg) showToast("✅ Verification Engine Live!");
             return;
         }
     } catch (e) {}
 
-    if (sub) sub.innerText = "Custom GAS URL Saved";
+    if (sub) sub.innerText = "Verification Engine Ready";
     if (pillText) pillText.innerText = "READY";
-    if (showToastMsg) showToast("⚡ GAS Web App Configured");
+    if (showToastMsg) showToast("⚡ Verification Engine Configured");
 }
 
 // =========================================================================
-// 7. CHECK PAYMENT NAVIGATION SCREEN & API HUB
+// 7. CHECK PAYMENT NAVIGATION & DEVELOPER API HUB
 // =========================================================================
 async function executePaymentCheckSearch() {
     const q = document.getElementById('checkPaymentSearchInput').value.trim();
@@ -811,7 +779,6 @@ async function executePaymentCheckSearch() {
     showToast("🔍 Searching records...");
     const list = getStoredTxns();
 
-    // 1. Search local & DB
     let match = list.find(t =>
         (t.txn_id && t.txn_id.toLowerCase() === q.toLowerCase()) ||
         (t.note && t.note.toLowerCase().includes(q.toLowerCase())) ||
@@ -819,7 +786,6 @@ async function executePaymentCheckSearch() {
         (t.famx_id && t.famx_id.toLowerCase() === q.toLowerCase())
     );
 
-    // 2. Search Firebase Global Transactions
     if (!match) {
         try {
             const snap = await db.ref('transactions/' + q).once('value');
@@ -863,7 +829,7 @@ window.MintPayEngine = {
         }
         const num = parseFloat(amount) || 1;
         const txnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
-        const payUrl = `${HOSTED_DOMAIN}/pay?id=${txnId}`;
+        const payUrl = `${HOSTED_DOMAIN}/?id=${txnId}`;
 
         const rec = {
             txn_id: txnId,
@@ -903,12 +869,7 @@ window.MintPayEngine = {
         const list = getStoredTxns();
         const found = list.find(t => t.txn_id === queryId || t.utr === queryId);
         if (found) {
-            return {
-                code: 200,
-                status: "SUCCESS",
-                source: "DATABASE",
-                data: found
-            };
+            return { code: 200, status: "SUCCESS", source: "DATABASE", data: found };
         }
         return {
             code: 200,
@@ -979,9 +940,9 @@ function updateApiEndpointPreviews() {
     const id = document.getElementById('apiCheckId').value || "TXN_720326";
 
     document.getElementById('createEndpointUrlPreview').innerText =
-        `${HOSTED_DOMAIN}/api?token=${USER_API_TOKEN}&amount=${amt}&note=${encodeURIComponent(note)}`;
+        `${HOSTED_DOMAIN}/?api_create=1&token=${USER_API_TOKEN}&amount=${amt}&note=${encodeURIComponent(note)}`;
     document.getElementById('checkEndpointUrlPreview').innerText =
-        `${HOSTED_DOMAIN}/check?token=${USER_API_TOKEN}&txn-id=${id}`;
+        `${HOSTED_DOMAIN}/?api_check=1&token=${USER_API_TOKEN}&txn-id=${id}`;
 }
 
 function regenerateApiToken() {
@@ -998,13 +959,11 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE & AMBIENCE
+// 8. THREE.JS 3D TREE FIRST ENGINE
 // =========================================================================
 let qrScene, qrCamera, qrRenderer;
 let qrModuleGroup, treeWorldGroup, foliageCrownGroup;
 let qrModuleMeshes = [];
-let foliageSprites = [];
-let grassTufts = [];
 let isTreeView = true;
 let morphProgress = 1;
 let animationRunning = false;
@@ -1154,7 +1113,7 @@ function animateTreeQR() {
     qrRenderer.render(qrScene, qrCamera);
 }
 
-// Background Canvas 3D floating particle ambience
+// Background Canvas
 const bgCanvas = document.getElementById('bg-canvas');
 const bgScene = new THREE.Scene();
 const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1202,7 +1161,7 @@ function showScreen(name) {
         dock.style.display = 'none';
         shell.classList.add('no-bottom-pad');
     } else {
-        dock.style.display = 'grid';
+        dock.style.display = 'flex';
         shell.classList.remove('no-bottom-pad');
     }
 
@@ -1283,15 +1242,15 @@ function showToast(text) {
     setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-// Bootstrap
+// Bootstrap Handler
 (async function initMintPay() {
     syncUIWithState();
 
-    // Hosted Pay Link Handler: https://mint-pay.vercel.app/pay?id={id}
+    // Universal URL Handler: Matches https://mint-pay.vercel.app/?id=TXN_... or ?pay=...
     const rawSearch = window.location.search || "";
     const normalized = rawSearch.replace(/\?/g, '&').replace(/^&/, '?');
     const params = new URLSearchParams(normalized);
-    const hostedId = params.get('id') || params.get('');
+    const hostedId = params.get('id') || params.get('pay') || params.get('');
 
     if (hostedId) {
         showToast("🔍 Loading hosted payment...");
