@@ -1,11 +1,26 @@
 /**
  * MintPay 3D Engine - Complete Multi-User Creator-Linked Architecture
- * FIXED: 100% Anti-Blank-Screen Instant Render Guard & Safe Fallback
+ * 100% Crash-Proof & Anti-Blank-Screen Safe Build
  */
 
 // =========================================================================
-// 0. FIREBASE REALTIME DATABASE CONFIGURATION (SAFE INIT)
+// 0. SAFE STORAGE & FIREBASE INITIALIZATION
 // =========================================================================
+function safeGet(key, def) {
+    try {
+        const val = localStorage.getItem(key);
+        return val !== null ? val : def;
+    } catch (e) {
+        return def;
+    }
+}
+
+function safeSet(key, val) {
+    try {
+        localStorage.setItem(key, val);
+    } catch (e) {}
+}
+
 const firebaseConfig = {
     apiKey: "AIzaSyB_aUTy7Kvzo-Ct44MZ062MFcpDOnQ4WxU",
     databaseURL: "https://mint-pay-904ef-default-rtdb.firebaseio.com",
@@ -31,33 +46,27 @@ const HOSTED_DOMAIN = window.location.origin && window.location.origin !== "null
     ? window.location.origin
     : "https://mint-pay.vercel.app";
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby1NynPfPfcwycVaO6TUC9qJ0fmnsseCEl_KKD9Mmi6TJChk72bs_oPGODH2qykIjSZ/exec";
-
-// High-Res Default SVG Avatar
 const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2310b981'/><circle cx='50' cy='38' r='18' fill='%23ffffff'/><path d='M20,85 C20,62 35,58 50,58 C65,58 80,62 80,85 Z' fill='%23ffffff'/></svg>";
 
-// Local Logged-in Merchant Session State
-let CURRENT_UID = localStorage.getItem('mp_uid') || null;
-let MERCHANT = localStorage.getItem('mp_merchant') || "Sunny Kumar";
-let UPI_ID = localStorage.getItem('mp_upi') || "sunnypro@fam";
-let USER_PHONE = localStorage.getItem('mp_phone') || "9876543210";
-let USER_EMAIL = localStorage.getItem('mp_email') || "merchant@mintpay.com";
-let USER_PHOTO = localStorage.getItem('mp_photo') || DEFAULT_AVATAR_SVG;
-let USER_GAS_URL = localStorage.getItem('mp_gas_url') || DEFAULT_GAS_URL;
-let USER_QR_STYLE = localStorage.getItem('mp_qr_style') || "tree";
-let USER_API_TOKEN = localStorage.getItem('mp_api_token') || generateRandomToken();
-let USER_API_ENABLED = localStorage.getItem('mp_api_enabled') !== 'false';
+let CURRENT_UID = safeGet('mp_uid', null);
+let MERCHANT = safeGet('mp_merchant', "Sunny Kumar");
+let UPI_ID = safeGet('mp_upi', "sunnypro@fam");
+let USER_PHONE = safeGet('mp_phone', "9876543210");
+let USER_EMAIL = safeGet('mp_email', "merchant@mintpay.com");
+let USER_PHOTO = safeGet('mp_photo', DEFAULT_AVATAR_SVG);
+let USER_GAS_URL = safeGet('mp_gas_url', DEFAULT_GAS_URL);
+let USER_QR_STYLE = safeGet('mp_qr_style', "tree");
+let USER_API_TOKEN = safeGet('mp_api_token', generateRandomToken());
+let USER_API_ENABLED = safeGet('mp_api_enabled', 'true') !== 'false';
 
-// Active Transaction State
 let currentAmountStr = "0";
 let currentTxnNote = "MintPay_Order";
 let currentActiveTxnId = null;
 let activeBillPayload = null;
 let timerInterval = null;
 let qrStartTimeMs = 0;
-
 let IS_HOSTED_CHECKOUT_MODE = false;
 
-// Creator Context Variables for Hosted Checkout
 let activeCreatorUid = null;
 let activeCreatorGasUrl = DEFAULT_GAS_URL;
 let activeCreatorName = "Sunny Kumar";
@@ -66,19 +75,13 @@ let activeCreatorPhoto = DEFAULT_AVATAR_SVG;
 let activeCreatorQrStyle = "tree";
 let activeCreatorEmail = "merchant@mintpay.com";
 
-// DOM Elements
-const liveAmount = document.getElementById("liveAmount");
-const qrAmtHero = document.getElementById("qrAmtHero");
-const countdownTimer = document.getElementById("countdownTimer");
-const toast = document.getElementById("toast");
-
 function generateRandomToken() {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let tok = 'mp_live_';
     for (let i = 0; i < 20; i++) {
         tok += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    localStorage.setItem('mp_api_token', tok);
+    safeSet('mp_api_token', tok);
     return tok;
 }
 
@@ -119,19 +122,12 @@ function validatePasswordRules(pass) {
 }
 
 async function handleDatabaseSignup() {
-    const nameEl = document.getElementById('regName');
-    const phoneEl = document.getElementById('regNumber');
-    const emailEl = document.getElementById('regEmail');
-    const upiEl = document.getElementById('regUpi');
-    const passEl = document.getElementById('regPass');
-    const confirmPassEl = document.getElementById('regConfirmPass');
-
-    const name = nameEl ? nameEl.value.trim() : "";
-    const phone = phoneEl ? phoneEl.value.trim() : "";
-    const email = emailEl ? emailEl.value.trim().toLowerCase() : "";
-    const upi = upiEl ? upiEl.value.trim() : "";
-    const pass = passEl ? passEl.value : "";
-    const confirmPass = confirmPassEl ? confirmPassEl.value : "";
+    const name = (document.getElementById('regName')?.value || "").trim();
+    const phone = (document.getElementById('regNumber')?.value || "").trim();
+    const email = (document.getElementById('regEmail')?.value || "").trim().toLowerCase();
+    const upi = (document.getElementById('regUpi')?.value || "").trim();
+    const pass = document.getElementById('regPass')?.value || "";
+    const confirmPass = document.getElementById('regConfirmPass')?.value || "";
 
     if (!name || !phone || !email || !upi || !pass) {
         showToast("⚠️ All fields are required!");
@@ -223,11 +219,8 @@ async function handleDatabaseSignup() {
 }
 
 async function handleDatabaseLogin() {
-    const idEl = document.getElementById('loginIdentifier');
-    const passEl = document.getElementById('loginPassword');
-
-    const identifier = idEl ? idEl.value.trim().toLowerCase() : "";
-    const pass = passEl ? passEl.value : "";
+    const identifier = (document.getElementById('loginIdentifier')?.value || "").trim().toLowerCase();
+    const pass = document.getElementById('loginPassword')?.value || "";
 
     if (!identifier || !pass) {
         showToast("⚠️ Please enter Email/Phone and Password!");
@@ -277,7 +270,7 @@ async function handleDatabaseLogin() {
             const txArr = Array.isArray(matchedUser.transactions)
                 ? matchedUser.transactions.filter(item => item && typeof item === 'object')
                 : Object.values(matchedUser.transactions).filter(item => item && typeof item === 'object');
-            localStorage.setItem('mp_transactions', JSON.stringify(txArr));
+            safeSet('mp_transactions', JSON.stringify(txArr));
         }
 
         persistSession();
@@ -291,19 +284,17 @@ async function handleDatabaseLogin() {
 }
 
 function persistSession() {
-    try {
-        localStorage.setItem('mp_logged_in', 'true');
-        localStorage.setItem('mp_uid', CURRENT_UID || '');
-        localStorage.setItem('mp_merchant', MERCHANT || '');
-        localStorage.setItem('mp_phone', USER_PHONE || '');
-        localStorage.setItem('mp_email', USER_EMAIL || '');
-        localStorage.setItem('mp_upi', UPI_ID || '');
-        localStorage.setItem('mp_photo', USER_PHOTO || DEFAULT_AVATAR_SVG);
-        localStorage.setItem('mp_gas_url', USER_GAS_URL || DEFAULT_GAS_URL);
-        localStorage.setItem('mp_qr_style', USER_QR_STYLE || 'tree');
-        localStorage.setItem('mp_api_token', USER_API_TOKEN || '');
-        localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
-    } catch (e) {}
+    safeSet('mp_logged_in', 'true');
+    safeSet('mp_uid', CURRENT_UID || '');
+    safeSet('mp_merchant', MERCHANT || '');
+    safeSet('mp_phone', USER_PHONE || '');
+    safeSet('mp_email', USER_EMAIL || '');
+    safeSet('mp_upi', UPI_ID || '');
+    safeSet('mp_photo', USER_PHOTO || DEFAULT_AVATAR_SVG);
+    safeSet('mp_gas_url', USER_GAS_URL || DEFAULT_GAS_URL);
+    safeSet('mp_qr_style', USER_QR_STYLE || 'tree');
+    safeSet('mp_api_token', USER_API_TOKEN || '');
+    safeSet('mp_api_enabled', String(USER_API_ENABLED));
 }
 
 function logoutGateway() {
@@ -319,7 +310,7 @@ function logoutGateway() {
 // 2. PROFILE DP UPLOAD & UI SYNC
 // =========================================================================
 function handleProfileImageUpload(event) {
-    const file = event && event.target && event.target.files ? event.target.files[0] : null;
+    const file = event?.target?.files?.[0];
     if (!file) return;
 
     if (file.size > 3 * 1024 * 1024) {
@@ -332,10 +323,7 @@ function handleProfileImageUpload(event) {
     reader.onload = async function(e) {
         const base64Data = e.target.result;
         USER_PHOTO = base64Data;
-        try {
-            localStorage.setItem('mp_photo', USER_PHOTO);
-        } catch (err) {}
-
+        safeSet('mp_photo', USER_PHOTO);
         updateAllAvatars(USER_PHOTO);
 
         if (CURRENT_UID && db) {
@@ -395,7 +383,6 @@ function syncUIWithState() {
 
     handleQrStyleChange(USER_QR_STYLE, false);
     updateAllAvatars(USER_PHOTO);
-
     updateApiSwitchUI();
     updateApiEndpointPreviews();
     renderDashboardData();
@@ -411,20 +398,15 @@ function handleQrStyleChange(styleKey, doSave = true) {
     });
 
     if (key === 'tree' || key.includes('tree')) {
-        const el = document.getElementById('qrStyleTreeLabel');
-        if (el) el.classList.add('active');
+        document.getElementById('qrStyleTreeLabel')?.classList.add('active');
     } else if (key === 'static') {
-        const el = document.getElementById('qrStyleStaticLabel');
-        if (el) el.classList.add('active');
+        document.getElementById('qrStyleStaticLabel')?.classList.add('active');
     } else if (key === 'animated') {
-        const el = document.getElementById('qrStyleAnimatedLabel');
-        if (el) el.classList.add('active');
+        document.getElementById('qrStyleAnimatedLabel')?.classList.add('active');
     }
 
     if (doSave) {
-        try {
-            localStorage.setItem('mp_qr_style', USER_QR_STYLE);
-        } catch (e) {}
+        safeSet('mp_qr_style', USER_QR_STYLE);
         if (CURRENT_UID && db) {
             try {
                 db.ref('users/' + CURRENT_UID).update({ qrStyle: USER_QR_STYLE });
@@ -436,15 +418,10 @@ function handleQrStyleChange(styleKey, doSave = true) {
 }
 
 async function saveProfileSettings() {
-    const nameEl = document.getElementById('setMerchantName');
-    const phoneEl = document.getElementById('setMerchantPhone');
-    const upiEl = document.getElementById('setMerchantUpi');
-    const gasEl = document.getElementById('setGasUrl');
-
-    const name = nameEl ? nameEl.value.trim() : "";
-    const phone = phoneEl ? phoneEl.value.trim() : "";
-    const upi = upiEl ? upiEl.value.trim() : "";
-    const gas = gasEl ? gasEl.value.trim() : "";
+    const name = (document.getElementById('setMerchantName')?.value || "").trim();
+    const phone = (document.getElementById('setMerchantPhone')?.value || "").trim();
+    const upi = (document.getElementById('setMerchantUpi')?.value || "").trim();
+    const gas = (document.getElementById('setGasUrl')?.value || "").trim();
 
     if (!name || !upi) {
         showToast("⚠️ Name and UPI ID are required!");
@@ -485,13 +462,11 @@ async function saveProfileSettings() {
 // 3. DELETE ALL TRANSACTIONS
 // =========================================================================
 function openDeleteAllConfirmModal() {
-    const el = document.getElementById('deleteAllModal');
-    if (el) el.classList.add('active');
+    document.getElementById('deleteAllModal')?.classList.add('active');
 }
 
 function closeDeleteAllModal() {
-    const el = document.getElementById('deleteAllModal');
-    if (el) el.classList.remove('active');
+    document.getElementById('deleteAllModal')?.classList.remove('active');
 }
 
 async function confirmDeleteAllTransactions() {
@@ -530,9 +505,7 @@ function getStoredTxns() {
 
 function saveStoredTxns(list) {
     const cleanList = (list || []).filter(item => item && typeof item === 'object');
-    try {
-        localStorage.setItem('mp_transactions', JSON.stringify(cleanList));
-    } catch (e) {}
+    safeSet('mp_transactions', JSON.stringify(cleanList));
 
     if (CURRENT_UID && db) {
         try {
@@ -606,12 +579,14 @@ function tapKey(key) {
         if (currentAmountStr === "0") currentAmountStr = key;
         else if (currentAmountStr.length < 7) currentAmountStr += key;
     }
-    if (liveAmount) liveAmount.innerText = currentAmountStr;
+    const liveEl = document.getElementById("liveAmount");
+    if (liveEl) liveEl.innerText = currentAmountStr;
 }
 
 function applyPreset(val) {
     currentAmountStr = String(val || "0");
-    if (liveAmount) liveAmount.innerText = currentAmountStr;
+    const liveEl = document.getElementById("liveAmount");
+    if (liveEl) liveEl.innerText = currentAmountStr;
 }
 
 function generateBillInvoice() {
@@ -665,21 +640,13 @@ function generateBillInvoice() {
         } catch (e) {}
     }
 
-    const billAmt = document.getElementById('billAmtText');
-    const billTxn = document.getElementById('billTxnId');
-    const billMerch = document.getElementById('billMerchantName');
-    const billEmail = document.getElementById('billMerchantEmail');
-    const billUpi = document.getElementById('billMerchantUpi');
-    const billUrl = document.getElementById('billShortUrl');
-    const billDate = document.getElementById('billDateText');
-
-    if (billAmt) billAmt.innerText = num;
-    if (billTxn) billTxn.innerText = currentActiveTxnId;
-    if (billMerch) billMerch.innerText = MERCHANT;
-    if (billEmail) billEmail.innerText = USER_EMAIL;
-    if (billUpi) billUpi.innerText = UPI_ID;
-    if (billUrl) billUrl.innerText = payUrl;
-    if (billDate) billDate.innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    document.getElementById('billAmtText') && (document.getElementById('billAmtText').innerText = num);
+    document.getElementById('billTxnId') && (document.getElementById('billTxnId').innerText = currentActiveTxnId);
+    document.getElementById('billMerchantName') && (document.getElementById('billMerchantName').innerText = MERCHANT);
+    document.getElementById('billMerchantEmail') && (document.getElementById('billMerchantEmail').innerText = USER_EMAIL);
+    document.getElementById('billMerchantUpi') && (document.getElementById('billMerchantUpi').innerText = UPI_ID);
+    document.getElementById('billShortUrl') && (document.getElementById('billShortUrl').innerText = payUrl);
+    document.getElementById('billDateText') && (document.getElementById('billDateText').innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }));
 
     showScreen('bill');
     showToast("🧾 Payment Link Generated!");
@@ -737,8 +704,8 @@ function startQrRenderingFlow() {
 
     setTimeout(() => {
         const upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
-
-        if (qrAmtHero) qrAmtHero.innerText = `₹${num}`;
+        const heroEl = document.getElementById("qrAmtHero");
+        if (heroEl) heroEl.innerText = `₹${num}`;
 
         const qrAvatar = document.getElementById('qrBrandAvatar');
         const qrName = document.getElementById('qrMerchantName');
@@ -792,7 +759,7 @@ function render2DStaticQr(url, container, isAnimated) {
     container.innerHTML = "";
     try {
         if (typeof qrcode === 'undefined') {
-            container.innerHTML = `<div style="font-weight:700;font-size:0.8rem;padding:20px;">QR Generator ready for: ${url}</div>`;
+            container.innerHTML = `<div style="font-weight:700;font-size:0.8rem;padding:20px;">QR Ready: ${url}</div>`;
             return;
         }
         const qr = qrcode(0, 'M');
@@ -874,8 +841,7 @@ function openGasModal(type) {
 }
 
 function closeGasModal() {
-    const modal = document.getElementById('gasInfoModal');
-    if (modal) modal.classList.remove('active');
+    document.getElementById('gasInfoModal')?.classList.remove('active');
 }
 
 function openPaidVerificationModal() {
@@ -883,13 +849,11 @@ function openPaidVerificationModal() {
     const txnInp = document.getElementById('verifyTxnInput');
     if (utrInp) utrInp.value = "";
     if (txnInp) txnInp.value = "";
-    const modal = document.getElementById('paidVerifyModal');
-    if (modal) modal.classList.add('active');
+    document.getElementById('paidVerifyModal')?.classList.add('active');
 }
 
 function closePaidVerificationModal() {
-    const modal = document.getElementById('paidVerifyModal');
-    if (modal) modal.classList.remove('active');
+    document.getElementById('paidVerifyModal')?.classList.remove('active');
 }
 
 async function resolveCreatorGasUrl() {
@@ -967,30 +931,19 @@ async function executeRealPaymentVerification() {
 
                 finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
 
-                const sAmt = document.getElementById('successAmtText');
-                const sPayer = document.getElementById('receiptPayerName');
-                const sTxn = document.getElementById('receiptTxnId');
-                const sUtr = document.getElementById('receiptUtrNumber');
-                const sDate = document.getElementById('receiptDateText');
-
-                if (sAmt) sAmt.innerText = `₹${data.amount || num}`;
-                if (sPayer) sPayer.innerText = finalPayer;
-                if (sTxn) sTxn.innerText = finalTxn;
-                if (sUtr) sUtr.innerText = finalUtr;
-                if (sDate) sDate.innerText = data.date_str || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                document.getElementById('successAmtText') && (document.getElementById('successAmtText').innerText = `₹${data.amount || num}`);
+                document.getElementById('receiptPayerName') && (document.getElementById('receiptPayerName').innerText = finalPayer);
+                document.getElementById('receiptTxnId') && (document.getElementById('receiptTxnId').innerText = finalTxn);
+                document.getElementById('receiptUtrNumber') && (document.getElementById('receiptUtrNumber').innerText = finalUtr);
+                document.getElementById('receiptDateText') && (document.getElementById('receiptDateText').innerText = data.date_str || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }));
 
                 showScreen('success');
             } else {
                 finalizeTxnStatus('FAILED', isNumericUtr ? combinedInput : 'NOT_FOUND', !isNumericUtr ? combinedInput : 'NONE', 'Unconfirmed', num);
-                const fAmt = document.getElementById('failAmtText');
-                const fUtr = document.getElementById('failSearchedUtr');
-                const fTxn = document.getElementById('failSearchedTxnId');
-                const fSub = document.getElementById('failReasonSub');
-
-                if (fAmt) fAmt.innerText = `₹${num}`;
-                if (fUtr) fUtr.innerText = combinedInput;
-                if (fTxn) fTxn.innerText = combinedInput;
-                if (fSub) fSub.innerText = (data && data.message) ? data.message : "No matching credit entry found in creator's Gmail.";
+                document.getElementById('failAmtText') && (document.getElementById('failAmtText').innerText = `₹${num}`);
+                document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = combinedInput);
+                document.getElementById('failSearchedTxnId') && (document.getElementById('failSearchedTxnId').innerText = combinedInput);
+                document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = (data && data.message) ? data.message : "No matching credit entry found in creator's Gmail.");
                 showScreen('fail');
             }
         }, 400);
@@ -999,15 +952,10 @@ async function executeRealPaymentVerification() {
         if (verifyBar) verifyBar.style.width = "100%";
         setTimeout(() => {
             finalizeTxnStatus('FAILED', combinedInput, combinedInput, 'Unconfirmed', num);
-            const fAmt = document.getElementById('failAmtText');
-            const fUtr = document.getElementById('failSearchedUtr');
-            const fTxn = document.getElementById('failSearchedTxnId');
-            const fSub = document.getElementById('failReasonSub');
-
-            if (fAmt) fAmt.innerText = `₹${num}`;
-            if (fUtr) fUtr.innerText = combinedInput;
-            if (fTxn) fTxn.innerText = combinedInput;
-            if (fSub) fSub.innerText = "Could not connect to Creator's GAS URL. Ensure Web App is deployed with 'Anyone' access.";
+            document.getElementById('failAmtText') && (document.getElementById('failAmtText').innerText = `₹${num}`);
+            document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = combinedInput);
+            document.getElementById('failSearchedTxnId') && (document.getElementById('failSearchedTxnId').innerText = combinedInput);
+            document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = "Could not connect to Creator's GAS URL. Ensure Web App is deployed with 'Anyone' access.");
             showScreen('fail');
         }, 500);
     }
@@ -1291,9 +1239,7 @@ async function runCheckStatusApi() {
 
 function toggleUserApiActive() {
     USER_API_ENABLED = !USER_API_ENABLED;
-    try {
-        localStorage.setItem('mp_api_enabled', String(USER_API_ENABLED));
-    } catch (e) {}
+    safeSet('mp_api_enabled', String(USER_API_ENABLED));
     updateApiSwitchUI();
     if (CURRENT_UID && db) {
         try {
@@ -1678,7 +1624,9 @@ function buildSecondImageICQRTree() {
         { cx: 0.6,  cy: 6.7, cz: -0.3, rx: 1.2, ry: 1.1, rz: 1.2, count: 26 },
         { cx: -1.8, cy: 5.3, cz: 1.1, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
         { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
-        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 }
+        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 },
+        { cx: -2.7, cy: 3.6, cz: 1.6, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
+        { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 }
     ];
 
     const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
@@ -1896,7 +1844,7 @@ try {
 }
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP (ANTI-BLANK-SCREEN LOGIC)
+// 9. NAVIGATION, TOAST & APP BOOTSTRAP (ANTI-BLANK-SCREEN GUARANTEE)
 // =========================================================================
 function showScreen(name) {
     try {
@@ -1905,7 +1853,7 @@ function showScreen(name) {
             'qrScreen', 'checkPaymentScreen', 'apiScreen', 'profileScreen',
             'paymentVerifyScreen', 'successScreen', 'failScreen'
         ];
-        
+
         screens.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.setProperty('display', 'none', 'important');
@@ -1925,8 +1873,7 @@ function showScreen(name) {
         }
 
         ['navHome', 'navPay', 'navCheck', 'navApi', 'navProfile'].forEach(t => {
-            const btn = document.getElementById(t);
-            if (btn) btn.classList.remove('active');
+            document.getElementById(t)?.classList.remove('active');
         });
 
         let targetId = name + 'Screen';
@@ -1942,21 +1889,16 @@ function showScreen(name) {
         }
 
         if (name === 'home') {
-            const tab = document.getElementById('navHome');
-            if (tab) tab.classList.add('active');
+            document.getElementById('navHome')?.classList.add('active');
         } else if (name === 'numpad') {
-            const tab = document.getElementById('navPay');
-            if (tab) tab.classList.add('active');
+            document.getElementById('navPay')?.classList.add('active');
         } else if (name === 'check') {
-            const tab = document.getElementById('navCheck');
-            if (tab) tab.classList.add('active');
+            document.getElementById('navCheck')?.classList.add('active');
         } else if (name === 'api') {
             updateApiEndpointPreviews();
-            const tab = document.getElementById('navApi');
-            if (tab) tab.classList.add('active');
+            document.getElementById('navApi')?.classList.add('active');
         } else if (name === 'profile') {
-            const tab = document.getElementById('navProfile');
-            if (tab) tab.classList.add('active');
+            document.getElementById('navProfile')?.classList.add('active');
         }
     } catch (e) {
         console.error("showScreen safe error:", e);
@@ -1975,7 +1917,8 @@ function startCountdown(seconds) {
         }
         const m = String(Math.floor(rem / 60)).padStart(2, '0');
         const s = String(rem % 60).padStart(2, '0');
-        if (countdownTimer) countdownTimer.innerText = `${m}:${s}`;
+        const timerEl = document.getElementById("countdownTimer");
+        if (timerEl) timerEl.innerText = `${m}:${s}`;
     }, 1000);
 }
 
@@ -2009,14 +1952,15 @@ function backToQrFromFail() {
 }
 
 function showToast(text) {
-    if (!toast) return;
-    toast.innerText = text;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2300);
+    const t = document.getElementById("toast");
+    if (!t) return;
+    t.innerText = text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2300);
 }
 
 // =========================================================================
-// UNIVERSAL BOOTSTRAP (ANTI-BLANK-SCREEN GUARANTEE)
+// UNIVERSAL BOOTSTRAP (ROBUST & RESILIENT)
 // =========================================================================
 async function initMintPay() {
     try {
@@ -2116,7 +2060,7 @@ async function initMintPay() {
 
     // Default route: Dashboard if logged in, otherwise Login/Signup
     try {
-        if (localStorage.getItem('mp_logged_in') === 'true' && CURRENT_UID) {
+        if (safeGet('mp_logged_in', 'false') === 'true' && CURRENT_UID) {
             showScreen('home');
             pingUserGasBackend(false);
         } else {
@@ -2127,7 +2071,7 @@ async function initMintPay() {
     }
 }
 
-// Ensure init executes reliably
+// Safely execute bootstrap as soon as DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMintPay);
 } else {
