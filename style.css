@@ -76,7 +76,7 @@ body.checkout-link-mode #bottomNavDock {
     pointer-events: none !important;
 }
 
-/* Strict Layout Containers */
+/* Screen Views */
 .screen-view,
 .scroll-page {
     width: 100% !important;
@@ -226,7 +226,7 @@ body.checkout-link-mode #bottomNavDock {
 }
 
 /* =========================================================================
-   CHECKOUT SCREEN: PURE FULL SCREEN DIRECT QR CARD
+   CHECKOUT SCREEN: PURE FULL SCREEN DIRECT QR CARD (NO CHANGE AMOUNT)
    ========================================================================= */
 .checkout-fullscreen-card {
     display: none;
@@ -708,7 +708,7 @@ body.checkout-link-mode #bottomNavDock {
 
 .btn-upload-dp-pill:active { transform: scale(0.96); }
 
-/* QR Stage & Details */
+/* QR Stage & Brand Bar */
 .user-brand-bar {
     display: flex !important;
     flex-direction: row !important;
@@ -797,19 +797,20 @@ body.checkout-link-mode #bottomNavDock {
     gap: 5px;
 }
 
+/* 3D Tree Stage Centered (Proportionately Enhanced Foliage) */
 .open-tree-stage {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 310px;
+    height: 310px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     background: transparent;
-    margin: 2px auto;
+    margin: 0 auto;
 }
 
-#treeQrCanvas { width: 300px !important; height: 300px !important; display: block; }
+#treeQrCanvas { width: 310px !important; height: 310px !important; display: block; }
 
 .static-qr-container {
     width: 250px;
@@ -837,18 +838,23 @@ body.checkout-link-mode #bottomNavDock {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 }
 
 .toggle-tree-pill:active { transform: scale(0.96); background: #ffffff; }
 
+/* Full-width Single Action on Payment Link (Change Amount Removed) */
 .qr-bottom-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px !important;
+    display: flex !important;
     width: 100% !important;
     box-sizing: border-box !important;
+}
+
+.qr-bottom-actions .btn-paid {
+    width: 100% !important;
+    font-size: 1.05rem;
+    padding: 15px;
 }
 
 .btn-paid {
@@ -869,25 +875,20 @@ body.checkout-link-mode #bottomNavDock {
 
 .btn-paid:active { transform: scale(0.96); }
 
-.btn-change-amt {
-    background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    color: #334155;
-    font-size: 0.88rem;
-    font-weight: 800;
-    padding: 14px;
-    border-radius: 18px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
+/* Full-width Single Action on Fail Screen (Home Button Removed) */
+.fail-bottom-actions {
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-.btn-change-amt:active { transform: scale(0.96); background: #f8fafc; }
+.fail-bottom-actions .btn-paid {
+    width: 100% !important;
+    font-size: 1.05rem;
+    padding: 15px;
+}
 
-/* Input Fields & Searches */
+/* Inputs & Forms */
 .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; text-align: left; width: 100%; }
 .input-label { font-size: 0.74rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 5px; padding-left: 3px; }
 .glass-input {
@@ -1061,7 +1062,7 @@ body.checkout-link-mode #bottomNavDock {
     font-weight: 900;
 }
 
-/* Stats & Quick Cards */
+/* Stats Grid */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
 .stat-box { background: var(--glass-card); border: 1.5px solid var(--glass-border); border-radius: 18px; padding: 12px 13px; display: flex; flex-direction: column; gap: 3px; }
 .stat-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-weight: 800; color: var(--text-muted); }
@@ -1121,7 +1122,7 @@ body.checkout-link-mode #bottomNavDock {
 
 .btn-info-bubble:active { transform: scale(0.96); }
 
-/* BOTTOM NAVIGATION BAR */
+/* Bottom Nav Dock */
 .bottom-nav-dock {
     position: fixed;
     bottom: 8px;
@@ -1219,7 +1220,6 @@ body.checkout-link-mode #bottomNavDock {
     width: 100%;
 }
 
-/* Verification Auto-Detect Box */
 .auto-verify-box {
     background: #ecfdf5;
     border: 1.5px solid #a7f3d0;
@@ -1272,7 +1272,7 @@ body.checkout-link-mode #bottomNavDock {
 .receipt-row { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600; }
 .receipt-row b { color: var(--text-dark); font-weight: 800; display: inline-flex; align-items: center; gap: 5px; word-break: break-all; }
 
-/* CODE BLOCKS & RAW JSON DISPLAY */
+/* Code Blocks */
 .code-block {
     width: 100%;
     background: #090d16;
