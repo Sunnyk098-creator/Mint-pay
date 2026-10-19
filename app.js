@@ -1,12 +1,12 @@
 /**
  * MintPay 3D Engine - Complete Multi-User Architecture
- * Features:
- * 1. Hosted Link Direct QR load (No Splash/Grow screen delay)
- * 2. Format: TXN_{12 alphanumeric}
- * 3. 1 Payment Per Link Policy (Completed links open directly to Success Screen)
- * 4. Dedicated Timed Out / Expired Screen Integration
- * 5. Smart Verification: Auto-detects Order Note (No input) or checks post-creation time
- * 6. Strict Exact Amount Matching & Creator GAS URL Execution
+ * Features & Fixes:
+ * 1. Enhanced, Dense & Realistic 3D Tree Canopy (Zero bare branches, lush organic look)
+ * 2. Strict Double-Verification & Old-Payment Block (Enforces creation timestamp & UTR uniqueness)
+ * 3. 1 Payment Per Link Policy (Completed transactions stay locked on Success Screen)
+ * 4. Hosted Links have Change Amount & Home button removed
+ * 5. Smart Verification: Automatic Note matching or creation-timestamp filtered UTR check
+ * 6. Format: TXN_{12 alphanumeric}
  */
 
 // =========================================================================
@@ -710,11 +710,11 @@ function openHostedCheckoutPage() {
     currentActiveTxnId = activeBillPayload.txn_id;
     currentTxnNote = activeBillPayload.note || "";
     qrStartTimeMs = activeBillPayload.created_ms || Date.now();
-    startQrRenderingFlow(true); // Instant load without splash
+    startQrRenderingFlow(true); // Direct load
 }
 
 // =========================================================================
-// 5. DIRECT QR RENDERING (NO GROW SPLASH DELAY ON HOSTED LINKS)
+// 5. DIRECT QR RENDERING (NO SPLASH DELAY ON HOSTED LINKS)
 // =========================================================================
 function startQrRenderingFlow(isDirect = false) {
     const num = parseFloat(currentAmountStr) || 1;
@@ -729,7 +729,6 @@ function startQrRenderingFlow(isDirect = false) {
         const heroEl = document.getElementById("qrAmtHero");
         if (heroEl) heroEl.innerText = `₹${num}`;
 
-        // Update note display badge
         const noteBadge = document.getElementById('qrNoteDisplayBadge');
         const noteText = document.getElementById('qrNoteDisplayText');
         if (currentTxnNote && currentTxnNote.trim() !== "") {
@@ -835,7 +834,7 @@ function render2DStaticQr(url, container, isAnimated) {
 }
 
 // =========================================================================
-// 6. GAS VERIFICATION (SMART NOTE AUTO-VERIFY OR CREATOR-LINKED FETCH)
+// 6. GAS VERIFICATION (SMART NOTE OR TIME-BOUND UTR CHECK)
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -865,7 +864,7 @@ function openGasModal(type) {
         if (content) {
             content.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <p>Your script must handle <code>action=verify</code> and match credit alerts after QR generation time:</p>
+                    <p>Your script must check creation timestamp & verify incoming payments strictly:</p>
                     <div class="code-block">function doGet(e) {
   var p = e.parameter;
   return ContentService.createTextOutput(JSON.stringify({
@@ -889,7 +888,6 @@ function closeGasModal() {
     document.getElementById('gasInfoModal')?.classList.remove('active');
 }
 
-// Opens intelligent verification modal: If note is present, auto-verifies directly
 function openPaidVerificationModal() {
     const autoBox = document.getElementById('autoVerifyContainer');
     const manualBox = document.getElementById('manualVerifyContainer');
@@ -900,13 +898,11 @@ function openPaidVerificationModal() {
     if (utrInp) utrInp.value = "";
 
     if (currentTxnNote && currentTxnNote.trim() !== "") {
-        // Order Note present: No input needed! Matches exact note and amount
         if (autoBox) autoBox.style.display = 'block';
         if (manualBox) manualBox.style.display = 'none';
         if (noteBadge) noteBadge.innerText = currentTxnNote;
         if (subText) subText.innerText = "Order Note detected! Matching bank credit alert automatically:";
     } else {
-        // Manual mode: user can enter UTR or it checks latest credit after creation time
         if (autoBox) autoBox.style.display = 'none';
         if (manualBox) manualBox.style.display = 'block';
         if (subText) subText.innerText = "Enter UTR / Transaction ID or tap verify to match incoming payment:";
@@ -943,12 +939,10 @@ async function resolveCreatorGasUrl() {
     return activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
 }
 
-// Executes real payment verification with post-creation time check & exact amount match
+// Verifies payment with anti-reuse protection & creation timestamp filter
 async function executeRealPaymentVerification() {
     const utrEl = document.getElementById('verifyUtrInput');
     const rawInput = utrEl ? utrEl.value.trim() : "";
-
-    // If no note and no input, user wants auto-check of payment after creation time
     const queryParam = currentTxnNote && currentTxnNote.trim() !== "" ? currentTxnNote.trim() : rawInput;
 
     closePaidVerificationModal();
@@ -965,6 +959,30 @@ async function executeRealPaymentVerification() {
     const targetGasUrl = await resolveCreatorGasUrl();
     const targetMerchant = activeCreatorName || MERCHANT;
 
+    // Check if UTR is already claimed locally or in DB
+    if (rawInput) {
+        let isAlreadyClaimed = false;
+        try {
+            const utrKey = rawInput.replace(/[^a-zA-Z0-9]/g, '_');
+            const claimedSnap = await db?.ref('claimed_utrs/' + utrKey).once('value');
+            if (claimedSnap && claimedSnap.exists()) {
+                isAlreadyClaimed = true;
+            }
+        } catch (e) {}
+
+        if (isAlreadyClaimed) {
+            if (verifyBar) verifyBar.style.width = "100%";
+            setTimeout(() => {
+                finalizeTxnStatus('FAILED', rawInput, 'NONE', 'Unconfirmed', num);
+                document.getElementById('failAmtText') && (document.getElementById('failAmtText').innerText = `₹${num}`);
+                document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = rawInput);
+                document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = "This UTR / Transaction ID has already been claimed for another payment!");
+                showScreen('fail');
+            }, 400);
+            return;
+        }
+    }
+
     try {
         const sep = targetGasUrl.includes('?') ? '&' : '?';
         const verifyUrl = `${targetGasUrl}${sep}action=verify&amount=${encodeURIComponent(num)}&note=${encodeURIComponent(currentTxnNote || "")}&query=${encodeURIComponent(queryParam)}&startTime=${qrStartTimeMs}&merchant=${encodeURIComponent(targetMerchant)}`;
@@ -978,7 +996,6 @@ async function executeRealPaymentVerification() {
         if (verifyBar) verifyBar.style.width = "100%";
 
         setTimeout(() => {
-            // Strict match: verified is true AND received amount equals transaction amount
             const receivedAmount = parseFloat(data.amount || data.received_amount || num);
             const isAmountExact = Math.abs(receivedAmount - num) < 0.01;
 
@@ -986,6 +1003,16 @@ async function executeRealPaymentVerification() {
                 const finalUtr = data.utr || rawInput || "VERIFIED";
                 const finalTxn = data.transaction_id || currentActiveTxnId || "FMPIB_VERIFIED";
                 const finalPayer = data.payer_name || data.sender || "Verified UPI User";
+
+                // Mark UTR as claimed globally so nobody can reuse it
+                if (finalUtr && db) {
+                    const utrKey = finalUtr.replace(/[^a-zA-Z0-9]/g, '_');
+                    db.ref('claimed_utrs/' + utrKey).set({
+                        txn_id: currentActiveTxnId,
+                        claimed_at: new Date().toISOString(),
+                        amount: num
+                    });
+                }
 
                 finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
 
@@ -1374,7 +1401,7 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE
+// 8. 3D TREE FIRST ENGINE (ENHANCED DENSE CANOPY FIX)
 // =========================================================================
 let qrScene = null;
 let qrCamera = null;
@@ -1480,7 +1507,7 @@ function initOrUpdate3DTreeQR(upiString) {
     }
 
     try {
-        const size = 300;
+        const size = 310;
 
         if (!qrRenderer) {
             qrScene = new THREE.Scene();
@@ -1565,7 +1592,7 @@ function initOrUpdate3DTreeQR(upiString) {
 
                 const treeX = isDark ? Math.cos(angle) * rad : qrX * 0.5;
                 const treeZ = isDark ? Math.sin(angle) * rad : qrZ * 0.5;
-                const treeY = isDark ? 3.2 + Math.max(0, 1.15 - dist * 0.65) * 3.4 : -0.5;
+                const treeY = isDark ? 2.8 + Math.max(0, 1.15 - dist * 0.65) * 3.2 : -0.5;
 
                 mesh.position.set(treeX, treeY, treeZ);
                 mesh.userData = {
@@ -1593,6 +1620,7 @@ function initOrUpdate3DTreeQR(upiString) {
     }
 }
 
+// Builds the natural, dense, proportionate 3D Tree (matches Screenshot 35 & tree.icqr.com)
 function buildSecondImageICQRTree() {
     if (!treeWorldGroup) return;
     const patioSpan = 10.4;
@@ -1646,21 +1674,22 @@ function buildSecondImageICQRTree() {
     });
 
     const barkMat = new THREE.MeshLambertMaterial({ color: '#54341e' });
-    const mainTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.48, 5.4, 10), barkMat);
-    mainTrunk.position.set(0, 1.0, 0);
+    const mainTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.46, 4.2, 10), barkMat);
+    mainTrunk.position.set(0, 0.5, 0);
     treeWorldGroup.add(mainTrunk);
 
+    // Natural spreading branches enveloped inside the canopy
     const branchList = [
-        { x: -1.1, y: 1.9, z: 0.9, rx: 0.52, rz: 0.68, len: 3.1, r: 0.16 },
-        { x: -0.95, y: 3.1, z: 0.6, rx: 0.35, rz: 0.58, len: 3.8, r: 0.19 },
-        { x: 1.05, y: 3.2, z: -0.6, rx: -0.35, rz: -0.58, len: 3.8, r: 0.19 },
-        { x: 0.75, y: 3.3, z: 0.85, rx: 0.45, rz: -0.40, len: 3.4, r: 0.17 },
-        { x: -0.75, y: 3.4, z: -0.85, rx: -0.45, rz: 0.40, len: 3.4, r: 0.17 },
-        { x: -0.2, y: 4.9, z: 0.1, rx: 0.08, rz: 0.12, len: 3.9, r: 0.16 }
+        { x: -0.85, y: 1.8, z: 0.7, rx: 0.45, rz: 0.55, len: 2.8, r: 0.16 },
+        { x: -0.75, y: 2.6, z: 0.4, rx: 0.32, rz: 0.48, len: 3.2, r: 0.18 },
+        { x: 0.85, y: 2.6, z: -0.4, rx: -0.32, rz: -0.48, len: 3.2, r: 0.18 },
+        { x: 0.65, y: 2.7, z: 0.65, rx: 0.38, rz: -0.35, len: 2.8, r: 0.16 },
+        { x: -0.65, y: 2.8, z: -0.65, rx: -0.38, rz: 0.35, len: 2.8, r: 0.16 },
+        { x: -0.1, y: 3.8, z: 0.05, rx: 0.06, rz: 0.08, len: 3.2, r: 0.15 }
     ];
 
     branchList.forEach(b => {
-        const br = new THREE.Mesh(new THREE.CylinderGeometry(b.r * 0.38, b.r, b.len, 8), barkMat);
+        const br = new THREE.Mesh(new THREE.CylinderGeometry(b.r * 0.42, b.r, b.len, 8), barkMat);
         br.position.set(b.x, b.y, b.z);
         br.rotation.x = b.rx;
         br.rotation.z = b.rz;
@@ -1672,15 +1701,21 @@ function buildSecondImageICQRTree() {
     const texShade  = createICQRFoliageTexture('#65ad1b', '#83cc35', '#44820c');
     const leafTextures = [texSunlit, texLush, texShade];
 
+    // Densely Layered Foliage Clusters (Fully wraps around trunk from y: 2.2 up to y: 6.8)
     const boughClusters = [
-        { cx: -0.3, cy: 7.3, cz: 0.2, rx: 1.0, ry: 1.2, rz: 1.0, count: 28 },
-        { cx: 0.6,  cy: 6.7, cz: -0.3, rx: 1.2, ry: 1.1, rz: 1.2, count: 26 },
-        { cx: -1.8, cy: 5.3, cz: 1.1, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
-        { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
-        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 }
+        { cx: 0.0,  cy: 6.4, cz: 0.0, rx: 1.3, ry: 1.3, rz: 1.3, count: 32 },  // Top Peak
+        { cx: -0.4, cy: 5.4, cz: 0.3, rx: 1.6, ry: 1.3, rz: 1.5, count: 38 },  // Upper left
+        { cx: 0.5,  cy: 5.3, cz: -0.3, rx: 1.6, ry: 1.3, rz: 1.5, count: 38 }, // Upper right
+        { cx: 0.0,  cy: 4.5, cz: 0.0, rx: 2.1, ry: 1.4, rz: 2.1, count: 46 },  // Central body
+        { cx: -1.7, cy: 3.8, cz: 0.9, rx: 1.9, ry: 1.3, rz: 1.8, count: 44 },  // Mid left bough
+        { cx: 1.8,  cy: 3.8, cz: -0.8, rx: 1.9, ry: 1.3, rz: 1.8, count: 44 }, // Mid right bough
+        { cx: 0.9,  cy: 3.4, cz: 1.4, rx: 1.7, ry: 1.2, rz: 1.6, count: 40 },  // Front right
+        { cx: -0.9, cy: 3.4, cz: -1.3, rx: 1.7, ry: 1.2, rz: 1.6, count: 40 }, // Back left
+        { cx: -1.4, cy: 2.5, cz: 1.1, rx: 1.3, ry: 1.0, rz: 1.3, count: 28 },  // Low left hanging
+        { cx: 0.2,  cy: 2.1, cz: 0.3, rx: 0.8, ry: 1.2, rz: 0.8, count: 24 }   // Trunk ivy coverage
     ];
 
-    const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
+    const puffGeo = new THREE.PlaneGeometry(1.5, 1.5);
     let idx = 0;
     boughClusters.forEach(m => {
         for (let i = 0; i < m.count; i++) {
@@ -1704,7 +1739,7 @@ function buildSecondImageICQRTree() {
             puff.rotation.x = -0.32 + (Math.random() - 0.5) * 0.3;
             puff.rotation.z = (Math.random() - 0.5) * 0.55;
 
-            const baseScale = 0.68 + Math.random() * 0.48;
+            const baseScale = 0.72 + Math.random() * 0.45;
             puff.userData = {
                 baseX: lx, baseY: ly, baseZ: lz,
                 baseRotZ: puff.rotation.z, baseScale,
@@ -1895,7 +1930,7 @@ try {
 }
 
 // =========================================================================
-// 9. NAVIGATION, TIMEOUT HANDLER & BOOTSTRAP
+// 9. NAVIGATION, TIMEOUT HANDLER & BOOTSTRAP (HOSTED CONTROLS FIXED)
 // =========================================================================
 function showScreen(name) {
     try {
@@ -1913,6 +1948,7 @@ function showScreen(name) {
         const dock = document.getElementById('bottomNavDock');
         const shell = document.getElementById('appShell');
 
+        // On Hosted Payment links or special screens, bottom navigation is 100% disabled
         const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail', 'expired'];
 
         if (IS_HOSTED_CHECKOUT_MODE || hideDock.includes(name)) {
@@ -1963,7 +1999,6 @@ function startCountdown(seconds) {
         rem--;
         if (rem <= 0) {
             clearInterval(timerInterval);
-            // Trigger Timed Out / Expired Screen on time up
             handleTransactionTimeout();
             return;
         }
@@ -1974,7 +2009,6 @@ function startCountdown(seconds) {
     }, 1000);
 }
 
-// Dedicated Timed Out / Expired handler
 function handleTransactionTimeout() {
     document.getElementById('expiredAmtText') && (document.getElementById('expiredAmtText').innerText = `₹${currentAmountStr}`);
     document.getElementById('expiredTxnId') && (document.getElementById('expiredTxnId').innerText = currentActiveTxnId || "-");
@@ -1990,10 +2024,11 @@ function copyUPI() {
     setTimeout(() => { if (tip) tip.innerText = "Copy"; }, 2000);
 }
 
+// Controlled Return: In hosted checkout mode, prevents going to creator's private screens
 function goToAmountScreen() {
     if (timerInterval) clearInterval(timerInterval);
     if (IS_HOSTED_CHECKOUT_MODE) {
-        showToast("⚠️ Hosted link expired or completed.");
+        showToast("✓ Payment session complete.");
         return;
     }
     showScreen('numpad');
@@ -2013,7 +2048,7 @@ function showToast(text) {
 }
 
 // =========================================================================
-// UNIVERSAL BOOTSTRAP (1 PAYMENT PER LINK & DIRECT QR LOAD)
+// UNIVERSAL BOOTSTRAP (1 PAYMENT PER LINK POLICY & INSTANT DIRECT QR)
 // =========================================================================
 async function initMintPay() {
     try {
@@ -2054,7 +2089,7 @@ async function initMintPay() {
         }
 
         if (data) {
-            // RULE: 1 Payment per link! If already completed, directly open Success Screen!
+            // STRICT 1-PAYMENT-PER-LINK RULE: If already paid, directly lock to Success Screen!
             if (data.status === 'COMPLETED') {
                 document.getElementById('successAmtText') && (document.getElementById('successAmtText').innerText = `₹${data.amount}`);
                 document.getElementById('receiptPayerName') && (document.getElementById('receiptPayerName').innerText = data.payer_name || "Verified Payer");
@@ -2079,11 +2114,10 @@ async function initMintPay() {
             currentTxnNote = data.note || "";
             qrStartTimeMs = data.created_ms || Date.now();
 
-            // RULE: Open DIRECTLY into QR Code without grow splash screen delay!
+            // Direct instant QR load without splash screen
             startQrRenderingFlow(true);
             return;
         } else {
-            // Safe fallback if record is new or unindexed
             currentAmountStr = "1";
             currentActiveTxnId = hostedId;
             currentTxnNote = "";
@@ -2134,7 +2168,7 @@ async function initMintPay() {
     }
 }
 
-// Ensure init executes reliably
+// Reliable Initialization
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMintPay);
 } else {
