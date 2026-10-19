@@ -27,7 +27,7 @@
 
     <main class="app-shell" id="appShell">
 
-        <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP (VISIBLE BY DEFAULT) ================= -->
+        <!-- ================= SCREEN 0: DATABASE LOGIN & SIGNUP ================= -->
         <div id="authScreen" class="scroll-page" style="display: flex;">
             <div class="header-box" style="margin-top: 10px;">
                 <div class="top-trust-pill">
@@ -49,7 +49,6 @@
             </div>
 
             <div class="frosted-card" style="padding: 16px;">
-                <!-- Auth Switch Tabs -->
                 <div class="auth-tabs">
                     <button class="auth-tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">
                         <img src="lock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -104,7 +103,6 @@
                         <input type="password" id="regConfirmPass" class="glass-input" placeholder="Re-enter password">
                     </div>
 
-                    <!-- Password Rules Box -->
                     <div class="password-rules-box" id="passwordRulesBox">
                         <div class="rule-title"><img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> Password Requirements:</div>
                         <div class="rule-item" id="ruleLen"><span class="rule-dot">○</span> Minimum 8 characters</div>
@@ -147,7 +145,6 @@
                 </button>
             </div>
 
-            <!-- Dashboard Engine Status -->
             <div class="frosted-card status-banner-card">
                 <div class="status-banner-left">
                     <div class="status-icon-box">
@@ -169,7 +166,6 @@
                 </span>
             </div>
 
-            <!-- Analytics Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-head">
@@ -195,7 +191,6 @@
                 </div>
             </div>
 
-            <!-- Clear Records -->
             <div class="frosted-card danger-strip-card">
                 <div style="text-align:left;">
                     <div style="font-size: 0.82rem; font-weight: 800; color: var(--danger);">Clear Payment Records</div>
@@ -207,7 +202,6 @@
                 </button>
             </div>
 
-            <!-- Quick Action Buttons -->
             <div class="quick-actions-grid">
                 <button class="quick-card-btn" onclick="showScreen('numpad')">
                     <img src="moneybag.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
@@ -223,7 +217,6 @@
                 </button>
             </div>
 
-            <!-- Recent Transactions List -->
             <div class="frosted-card">
                 <div class="card-section-head">
                     <div class="card-section-title">
@@ -265,7 +258,6 @@
                 <span class="live-amount-text" id="liveAmount">0</span>
             </div>
 
-            <!-- Presets -->
             <div class="chip-grid">
                 <button class="chip-btn" onclick="applyPreset('1')">₹1</button>
                 <button class="chip-btn" onclick="applyPreset('10')">₹10</button>
@@ -273,7 +265,6 @@
                 <button class="chip-btn" onclick="applyPreset('100')">₹100</button>
             </div>
 
-            <!-- Numpad -->
             <div class="numpad-container">
                 <button class="pad-btn" onclick="tapKey('1')">1</button>
                 <button class="pad-btn" onclick="tapKey('2')">2</button>
@@ -310,7 +301,6 @@
                 <p class="subtitle-text">Share link with buyer or open checkout QR</p>
             </div>
 
-            <!-- Receipt Card -->
             <div class="invoice-paper-card">
                 <div class="invoice-header">
                     <img src="" id="billLogoImg" alt="" class="invoice-logo">
@@ -349,7 +339,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons: Copy, Share, Open -->
             <div class="bill-actions-grid">
                 <button class="bill-btn copy-btn" onclick="copyBillPaymentLink()">
                     <img src="live.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -379,7 +368,7 @@
             </div>
         </div>
 
-        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR ================= -->
+        <!-- ================= SCREEN 5: CHECKOUT / 3D TREE QR (FULL SCREEN NO CHANGE AMOUNT) ================= -->
         <div id="qrScreen" class="screen-view checkout-fullscreen-card">
             
             <!-- User Brand Bar -->
@@ -401,7 +390,7 @@
                     </div>
                 </div>
 
-                <!-- Timer Capsule with clock.gif -->
+                <!-- Timer Capsule -->
                 <div class="timer-capsule">
                     <img src="clock.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span id="countdownTimer">04:55</span>
@@ -417,7 +406,7 @@
                 </div>
             </div>
 
-            <!-- 3D Tree QR Stage Container -->
+            <!-- 3D Tree QR Stage Container (Enhanced Foliage Proportions) -->
             <div class="open-tree-stage" id="qrStageContainer" onclick="toggleTreeMode()" title="Tap tree to see QR">
                 <canvas id="treeQrCanvas"></canvas>
                 <div id="staticQrBox" class="static-qr-container" style="display:none;"></div>
@@ -429,15 +418,11 @@
                 <span id="toggleBtnText">Tap the tree to see QR code</span>
             </button>
 
-            <!-- Bottom Row: Paid & Change Amount -->
+            <!-- Bottom Row: Pure Full-Width Paid Button (Change Amount Removed) -->
             <div class="qr-bottom-actions">
                 <button class="btn-paid" onclick="openPaidVerificationModal()">
                     <img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
                     <span>Paid</span>
-                </button>
-                <button class="btn-change-amt" onclick="goToAmountScreen()">
-                    <img src="moneybag.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
-                    <span>← Change Amount</span>
                 </button>
             </div>
         </div>
@@ -632,7 +617,6 @@
         <!-- ================= SCREEN 8: PROFILE & SETTINGS ================= -->
         <div id="profileScreen" class="scroll-page">
             <div class="header-box">
-                <!-- User Profile DP Upload Area -->
                 <div class="profile-upload-container">
                     <div class="badge-avatar-wrap" style="width:88px;height:88px;border-radius:50%;">
                         <img src="" id="profAvatarImg" alt="" class="avatar-logo-img">
@@ -656,7 +640,6 @@
                 <p class="subtitle-text" id="profHeaderPhone" style="color:var(--primary-deep); font-weight:800; font-size:0.74rem;">Mobile: 9876543210</p>
             </div>
 
-            <!-- Merchant Profile Fields -->
             <div class="frosted-card">
                 <div class="card-section-title" style="margin-bottom:12px;">
                     <img src="star.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -679,7 +662,6 @@
                 </div>
             </div>
 
-            <!-- QR Code Style Selector -->
             <div class="frosted-card">
                 <div class="card-section-title" style="color:var(--primary-deep); margin-bottom:4px;">
                     <img src="colourful-sparks.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -710,7 +692,6 @@
                 </div>
             </div>
 
-            <!-- Creator's Verification Backend URL -->
             <div class="frosted-card">
                 <div class="card-section-title" style="margin-bottom:4px;">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
@@ -801,7 +782,7 @@
             </button>
         </div>
 
-        <!-- ================= SCREEN 11: FAILED SCREEN ================= -->
+        <!-- ================= SCREEN 11: FAILED SCREEN (HOME BUTTON REMOVED) ================= -->
         <div id="failScreen" class="result-screen-box">
             <div class="result-badge-wrap fail-bg">
                 <img src="x.gif" alt="" class="result-gif" onerror="this.src='block.gif'">
@@ -832,14 +813,11 @@
                 </div>
             </div>
 
-            <div class="qr-bottom-actions" style="width:100%;">
+            <!-- Single Full-Width Action: Try Again Only (Home Button Removed) -->
+            <div class="fail-bottom-actions">
                 <button class="btn-paid" onclick="backToQrFromFail()">
                     <img src="light.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
                     <span>Try Again</span>
-                </button>
-                <button class="btn-change-amt" onclick="goToAmountScreen()">
-                    <img src="moneybag.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
-                    <span>← Home</span>
                 </button>
             </div>
         </div>
@@ -935,7 +913,7 @@
         </div>
     </div>
 
-    <!-- MODAL 3: INTELLIGENT VERIFY MODAL (AUTO-DETECT FOR NOTE OR UNIFIED INPUT) -->
+    <!-- MODAL 3: INTELLIGENT VERIFY MODAL -->
     <div class="modal-backdrop" id="paidVerifyModal">
         <div class="modal-card">
             <img src="eye.gif" alt="" class="modal-top-gif" onerror="this.style.display='none'">
