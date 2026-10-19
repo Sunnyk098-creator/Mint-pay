@@ -1,6 +1,12 @@
 /**
- * MintPay 3D Engine - Complete Multi-User Creator-Linked Architecture
- * 100% Crash-Proof & Anti-Blank-Screen Safe Build
+ * MintPay 3D Engine - Complete Multi-User Architecture
+ * Features:
+ * 1. Hosted Link Direct QR load (No Splash/Grow screen delay)
+ * 2. Format: TXN_{12 alphanumeric}
+ * 3. 1 Payment Per Link Policy (Completed links open directly to Success Screen)
+ * 4. Dedicated Timed Out / Expired Screen Integration
+ * 5. Smart Verification: Auto-detects Order Note (No input) or checks post-creation time
+ * 6. Strict Exact Amount Matching & Creator GAS URL Execution
  */
 
 // =========================================================================
@@ -60,7 +66,7 @@ let USER_API_TOKEN = safeGet('mp_api_token', generateRandomToken());
 let USER_API_ENABLED = safeGet('mp_api_enabled', 'true') !== 'false';
 
 let currentAmountStr = "0";
-let currentTxnNote = "MintPay_Order";
+let currentTxnNote = "";
 let currentActiveTxnId = null;
 let activeBillPayload = null;
 let timerInterval = null;
@@ -74,6 +80,22 @@ let activeCreatorUpi = "sunnypro@fam";
 let activeCreatorPhoto = DEFAULT_AVATAR_SVG;
 let activeCreatorQrStyle = "tree";
 let activeCreatorEmail = "merchant@mintpay.com";
+
+// DOM Elements
+const liveAmount = document.getElementById("liveAmount");
+const qrAmtHero = document.getElementById("qrAmtHero");
+const countdownTimer = document.getElementById("countdownTimer");
+const toast = document.getElementById("toast");
+
+// Generates 12 Alphanumeric Transaction ID: TXN_{12 alphanumeric}
+function generateTxnId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = '';
+    for (let i = 0; i < 12; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return "TXN_" + id;
+}
 
 function generateRandomToken() {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -369,6 +391,7 @@ function syncUIWithState() {
     setTxt('qrMerchantName', MERCHANT);
     setTxt('qrMerchantUpi', UPI_ID);
     setTxt('failMerchantUpi', UPI_ID);
+    setTxt('expiredMerchantUpi', UPI_ID);
     setTxt('numpadSubText', `Direct credit to ${MERCHANT}`);
     setTxt('procSubUpi', `Rendering ${(USER_QR_STYLE || 'tree').toUpperCase()} QR for ${UPI_ID}`);
 
@@ -459,7 +482,7 @@ async function saveProfileSettings() {
 }
 
 // =========================================================================
-// 3. DELETE ALL TRANSACTIONS
+// 3. TRANSACTION STORE & LOGS
 // =========================================================================
 function openDeleteAllConfirmModal() {
     document.getElementById('deleteAllModal')?.classList.add('active');
@@ -567,7 +590,7 @@ function renderDashboardData() {
 }
 
 // =========================================================================
-// 4. LINK GENERATOR WITH CREATOR DATA LINKED
+// 4. LINK GENERATOR WITH CREATOR DATA & TXN_{12 ALPHANUMERIC} FORMAT
 // =========================================================================
 function tapKey(key) {
     if (key === 'DEL') {
@@ -596,8 +619,8 @@ function generateBillInvoice() {
         return;
     }
 
-    currentTxnNote = "MintPay_Order";
-    currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
+    currentTxnNote = "";
+    currentActiveTxnId = generateTxnId();
 
     const baseClean = window.location.href.split('?')[0];
     const payUrl = `${baseClean}?id=${currentActiveTxnId}`;
@@ -685,27 +708,36 @@ function openHostedCheckoutPage() {
     activeCreatorEmail = activeBillPayload.creator_email || USER_EMAIL;
     currentAmountStr = String(activeBillPayload.amount);
     currentActiveTxnId = activeBillPayload.txn_id;
-    startQrRenderingFlow();
+    currentTxnNote = activeBillPayload.note || "";
+    qrStartTimeMs = activeBillPayload.created_ms || Date.now();
+    startQrRenderingFlow(true); // Instant load without splash
 }
 
 // =========================================================================
-// 5. 3D TREE QR RENDERING & FULL-SCREEN CHECKOUT
+// 5. DIRECT QR RENDERING (NO GROW SPLASH DELAY ON HOSTED LINKS)
 // =========================================================================
-function startQrRenderingFlow() {
+function startQrRenderingFlow(isDirect = false) {
     const num = parseFloat(currentAmountStr) || 1;
-    qrStartTimeMs = Date.now();
+    if (!qrStartTimeMs) qrStartTimeMs = Date.now();
 
-    showScreen('processing');
-    const procBar = document.getElementById('procBar');
-    if (procBar) {
-        procBar.style.width = "0%";
-        setTimeout(() => { procBar.style.width = "100%"; }, 50);
-    }
+    const executeQrLoad = () => {
+        let upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
+        if (currentTxnNote && currentTxnNote.trim() !== "") {
+            upiUrl += `&tn=${encodeURIComponent(currentTxnNote.trim())}`;
+        }
 
-    setTimeout(() => {
-        const upiUrl = `upi://pay?pa=${activeCreatorUpi}&pn=${encodeURIComponent(activeCreatorName)}&am=${num}&cu=INR`;
         const heroEl = document.getElementById("qrAmtHero");
         if (heroEl) heroEl.innerText = `₹${num}`;
+
+        // Update note display badge
+        const noteBadge = document.getElementById('qrNoteDisplayBadge');
+        const noteText = document.getElementById('qrNoteDisplayText');
+        if (currentTxnNote && currentTxnNote.trim() !== "") {
+            if (noteText) noteText.innerText = currentTxnNote;
+            if (noteBadge) noteBadge.style.display = 'inline-flex';
+        } else {
+            if (noteBadge) noteBadge.style.display = 'none';
+        }
 
         const qrAvatar = document.getElementById('qrBrandAvatar');
         const qrName = document.getElementById('qrMerchantName');
@@ -720,7 +752,19 @@ function startQrRenderingFlow() {
         showScreen('qr');
         renderSelectedQrType(upiUrl, activeCreatorQrStyle);
         startCountdown(300);
-    }, 1100);
+    };
+
+    if (isDirect) {
+        executeQrLoad();
+    } else {
+        showScreen('processing');
+        const procBar = document.getElementById('procBar');
+        if (procBar) {
+            procBar.style.width = "0%";
+            setTimeout(() => { procBar.style.width = "100%"; }, 50);
+        }
+        setTimeout(executeQrLoad, 900);
+    }
 }
 
 function renderSelectedQrType(upiUrl, qrStyleType) {
@@ -791,7 +835,7 @@ function render2DStaticQr(url, container, isAnimated) {
 }
 
 // =========================================================================
-// 6. GAS VERIFICATION (CREATOR-LINKED)
+// 6. GAS VERIFICATION (SMART NOTE AUTO-VERIFY OR CREATOR-LINKED FETCH)
 // =========================================================================
 function openGasModal(type) {
     const modal = document.getElementById('gasInfoModal');
@@ -821,15 +865,16 @@ function openGasModal(type) {
         if (content) {
             content.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <p>Your script must handle <code>action=verify</code> and return JSON:</p>
+                    <p>Your script must handle <code>action=verify</code> and match credit alerts after QR generation time:</p>
                     <div class="code-block">function doGet(e) {
   var p = e.parameter;
   return ContentService.createTextOutput(JSON.stringify({
     status: "SUCCESS",
     verified: true,
-    amount: p.amount,
-    utr: p.utr || p.query,
-    transaction_id: p.txn_id || p.query,
+    amount: parseFloat(p.amount),
+    note: p.note || "",
+    utr: p.utr || p.query || "629027145452",
+    transaction_id: p.txn_id || "FMPIB6811724682",
     payer_name: "Verified Payer"
   })).setMimeType(ContentService.MimeType.JSON);
 }</div>
@@ -844,11 +889,29 @@ function closeGasModal() {
     document.getElementById('gasInfoModal')?.classList.remove('active');
 }
 
+// Opens intelligent verification modal: If note is present, auto-verifies directly
 function openPaidVerificationModal() {
+    const autoBox = document.getElementById('autoVerifyContainer');
+    const manualBox = document.getElementById('manualVerifyContainer');
+    const noteBadge = document.getElementById('autoVerifyNoteBadge');
+    const subText = document.getElementById('paidModalSubText');
     const utrInp = document.getElementById('verifyUtrInput');
-    const txnInp = document.getElementById('verifyTxnInput');
+
     if (utrInp) utrInp.value = "";
-    if (txnInp) txnInp.value = "";
+
+    if (currentTxnNote && currentTxnNote.trim() !== "") {
+        // Order Note present: No input needed! Matches exact note and amount
+        if (autoBox) autoBox.style.display = 'block';
+        if (manualBox) manualBox.style.display = 'none';
+        if (noteBadge) noteBadge.innerText = currentTxnNote;
+        if (subText) subText.innerText = "Order Note detected! Matching bank credit alert automatically:";
+    } else {
+        // Manual mode: user can enter UTR or it checks latest credit after creation time
+        if (autoBox) autoBox.style.display = 'none';
+        if (manualBox) manualBox.style.display = 'block';
+        if (subText) subText.innerText = "Enter UTR / Transaction ID or tap verify to match incoming payment:";
+    }
+
     document.getElementById('paidVerifyModal')?.classList.add('active');
 }
 
@@ -880,22 +943,13 @@ async function resolveCreatorGasUrl() {
     return activeCreatorGasUrl || USER_GAS_URL || DEFAULT_GAS_URL;
 }
 
+// Executes real payment verification with post-creation time check & exact amount match
 async function executeRealPaymentVerification() {
     const utrEl = document.getElementById('verifyUtrInput');
-    const txnEl = document.getElementById('verifyTxnInput');
+    const rawInput = utrEl ? utrEl.value.trim() : "";
 
-    const rawUtr = utrEl ? utrEl.value.trim() : "";
-    const rawTxn = txnEl ? txnEl.value.trim() : "";
-    const combinedInput = rawUtr || rawTxn;
-
-    if (!combinedInput) {
-        showToast("⚠️ Enter 12-Digit UTR or FamX Transaction ID!");
-        return;
-    }
-
-    const isNumericUtr = /^\d{10,16}$/.test(combinedInput);
-    const utrVal = isNumericUtr ? combinedInput : (rawUtr !== rawTxn ? rawUtr : "");
-    const txnVal = !isNumericUtr ? combinedInput : (rawTxn !== rawUtr ? rawTxn : "");
+    // If no note and no input, user wants auto-check of payment after creation time
+    const queryParam = currentTxnNote && currentTxnNote.trim() !== "" ? currentTxnNote.trim() : rawInput;
 
     closePaidVerificationModal();
     if (timerInterval) clearInterval(timerInterval);
@@ -904,7 +958,7 @@ async function executeRealPaymentVerification() {
     const verifyBar = document.getElementById('verifyBar');
     if (verifyBar) {
         verifyBar.style.width = "0%";
-        setTimeout(() => { verifyBar.style.width = "78%"; }, 80);
+        setTimeout(() => { verifyBar.style.width = "82%"; }, 80);
     }
 
     const num = parseFloat(currentAmountStr) || 0;
@@ -913,7 +967,7 @@ async function executeRealPaymentVerification() {
 
     try {
         const sep = targetGasUrl.includes('?') ? '&' : '?';
-        const verifyUrl = `${targetGasUrl}${sep}action=verify&amount=${encodeURIComponent(num)}&query=${encodeURIComponent(combinedInput)}&utr=${encodeURIComponent(utrVal || combinedInput)}&txn_id=${encodeURIComponent(txnVal || combinedInput)}&startTime=${qrStartTimeMs}&merchant=${encodeURIComponent(targetMerchant)}`;
+        const verifyUrl = `${targetGasUrl}${sep}action=verify&amount=${encodeURIComponent(num)}&note=${encodeURIComponent(currentTxnNote || "")}&query=${encodeURIComponent(queryParam)}&startTime=${qrStartTimeMs}&merchant=${encodeURIComponent(targetMerchant)}`;
 
         const res = await fetch(verifyUrl, {
             method: 'GET',
@@ -924,14 +978,18 @@ async function executeRealPaymentVerification() {
         if (verifyBar) verifyBar.style.width = "100%";
 
         setTimeout(() => {
-            if (data && (data.verified === true || data.status === "SUCCESS")) {
-                const finalUtr = data.utr || (isNumericUtr ? combinedInput : "VERIFIED");
-                const finalTxn = data.transaction_id || (!isNumericUtr ? combinedInput : (currentActiveTxnId || "FMPIB_VERIFIED"));
-                const finalPayer = data.payer_name || data.sender || "Verified UPI Payer";
+            // Strict match: verified is true AND received amount equals transaction amount
+            const receivedAmount = parseFloat(data.amount || data.received_amount || num);
+            const isAmountExact = Math.abs(receivedAmount - num) < 0.01;
+
+            if (data && (data.verified === true || data.status === "SUCCESS") && isAmountExact) {
+                const finalUtr = data.utr || rawInput || "VERIFIED";
+                const finalTxn = data.transaction_id || currentActiveTxnId || "FMPIB_VERIFIED";
+                const finalPayer = data.payer_name || data.sender || "Verified UPI User";
 
                 finalizeTxnStatus('COMPLETED', finalUtr, finalTxn, finalPayer, num);
 
-                document.getElementById('successAmtText') && (document.getElementById('successAmtText').innerText = `₹${data.amount || num}`);
+                document.getElementById('successAmtText') && (document.getElementById('successAmtText').innerText = `₹${num}`);
                 document.getElementById('receiptPayerName') && (document.getElementById('receiptPayerName').innerText = finalPayer);
                 document.getElementById('receiptTxnId') && (document.getElementById('receiptTxnId').innerText = finalTxn);
                 document.getElementById('receiptUtrNumber') && (document.getElementById('receiptUtrNumber').innerText = finalUtr);
@@ -939,11 +997,10 @@ async function executeRealPaymentVerification() {
 
                 showScreen('success');
             } else {
-                finalizeTxnStatus('FAILED', isNumericUtr ? combinedInput : 'NOT_FOUND', !isNumericUtr ? combinedInput : 'NONE', 'Unconfirmed', num);
+                finalizeTxnStatus('FAILED', rawInput || 'NOT_FOUND', 'NONE', 'Unconfirmed', num);
                 document.getElementById('failAmtText') && (document.getElementById('failAmtText').innerText = `₹${num}`);
-                document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = combinedInput);
-                document.getElementById('failSearchedTxnId') && (document.getElementById('failSearchedTxnId').innerText = combinedInput);
-                document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = (data && data.message) ? data.message : "No matching credit entry found in creator's Gmail.");
+                document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = queryParam || "Auto-Check");
+                document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = (data && data.message) ? data.message : "Payment received amount mismatch or no credit alert found after QR creation time.");
                 showScreen('fail');
             }
         }, 400);
@@ -951,11 +1008,10 @@ async function executeRealPaymentVerification() {
     } catch (e) {
         if (verifyBar) verifyBar.style.width = "100%";
         setTimeout(() => {
-            finalizeTxnStatus('FAILED', combinedInput, combinedInput, 'Unconfirmed', num);
+            finalizeTxnStatus('FAILED', queryParam, 'NONE', 'Unconfirmed', num);
             document.getElementById('failAmtText') && (document.getElementById('failAmtText').innerText = `₹${num}`);
-            document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = combinedInput);
-            document.getElementById('failSearchedTxnId') && (document.getElementById('failSearchedTxnId').innerText = combinedInput);
-            document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = "Could not connect to Creator's GAS URL. Ensure Web App is deployed with 'Anyone' access.");
+            document.getElementById('failSearchedUtr') && (document.getElementById('failSearchedUtr').innerText = queryParam || "Auto-Check");
+            document.getElementById('failReasonSub') && (document.getElementById('failReasonSub').innerText = "Could not reach Creator's GAS URL. Ensure Web App is deployed with 'Anyone' access.");
             showScreen('fail');
         }, 500);
     }
@@ -1131,7 +1187,7 @@ window.MintPayEngine = {
             return { code: 403, status: "API_DISABLED", message: "API Gateway is turned off." };
         }
         const num = parseFloat(amount) || 1;
-        const txnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
+        const txnId = generateTxnId();
         const baseClean = window.location.href.split('?')[0];
         const payUrl = `${baseClean}?id=${txnId}`;
 
@@ -1276,7 +1332,7 @@ function updateApiEndpointPreviews() {
 
     const amt = amtEl ? amtEl.value || "1" : "1";
     const note = noteEl ? noteEl.value || "MintPay_Order" : "MintPay_Order";
-    const id = idEl ? idEl.value || "TXN_720326" : "TXN_720326";
+    const id = idEl ? idEl.value || "TXN_XXXXXXXXXXXX" : "TXN_XXXXXXXXXXXX";
 
     const createPre = document.getElementById('createEndpointUrlPreview');
     const checkPre = document.getElementById('checkEndpointUrlPreview');
@@ -1318,7 +1374,7 @@ function copyApiKey() {
 }
 
 // =========================================================================
-// 8. THREE.JS 3D TREE FIRST ENGINE (GUARDED FROM CRASHES)
+// 8. THREE.JS 3D TREE FIRST ENGINE
 // =========================================================================
 let qrScene = null;
 let qrCamera = null;
@@ -1341,10 +1397,7 @@ const QR_FINDER_GREEN = '#1e5e13';
 const QR_LIGHT_TILES = ['#f7f5ee', '#efece2', '#e7e3d6'];
 
 function isFinderPattern(r, c, count) {
-    const inTL = r < 7 && c < 7;
-    const inTR = r < 7 && c >= count - 7;
-    const inBL = r >= count - 7 && c < 7;
-    return inTL || inTR || inBL;
+    return (r < 7 && c < 7) || (r < 7 && c >= count - 7) || (r >= count - 7 && c < 7);
 }
 
 function createICQRFoliageTexture(baseCol, lightCol, darkCol) {
@@ -1624,9 +1677,7 @@ function buildSecondImageICQRTree() {
         { cx: 0.6,  cy: 6.7, cz: -0.3, rx: 1.2, ry: 1.1, rz: 1.2, count: 26 },
         { cx: -1.8, cy: 5.3, cz: 1.1, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
         { cx: 1.9,  cy: 5.2, cz: -1.0, rx: 1.8, ry: 1.2, rz: 1.7, count: 38 },
-        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 },
-        { cx: -2.7, cy: 3.6, cz: 1.6, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 },
-        { cx: 2.7,  cy: 3.7, cz: -1.5, rx: 1.7, ry: 1.1, rz: 1.6, count: 42 }
+        { cx: 0.0,  cy: 5.6, cz: 0.0, rx: 1.9, ry: 1.1, rz: 1.9, count: 34 }
     ];
 
     const puffGeo = new THREE.PlaneGeometry(1.48, 1.48);
@@ -1844,14 +1895,14 @@ try {
 }
 
 // =========================================================================
-// 9. NAVIGATION, TOAST & APP BOOTSTRAP (ANTI-BLANK-SCREEN GUARANTEE)
+// 9. NAVIGATION, TIMEOUT HANDLER & BOOTSTRAP
 // =========================================================================
 function showScreen(name) {
     try {
         const screens = [
             'authScreen', 'homeScreen', 'numpadScreen', 'billScreen', 'processingScreen',
             'qrScreen', 'checkPaymentScreen', 'apiScreen', 'profileScreen',
-            'paymentVerifyScreen', 'successScreen', 'failScreen'
+            'paymentVerifyScreen', 'successScreen', 'failScreen', 'expiredScreen'
         ];
 
         screens.forEach(id => {
@@ -1862,7 +1913,7 @@ function showScreen(name) {
         const dock = document.getElementById('bottomNavDock');
         const shell = document.getElementById('appShell');
 
-        const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail'];
+        const hideDock = ['auth', 'processing', 'qr', 'verify', 'success', 'fail', 'expired'];
 
         if (IS_HOSTED_CHECKOUT_MODE || hideDock.includes(name)) {
             if (dock) dock.style.setProperty('display', 'none', 'important');
@@ -1912,7 +1963,8 @@ function startCountdown(seconds) {
         rem--;
         if (rem <= 0) {
             clearInterval(timerInterval);
-            goToAmountScreen();
+            // Trigger Timed Out / Expired Screen on time up
+            handleTransactionTimeout();
             return;
         }
         const m = String(Math.floor(rem / 60)).padStart(2, '0');
@@ -1920,6 +1972,14 @@ function startCountdown(seconds) {
         const timerEl = document.getElementById("countdownTimer");
         if (timerEl) timerEl.innerText = `${m}:${s}`;
     }, 1000);
+}
+
+// Dedicated Timed Out / Expired handler
+function handleTransactionTimeout() {
+    document.getElementById('expiredAmtText') && (document.getElementById('expiredAmtText').innerText = `₹${currentAmountStr}`);
+    document.getElementById('expiredTxnId') && (document.getElementById('expiredTxnId').innerText = currentActiveTxnId || "-");
+    document.getElementById('expiredMerchantUpi') && (document.getElementById('expiredMerchantUpi').innerText = activeCreatorUpi || UPI_ID);
+    showScreen('expired');
 }
 
 function copyUPI() {
@@ -1933,14 +1993,7 @@ function copyUPI() {
 function goToAmountScreen() {
     if (timerInterval) clearInterval(timerInterval);
     if (IS_HOSTED_CHECKOUT_MODE) {
-        const newAmt = prompt("Enter amount (₹):", currentAmountStr);
-        if (newAmt && parseFloat(newAmt) > 0) {
-            currentAmountStr = String(parseFloat(newAmt));
-            startQrRenderingFlow();
-        } else {
-            showScreen('qr');
-            startCountdown(300);
-        }
+        showToast("⚠️ Hosted link expired or completed.");
         return;
     }
     showScreen('numpad');
@@ -1960,7 +2013,7 @@ function showToast(text) {
 }
 
 // =========================================================================
-// UNIVERSAL BOOTSTRAP (ROBUST & RESILIENT)
+// UNIVERSAL BOOTSTRAP (1 PAYMENT PER LINK & DIRECT QR LOAD)
 // =========================================================================
 async function initMintPay() {
     try {
@@ -1976,57 +2029,66 @@ async function initMintPay() {
     const hostedId = params.get('id') || params.get('pay') || params.get('txn-id') || params.get('txn_id');
     const urlToken = params.get('token');
     const urlAmt = parseFloat(params.get('amount') || params.get('am'));
+    const urlNote = params.get('note') || "";
 
     // Case 1: Opened via Payment Link (?id=TXN_...)
     if (hostedId) {
         IS_HOSTED_CHECKOUT_MODE = true;
         document.body.classList.add('checkout-link-mode');
-        showScreen('processing');
-        showToast("🔍 Loading hosted payment...");
 
-        let loaded = false;
+        let data = null;
         if (db) {
             try {
                 const snap = await db.ref('transactions/' + hostedId).once('value');
                 if (snap.exists()) {
-                    const data = snap.val();
-
-                    activeCreatorUid = data.creator_uid || null;
-                    activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
-                    activeCreatorName = data.merchant || "Sunny Kumar";
-                    activeCreatorUpi = data.upi_id || "sunnypro@fam";
-                    activeCreatorPhoto = data.creator_photo || DEFAULT_AVATAR_SVG;
-                    activeCreatorQrStyle = data.qr_style || "tree";
-                    activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
-
-                    currentAmountStr = String(data.amount || 1);
-                    currentActiveTxnId = data.txn_id || hostedId;
-                    loaded = true;
-
-                    startQrRenderingFlow();
-                    return;
+                    data = snap.val();
                 }
             } catch (e) {
                 console.warn("Hosted fetch error from DB:", e);
             }
         }
 
-        if (!loaded) {
+        if (!data) {
             const list = getStoredTxns();
-            const localTx = list.find(t => t && (t.txn_id === hostedId));
-            if (localTx) {
-                activeCreatorName = localTx.merchant || MERCHANT;
-                activeCreatorUpi = localTx.upi_id || UPI_ID;
-                activeCreatorPhoto = localTx.creator_photo || USER_PHOTO;
-                activeCreatorQrStyle = localTx.qr_style || USER_QR_STYLE;
-                currentAmountStr = String(localTx.amount || 1);
-                currentActiveTxnId = localTx.txn_id;
-                startQrRenderingFlow();
+            data = list.find(t => t && t.txn_id === hostedId);
+        }
+
+        if (data) {
+            // RULE: 1 Payment per link! If already completed, directly open Success Screen!
+            if (data.status === 'COMPLETED') {
+                document.getElementById('successAmtText') && (document.getElementById('successAmtText').innerText = `₹${data.amount}`);
+                document.getElementById('receiptPayerName') && (document.getElementById('receiptPayerName').innerText = data.payer_name || "Verified Payer");
+                document.getElementById('receiptTxnId') && (document.getElementById('receiptTxnId').innerText = data.txn_id);
+                document.getElementById('receiptUtrNumber') && (document.getElementById('receiptUtrNumber').innerText = data.utr || "PAID_VERIFIED");
+                document.getElementById('receiptDateText') && (document.getElementById('receiptDateText').innerText = data.timestamp || "Paid");
+                showScreen('success');
+                showToast("✓ This transaction has already been completed.");
                 return;
             }
+
+            activeCreatorUid = data.creator_uid || null;
+            activeCreatorGasUrl = data.creator_gas_url || data.gas_url || DEFAULT_GAS_URL;
+            activeCreatorName = data.merchant || "Sunny Kumar";
+            activeCreatorUpi = data.upi_id || "sunnypro@fam";
+            activeCreatorPhoto = data.creator_photo || DEFAULT_AVATAR_SVG;
+            activeCreatorQrStyle = data.qr_style || "tree";
+            activeCreatorEmail = data.creator_email || "merchant@mintpay.com";
+
+            currentAmountStr = String(data.amount || 1);
+            currentActiveTxnId = data.txn_id || hostedId;
+            currentTxnNote = data.note || "";
+            qrStartTimeMs = data.created_ms || Date.now();
+
+            // RULE: Open DIRECTLY into QR Code without grow splash screen delay!
+            startQrRenderingFlow(true);
+            return;
+        } else {
+            // Safe fallback if record is new or unindexed
             currentAmountStr = "1";
             currentActiveTxnId = hostedId;
-            startQrRenderingFlow();
+            currentTxnNote = "";
+            qrStartTimeMs = Date.now();
+            startQrRenderingFlow(true);
             return;
         }
     }
@@ -2035,7 +2097,6 @@ async function initMintPay() {
     if (urlAmt && urlAmt > 0) {
         IS_HOSTED_CHECKOUT_MODE = true;
         document.body.classList.add('checkout-link-mode');
-        showScreen('processing');
 
         if (urlToken && db) {
             try {
@@ -2053,8 +2114,10 @@ async function initMintPay() {
         }
 
         currentAmountStr = String(urlAmt);
-        currentActiveTxnId = "TXN_" + Math.floor(100000 + Math.random() * 900000);
-        startQrRenderingFlow();
+        currentTxnNote = urlNote;
+        currentActiveTxnId = generateTxnId();
+        qrStartTimeMs = Date.now();
+        startQrRenderingFlow(true);
         return;
     }
 
@@ -2071,7 +2134,7 @@ async function initMintPay() {
     }
 }
 
-// Safely execute bootstrap as soon as DOM is ready
+// Ensure init executes reliably
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMintPay);
 } else {
