@@ -328,7 +328,7 @@
                 <div class="invoice-details-list">
                     <div class="invoice-row">
                         <span>Transaction ID</span>
-                        <b id="billTxnId">TXN_000000</b>
+                        <b id="billTxnId">TXN_000000000000</b>
                     </div>
                     <div class="invoice-row">
                         <span>Creator Name</span>
@@ -408,9 +408,13 @@
                 </div>
             </div>
 
-            <!-- Big Centered Hero Amount -->
+            <!-- Big Centered Hero Amount & Note Badge -->
             <div class="hero-amount-center-wrap">
                 <span class="hero-qr-amt-large" id="qrAmtHero">₹1</span>
+                <div class="hero-note-pill" id="qrNoteDisplayBadge" style="display:none;">
+                    <img src="paper.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <span id="qrNoteDisplayText">Order Note</span>
+                </div>
             </div>
 
             <!-- 3D Tree QR Stage Container -->
@@ -459,7 +463,7 @@
                         <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> Enter Transaction ID or UTR
                     </label>
                     <div class="search-bar-row">
-                        <input type="text" id="checkPaymentSearchInput" class="glass-input" placeholder="e.g. FMPIB... or 6290... or TXN_...">
+                        <input type="text" id="checkPaymentSearchInput" class="glass-input" placeholder="e.g. TXN_XXXXXXXXXXXX, FMPIB... or UTR">
                         <button class="btn-paid search-submit-btn" onclick="executePaymentCheckSearch()">
                             <img src="check.gif" alt="" class="tiny-gif" onerror="this.src='tick.gif'">
                             <span>Search</span>
@@ -603,7 +607,7 @@
                 <div class="input-group" style="margin-bottom: 10px;">
                     <label class="input-label">Transaction ID / UTR</label>
                     <div class="search-bar-row">
-                        <input type="text" id="apiCheckId" class="glass-input" value="TXN_720326" oninput="updateApiEndpointPreviews()">
+                        <input type="text" id="apiCheckId" class="glass-input" value="TXN_12DIGITID" oninput="updateApiEndpointPreviews()">
                         <button class="btn-paid search-submit-btn" onclick="runCheckStatusApi()">
                             <img src="check.gif" alt="" class="tiny-gif" onerror="this.src='tick.gif'">
                             <span>Check</span>
@@ -619,21 +623,7 @@
                     <pre class="code-block raw-json" id="apiCheckOutput">{
   "code": 200,
   "status": "SUCCESS",
-  "source": "DATABASE",
-  "data": {
-    "txn_id": "TXN_720326",
-    "utr": "PENDING",
-    "famx_id": "PENDING",
-    "payer_name": "Waiting...",
-    "amount": 1,
-    "creator_email": "merchant@mintpay.com",
-    "merchant": "Sunny Kumar",
-    "upi_id": "sunnypro@fam",
-    "note": "3D_Tree_Checkout",
-    "status": "PENDING",
-    "created_ms": 1792315402765,
-    "timestamp": "02:53 PM"
-  }
+  "source": "DATABASE"
 }</pre>
                 </div>
             </div>
@@ -785,15 +775,15 @@
             <div class="receipt-pill">
                 <div class="receipt-row">
                     <span>Status</span>
-                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> VERIFIED</b>
+                    <b style="color:#059669;"><img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'"> VERIFIED (PAID)</b>
                 </div>
                 <div class="receipt-row">
                     <span>Sender / Payer</span>
-                    <b id="receiptPayerName">PRATIMA FARIKAR</b>
+                    <b id="receiptPayerName">Verified User</b>
                 </div>
                 <div class="receipt-row">
                     <span>Transaction ID</span>
-                    <b id="receiptTxnId">FMPIB6811724682</b>
+                    <b id="receiptTxnId">TXN_000000000000</b>
                 </div>
                 <div class="receipt-row">
                     <span>UTR / Ref No.</span>
@@ -807,7 +797,7 @@
 
             <button class="btn-proceed" onclick="goToAmountScreen()">
                 <img src="paper.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
-                <span>Done / Next Payment</span>
+                <span>Done / Return Home</span>
             </button>
         </div>
 
@@ -852,6 +842,39 @@
                     <span>← Home</span>
                 </button>
             </div>
+        </div>
+
+        <!-- ================= SCREEN 12: TIMED UP / EXPIRED SCREEN ================= -->
+        <div id="expiredScreen" class="result-screen-box">
+            <div class="result-badge-wrap expired-bg">
+                <img src="clock.gif" alt="" class="result-gif" onerror="this.src='alert.gif'">
+            </div>
+            <h2 class="result-title" style="color: var(--warning);">
+                <span>Transaction Expired</span>
+                <img src="alert.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
+            </h2>
+            <div class="result-amt" id="expiredAmtText">₹0</div>
+            <p class="result-sub" id="expiredReasonSub">This payment QR session has timed out or has already been completed.</p>
+
+            <div class="receipt-pill">
+                <div class="receipt-row">
+                    <span>Status</span>
+                    <b style="color:var(--warning);">TIMED OUT / EXPIRED</b>
+                </div>
+                <div class="receipt-row">
+                    <span>Transaction ID</span>
+                    <b id="expiredTxnId">TXN_000000000000</b>
+                </div>
+                <div class="receipt-row">
+                    <span>Receiver UPI</span>
+                    <b id="expiredMerchantUpi">sunnypro@fam</b>
+                </div>
+            </div>
+
+            <button class="btn-proceed" onclick="goToAmountScreen()">
+                <img src="paper.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
+                <span>Create New Link</span>
+            </button>
         </div>
 
     </main>
@@ -912,25 +935,38 @@
         </div>
     </div>
 
-    <!-- MODAL 3: UNIFIED SINGLE INPUT FOR UTR OR TRANSACTION ID -->
+    <!-- MODAL 3: INTELLIGENT VERIFY MODAL (AUTO-DETECT FOR NOTE OR UNIFIED INPUT) -->
     <div class="modal-backdrop" id="paidVerifyModal">
         <div class="modal-card">
             <img src="eye.gif" alt="" class="modal-top-gif" onerror="this.style.display='none'">
             <h3 class="modal-title">Confirm & Verify Payment</h3>
-            <p class="modal-sub">
-                Enter your <b>12-Digit UTR</b> OR <b>FamX Transaction ID</b> (`FMPIB...`) below to verify payment:
+            <p class="modal-sub" id="paidModalSubText">
+                Verifying payment with Creator's Gmail & Database:
             </p>
 
-            <div class="input-group" style="margin-bottom: 14px;">
+            <!-- Auto Verify Section (Shown when note is present) -->
+            <div id="autoVerifyContainer" class="auto-verify-box" style="display:none;">
+                <div class="auto-verify-head">
+                    <img src="tick.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
+                    <span>Direct Order Matching Active</span>
+                </div>
+                <div class="auto-verify-desc">
+                    Order Note: <b id="autoVerifyNoteBadge" style="color:var(--primary-deep);">Note</b><br>
+                    Payments will be verified automatically by matching the exact note and amount from bank credit alerts.
+                </div>
+            </div>
+
+            <!-- Manual Input Section (Shown when no note is present) -->
+            <div id="manualVerifyContainer" class="input-group" style="margin-bottom: 14px;">
                 <label class="input-label">
                     <img src="secure.gif" alt="" class="tiny-gif" onerror="this.style.display='none'">
-                    <span>UTR Number or Transaction ID</span>
+                    <span>12-Digit UTR or Transaction ID</span>
                 </label>
                 <input
                     type="text"
                     id="verifyUtrInput"
                     class="glass-input"
-                    placeholder="e.g. 629027145452 or FMPIB6811724682"
+                    placeholder="e.g. 629027145452 or FMPIB..."
                     style="text-align: center; font-weight: 800; letter-spacing: 0.5px;"
                     oninput="const t = document.getElementById('verifyTxnInput'); if(t) t.value = this.value;"
                 >
@@ -938,7 +974,7 @@
             </div>
 
             <div class="real-verify-actions">
-                <button class="btn-proceed" style="padding: 13px;" onclick="const u = document.getElementById('verifyUtrInput'); const t = document.getElementById('verifyTxnInput'); if(u && t) t.value = u.value; executeRealPaymentVerification();">
+                <button class="btn-proceed" style="padding: 13px;" onclick="executeRealPaymentVerification()">
                     <img src="secure.gif" alt="" class="btn-gif-icon" onerror="this.style.display='none'">
                     <span>Verify Payment Now</span>
                 </button>
