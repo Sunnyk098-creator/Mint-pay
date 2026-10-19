@@ -4,6 +4,7 @@
     --primary-deep: #047857;
     --danger: #ef4444;
     --danger-dark: #dc2626;
+    --warning: #f59e0b;
     --glass-surface: rgba(255, 255, 255, 0.65);
     --glass-card: rgba(255, 255, 255, 0.88);
     --glass-border: rgba(255, 255, 255, 0.95);
@@ -38,7 +39,7 @@ html, body {
     pointer-events: none;
 }
 
-/* App Shell */
+/* App Shell Container */
 .app-shell {
     width: 100vw;
     height: 100dvh;
@@ -60,13 +61,12 @@ html, body {
     box-sizing: border-box;
 }
 
-/* Full-screen mode when on Checkout/Payment link */
+/* Full-Screen Mode for Hosted Payment Links */
 .app-shell.no-bottom-pad,
 body.checkout-link-mode .app-shell {
     padding: 12px 14px 12px !important;
 }
 
-/* Hide Bottom Navigation Bar in Full-Screen Mode via pure CSS (No script lag) */
 .app-shell.no-bottom-pad ~ #bottomNavDock,
 body.checkout-link-mode ~ #bottomNavDock,
 body.checkout-link-mode #bottomNavDock {
@@ -76,7 +76,7 @@ body.checkout-link-mode #bottomNavDock {
     pointer-events: none !important;
 }
 
-/* SCREEN CONTAINERS - STRICT VERTICAL STACK */
+/* Strict Layout Containers */
 .screen-view,
 .scroll-page {
     width: 100% !important;
@@ -100,7 +100,6 @@ body.checkout-link-mode #bottomNavDock {
     padding-bottom: 14px;
 }
 
-/* ANTI-BLANK-SCREEN: Default visible screen so page is NEVER blank */
 #authScreen {
     display: flex;
 }
@@ -150,7 +149,7 @@ body.checkout-link-mode #bottomNavDock {
     cursor: pointer;
 }
 
-/* Dashboard Status & Danger Strip Cards */
+/* Dashboard Status & Strips */
 .status-banner-card {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(255, 255, 255, 0.92) 100%);
     padding: 13px 15px;
@@ -227,7 +226,7 @@ body.checkout-link-mode #bottomNavDock {
 }
 
 /* =========================================================================
-   CHECKOUT SCREEN 5: FULL-SCREEN ROUNDED CARD
+   CHECKOUT SCREEN: PURE FULL SCREEN DIRECT QR CARD
    ========================================================================= */
 .checkout-fullscreen-card {
     display: none;
@@ -376,7 +375,7 @@ body.checkout-link-mode #bottomNavDock {
 .rule-dot { font-weight: 900; }
 .rule-item.valid .rule-dot::before { content: "✓"; }
 
-/* Amount Box & Chips */
+/* Amount Hero & Numpad */
 .amount-hero-box {
     width: 100%;
     background: var(--glass-card);
@@ -433,7 +432,6 @@ body.checkout-link-mode #bottomNavDock {
     color: #ffffff;
 }
 
-/* Numpad */
 .numpad-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -469,7 +467,7 @@ body.checkout-link-mode #bottomNavDock {
 
 .del-action { color: var(--danger); }
 
-/* Buttons */
+/* Standard Buttons */
 .btn-proceed {
     width: 100%;
     padding: 15px 20px;
@@ -614,7 +612,6 @@ body.checkout-link-mode #bottomNavDock {
     color: var(--primary-dark) !important;
 }
 
-/* Bill Actions Grid */
 .bill-actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -640,7 +637,7 @@ body.checkout-link-mode #bottomNavDock {
 .share-btn { background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1d4ed8; }
 .open-btn { background: #fefce8; border: 1.5px solid #fef08a; color: #a16207; }
 
-/* QR STYLE SELECTOR */
+/* QR Style Selector */
 .qr-style-picker-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -674,7 +671,7 @@ body.checkout-link-mode #bottomNavDock {
 .style-name { font-size: 0.74rem; font-weight: 900; color: var(--text-dark); }
 .style-desc { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); line-height: 1.2; }
 
-/* User Profile Upload Badge */
+/* Profile DP Upload */
 .profile-upload-container {
     position: relative;
     display: inline-block;
@@ -711,7 +708,7 @@ body.checkout-link-mode #bottomNavDock {
 
 .btn-upload-dp-pill:active { transform: scale(0.96); }
 
-/* QR SCREEN COMPONENTS */
+/* QR Stage & Details */
 .user-brand-bar {
     display: flex !important;
     flex-direction: row !important;
@@ -756,7 +753,6 @@ body.checkout-link-mode #bottomNavDock {
 
 .copy-pill { background: #d1fae5; color: #047857; font-size: 0.65rem; padding: 2px 7px; border-radius: 6px; font-weight: 800; }
 
-/* Timer capsule with clock icon */
 .timer-capsule {
     display: inline-flex;
     align-items: center;
@@ -770,13 +766,14 @@ body.checkout-link-mode #bottomNavDock {
     font-weight: 800;
 }
 
-/* Large Centered Amount */
 .hero-amount-center-wrap {
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     margin: 4px 0;
+    gap: 4px;
 }
 
 .hero-qr-amt-large {
@@ -787,7 +784,19 @@ body.checkout-link-mode #bottomNavDock {
     line-height: 1;
 }
 
-/* 3D Tree Stage Centered */
+.hero-note-pill {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
 .open-tree-stage {
     position: relative;
     width: 300px;
@@ -816,7 +825,6 @@ body.checkout-link-mode #bottomNavDock {
 
 .static-qr-container canvas { width: 100% !important; height: 100% !important; }
 
-/* Pill Toggle Button */
 .toggle-tree-pill {
     background: rgba(241, 245, 249, 0.85);
     border: 1.5px solid #e2e8f0;
@@ -835,7 +843,6 @@ body.checkout-link-mode #bottomNavDock {
 
 .toggle-tree-pill:active { transform: scale(0.96); background: #ffffff; }
 
-/* Action Buttons: Paid & Change Amount */
 .qr-bottom-actions {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -880,7 +887,7 @@ body.checkout-link-mode #bottomNavDock {
 
 .btn-change-amt:active { transform: scale(0.96); background: #f8fafc; }
 
-/* Inputs & Search Bars */
+/* Input Fields & Searches */
 .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; text-align: left; width: 100%; }
 .input-label { font-size: 0.74rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 5px; padding-left: 3px; }
 .glass-input {
@@ -1097,7 +1104,6 @@ body.checkout-link-mode #bottomNavDock {
 .txn-time-text { font-size: 0.66rem; font-weight: 600; color: var(--text-muted); }
 .txn-amt-badge { font-size: 0.88rem; font-weight: 900; }
 
-/* Info Bubble Buttons */
 .btn-info-bubble {
     background: #f0fdf4;
     border: 1.5px solid #bbf7d0;
@@ -1213,6 +1219,33 @@ body.checkout-link-mode #bottomNavDock {
     width: 100%;
 }
 
+/* Verification Auto-Detect Box */
+.auto-verify-box {
+    background: #ecfdf5;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.auto-verify-head {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: var(--primary-deep);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+}
+
+.auto-verify-desc {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
 /* Process & Result */
 .proc-screen-box { display: none; width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
 .proc-icon-box { position: relative; width: 118px; height: 118px; border-radius: 50%; background: var(--glass-card); border: 2px solid var(--glass-border); display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
@@ -1228,6 +1261,8 @@ body.checkout-link-mode #bottomNavDock {
 .result-badge-wrap { width: 108px; height: 108px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 14px; }
 .result-badge-wrap.success-bg { background: var(--glass-card); border: 2px solid #a7f3d0; box-shadow: 0 14px 32px rgba(16, 185, 129, 0.25); }
 .result-badge-wrap.fail-bg { background: var(--glass-card); border: 2px solid #fecaca; box-shadow: 0 14px 32px rgba(239, 68, 68, 0.22); }
+.result-badge-wrap.expired-bg { background: var(--glass-card); border: 2px solid #fed7aa; box-shadow: 0 14px 32px rgba(245, 158, 11, 0.22); }
+
 .result-gif { width: 70px; height: 70px; object-fit: contain; }
 .result-amt { font-size: 2.2rem; font-weight: 900; color: var(--text-dark); margin: 5px 0 3px; }
 .result-title { font-size: 1.32rem; font-weight: 900; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
